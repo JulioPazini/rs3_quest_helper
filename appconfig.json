@@ -1,11 +1,12 @@
-{
-  "name": "Alt1 Quest Helper",
-  "author": "Julio",
-  "version": "1.0.0",
-  "description": "Visualizador de passos de quests do RuneScape 3 usando a Wiki",
-  "appUrl": "index.html",
-  "defaultSize": {
-    "width": 380,
-    "height": 600
-  }
+﻿{
+  "appName": "Alt1 Quest Helper",
+  "description": "RuneScape quest helper for Alt1",
+  "appUrl": "./index.html",
+  "configUrl": "./appconfig.json",
+  "iconUrl": "./icon.png",
+  "defaultWidth": 380,
+  "defaultHeight": 600,
+  "minWidth": 320,
+  "minHeight": 500,
+  "requestHandlers": []
 }
