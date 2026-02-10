@@ -1,0 +1,22 @@
+export const state = {
+  showAllSteps: false,
+  currentItems: [],
+  pendingAutoScroll: false,
+  currentQuestKey: null,
+  currentRewardImage: null,
+  currentOverview: null,
+  overviewChecks: {},
+  showSteps: false,
+  searchQuery: '',
+  selectedSeries: 'alphabetical',
+  playerName: '',
+  playerQuestFilter: null,
+  playerQuestMeta: {},
+  playerSkills: {},
+  playerLastFetchAt: null,
+  searchState: {
+    visibleResults: 0,
+    reset: false,
+    lastRenderedSeries: null,
+  },
+};

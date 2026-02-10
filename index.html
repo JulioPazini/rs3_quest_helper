@@ -1,0 +1,156 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Alt1 Quest Helper</title>
+
+    <link rel="stylesheet" href="src/styles/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back,arrow_forward,description,list,my_location,restart_alt,search&display=block"
+    />
+
+    <!-- Alt1 API -->
+    <script src="https://runeapps.org/alt1lib/alt1lib.js"></script>
+  </head>
+  <body>
+    <header>
+      <h2>Quest Helper</h2>
+    </header>
+
+    <section class="toggle-bar">
+      <button
+        id="backButton"
+        class="toggle hidden"
+        type="button"
+        title="Back to list"
+        aria-label="Back to list"
+      >
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <select id="seriesFilter" class="series-filter" aria-label="Filter quests">
+        <option value="alphabetical" selected>Alphabetical</option>
+        <option value="series">Series</option>
+        <option value="length">Length</option>
+        <option value="combat">Combat</option>
+        <option value="membership">Free/Members</option>
+      </select>
+      <input type="text" id="questInput" class="search-input" placeholder="Type the quest name" />
+      <button
+        id="searchToggle"
+        class="search-toggle"
+        type="button"
+        title="Search another quest"
+        aria-label="Search another quest"
+      >
+        <span class="material-symbols-outlined">search</span>
+      </button>
+    </section>
+
+    <section class="player-bar">
+      <input
+        type="text"
+        id="playerInput"
+        class="player-input"
+        placeholder="Display name"
+        aria-label="Search quests by player name"
+      />
+      <button
+        id="playerLookup"
+        class="player-lookup-btn"
+        type="button"
+        title="Look up player quests"
+        aria-label="Look up player quests"
+      >
+        Look up
+      </button>
+    </section>
+
+    <section id="questTitle"></section>
+
+    <section id="viewModeToggle" class="view-mode-toggle hidden">
+      <a id="wikiLink" class="wiki-link" href="#" target="_blank" rel="noopener">Wiki</a>
+      <span class="mode-label">Overview</span>
+      <button id="viewStepsToggle" class="nav-btn" type="button">
+        <span class="material-symbols-outlined">list</span>
+        <span class="view-toggle-label">Steps</span>
+      </button>
+    </section>
+
+    <section class="nav-bar hidden">
+      <div class="nav-left">
+        <button
+          id="toggleAll"
+          class="toggle switch-toggle"
+          type="button"
+          title="Show all quest steps"
+          aria-pressed="false"
+        >
+          Show all steps
+        </button>
+        <button
+          id="hideCompleted"
+          class="filter-toggle hidden"
+          type="button"
+          title="Hide completed steps from the list"
+          aria-pressed="false"
+        >
+          Hide completed
+        </button>
+      </div>
+      <div class="nav-link"></div>
+      <div class="nav-actions"></div>
+    </section>
+
+    <section id="progressRow">
+      <span id="progressIndicator" class="progress-indicator hidden">0 / 0</span>
+    </section>
+
+    <section id="questOverview" class="quest-overview hidden"></section>
+
+    <section id="searchResults" class="results-list hidden"></section>
+
+    <section id="steps"></section>
+
+    <section id="stickyBar" class="sticky-bar hidden">
+      <button
+        id="resetQuest"
+        class="nav-btn sticky-action-btn"
+        type="button"
+        title="Reset all step progress for this quest"
+        aria-label="Reset all step progress for this quest"
+      >
+        <span class="material-symbols-outlined">restart_alt</span>
+      </button>
+      <button
+        id="prevStep"
+        class="nav-btn sticky-action-btn"
+        type="button"
+        title="Mark the previous step as not completed"
+        aria-label="Mark the previous step as not completed"
+      >
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <button
+        id="nextStep"
+        class="nav-btn sticky-action-btn"
+        type="button"
+        title="Mark the current step as completed and move forward"
+        aria-label="Mark the current step as completed and move forward"
+      >
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+      <button
+        id="jumpCurrent"
+        class="nav-btn sticky-action-btn jump-current-btn hidden"
+        type="button"
+        title="Jump to the current step in the list"
+        aria-label="Jump to the current step in the list"
+      >
+        <span class="material-symbols-outlined">my_location</span>
+      </button>
+    </section>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>

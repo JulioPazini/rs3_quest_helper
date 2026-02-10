@@ -1,0 +1,11 @@
+{
+  "name": "Alt1 Quest Helper",
+  "author": "Julio",
+  "version": "1.0.0",
+  "description": "Visualizador de passos de quests do RuneScape 3 usando a Wiki",
+  "appUrl": "index.html",
+  "defaultSize": {
+    "width": 380,
+    "height": 600
+  }
+}
