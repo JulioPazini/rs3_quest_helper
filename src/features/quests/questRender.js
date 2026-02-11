@@ -384,39 +384,76 @@ export const renderSteps = (params) => {
       }
       return false;
     };
+    const appendSectionImages = (sectionImages) => {
+      if (!Array.isArray(sectionImages) || sectionImages.length === 0) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'section-images';
+      sectionImages.forEach((imgData) => {
+        if (!imgData || !imgData.src) return;
+        const figure = document.createElement('figure');
+        figure.className = 'section-image';
+        const img = document.createElement('img');
+        img.src = imgData.src;
+        img.alt = imgData.alt || '';
+        img.loading = 'lazy';
+        figure.appendChild(img);
+        if (imgData.caption) {
+          const caption = document.createElement('figcaption');
+          caption.textContent = imgData.caption;
+          figure.appendChild(caption);
+        }
+        wrap.appendChild(figure);
+      });
+      if (wrap.children.length > 0) {
+        stepsDiv.appendChild(wrap);
+      }
+    };
     const currentIndex = items.findIndex((item) => item.type === 'step' && !item.checked);
     if (jumpCurrentButton) {
       jumpCurrentButton.classList.remove('hidden');
       jumpCurrentButton.disabled = currentIndex === -1;
     }
-    items.forEach((item, idx) => {
-      if (item.type === 'title') {
-        if (hideCompletedActive && !sectionHasVisibleSteps(idx)) {
-          return;
-        }
-        const h = document.createElement('h3');
-        h.textContent = item.text;
-        h.style.marginBottom = '10px';
-        stepsDiv.appendChild(h);
+    for (let idx = 0; idx < items.length; idx += 1) {
+      const item = items[idx];
+      if (item.type !== 'title') continue;
 
-        if (item.seeAlso && item.seeAlso.length > 0) {
-          const small = document.createElement('div');
-          small.className = 'seealso';
-          small.innerHTML = item.seeAlso.join('<br>');
-          stepsDiv.appendChild(small);
-        }
+      if (hideCompletedActive && !sectionHasVisibleSteps(idx)) {
+        continue;
       }
 
-      if (item.type === 'step') {
-        if (hideCompletedCheckbox && hideCompletedCheckbox.checked && item.checked) {
-          return;
+      const h = document.createElement('h3');
+      h.textContent = item.text;
+      h.style.marginBottom = '10px';
+      stepsDiv.appendChild(h);
+
+      if (item.seeAlso && item.seeAlso.length > 0) {
+        const small = document.createElement('div');
+        small.className = 'seealso';
+        small.innerHTML = item.seeAlso.join('<br>');
+        stepsDiv.appendChild(small);
+      }
+
+      let sectionCursor = idx + 1;
+      let shouldShowSectionReward = false;
+      let renderedSectionImages = false;
+      while (sectionCursor < items.length && items[sectionCursor].type !== 'title') {
+        const sectionItem = items[sectionCursor];
+        const stepIndex = sectionCursor;
+        if (sectionItem.type !== 'step') {
+          sectionCursor += 1;
+          continue;
         }
+        if (hideCompletedCheckbox && hideCompletedCheckbox.checked && sectionItem.checked) {
+          sectionCursor += 1;
+          continue;
+        }
+
         const stepEl = document.createElement('div');
-        const isCurrent = !item.checked && items.indexOf(item) === currentIndex;
+        const isCurrent = !sectionItem.checked && sectionCursor === currentIndex;
         stepEl.className =
-          'step-item' + (item.checked ? ' completed' : '') + (isCurrent ? ' current' : '');
-        const displayHtml = formatStepHtml(item.html || item.text, item.text);
-        stepEl.innerHTML = (item.checked ? '\u2714 ' : '') + (displayHtml || '');
+          'step-item' + (sectionItem.checked ? ' completed' : '') + (isCurrent ? ' current' : '');
+        const displayHtml = formatStepHtml(sectionItem.html || sectionItem.text, sectionItem.text);
+        stepEl.innerHTML = (sectionItem.checked ? '\u2714 ' : '') + (displayHtml || '');
 
         stepEl.onclick = (event) => {
           if (event && event.target && event.target.closest && event.target.closest('a')) {
@@ -424,20 +461,20 @@ export const renderSteps = (params) => {
           }
           stepEl.classList.add('clicked');
           setTimeout(() => {
-            if (currentIndex !== -1 && idx > currentIndex) {
-              for (let i = currentIndex; i <= idx; i++) {
+            if (currentIndex !== -1 && stepIndex > currentIndex) {
+              for (let i = currentIndex; i <= stepIndex; i += 1) {
                 if (items[i].type === 'step') {
                   items[i].checked = true;
                 }
               }
-            } else if (item.checked) {
-              for (let i = idx; i < items.length; i++) {
+            } else if (sectionItem.checked) {
+              for (let i = stepIndex; i < items.length; i += 1) {
                 if (items[i].type === 'step') {
                   items[i].checked = false;
                 }
               }
             } else {
-              item.checked = true;
+              sectionItem.checked = true;
             }
             saveProgress();
             setPendingAutoScroll(true);
@@ -445,12 +482,17 @@ export const renderSteps = (params) => {
           }, 180);
         };
 
+        const isQuestCompleteStep = /quest complete/i.test(sectionItem.text || '');
+        if (isQuestCompleteStep && !renderedSectionImages) {
+          appendSectionImages(item.sectionImages);
+          renderedSectionImages = true;
+        }
         stepsDiv.appendChild(stepEl);
 
-        if (item.substeps && item.substeps.length > 0) {
+        if (sectionItem.substeps && sectionItem.substeps.length > 0) {
           const list = document.createElement('ul');
           list.className = 'substeps';
-          for (const substep of item.substeps) {
+          for (const substep of sectionItem.substeps) {
             const li = document.createElement('li');
             li.innerHTML = substep.html || substep.text;
             list.appendChild(li);
@@ -458,15 +500,25 @@ export const renderSteps = (params) => {
           stepsDiv.appendChild(list);
         }
 
-        if (currentRewardImage && /quest complete/i.test(item.text)) {
-          const img = document.createElement('img');
-          img.className = 'reward-image';
-          img.src = currentRewardImage;
-          img.alt = 'Quest rewards';
-          stepsDiv.appendChild(img);
+        if (currentRewardImage && /quest complete/i.test(sectionItem.text)) {
+          shouldShowSectionReward = true;
         }
+        sectionCursor += 1;
       }
-    });
+
+      if (!renderedSectionImages) {
+        appendSectionImages(item.sectionImages);
+      }
+      if (shouldShowSectionReward) {
+        const img = document.createElement('img');
+        img.className = 'reward-image';
+        img.src = currentRewardImage;
+        img.alt = 'Quest rewards';
+        stepsDiv.appendChild(img);
+      }
+      idx = sectionCursor - 1;
+    }
+
     if (pendingAutoScroll()) {
       setPendingAutoScroll(false);
       const currentEl = stepsDiv.querySelector('.step-item.current');
@@ -522,12 +574,13 @@ export const renderSteps = (params) => {
     stepsDiv.appendChild(h);
   }
 
+  let currentTitleItem = null;
   if (currentTitle) {
-    const titleItem = items.find((item) => item.type === 'title' && item.text === currentTitle);
-    if (titleItem && titleItem.seeAlso && titleItem.seeAlso.length > 0) {
+    currentTitleItem = items.find((item) => item.type === 'title' && item.text === currentTitle);
+    if (currentTitleItem && currentTitleItem.seeAlso && currentTitleItem.seeAlso.length > 0) {
       const small = document.createElement('div');
       small.className = 'seealso';
-      small.innerHTML = titleItem.seeAlso.join('<br>');
+      small.innerHTML = currentTitleItem.seeAlso.join('<br>');
       stepsDiv.appendChild(small);
     }
   }
@@ -536,6 +589,36 @@ export const renderSteps = (params) => {
   if (prevStepButton) prevStepButton.disabled = currentStepIndex === 0;
   if (nextStepButton) nextStepButton.disabled = false;
   updateProgress();
+
+  const isCurrentQuestComplete = /quest complete/i.test(step.text || '');
+  if (
+    isCurrentQuestComplete &&
+    currentTitleItem &&
+    Array.isArray(currentTitleItem.sectionImages) &&
+    currentTitleItem.sectionImages.length > 0
+  ) {
+    const wrap = document.createElement('div');
+    wrap.className = 'section-images';
+    currentTitleItem.sectionImages.forEach((imgData) => {
+      if (!imgData || !imgData.src) return;
+      const figure = document.createElement('figure');
+      figure.className = 'section-image';
+      const img = document.createElement('img');
+      img.src = imgData.src;
+      img.alt = imgData.alt || '';
+      img.loading = 'lazy';
+      figure.appendChild(img);
+      if (imgData.caption) {
+        const caption = document.createElement('figcaption');
+        caption.textContent = imgData.caption;
+        figure.appendChild(caption);
+      }
+      wrap.appendChild(figure);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  }
 
   const stepEl = document.createElement('div');
   stepEl.className = 'step-item current';
@@ -565,6 +648,43 @@ export const renderSteps = (params) => {
       list.appendChild(li);
     }
     stepsDiv.appendChild(list);
+  }
+
+  if (
+    !isCurrentQuestComplete &&
+    currentTitleItem &&
+    Array.isArray(currentTitleItem.sectionImages) &&
+    currentTitleItem.sectionImages.length > 0
+  ) {
+    const wrap = document.createElement('div');
+    wrap.className = 'section-images';
+    currentTitleItem.sectionImages.forEach((imgData) => {
+      if (!imgData || !imgData.src) return;
+      const figure = document.createElement('figure');
+      figure.className = 'section-image';
+      const img = document.createElement('img');
+      img.src = imgData.src;
+      img.alt = imgData.alt || '';
+      img.loading = 'lazy';
+      figure.appendChild(img);
+      if (imgData.caption) {
+        const caption = document.createElement('figcaption');
+        caption.textContent = imgData.caption;
+        figure.appendChild(caption);
+      }
+      wrap.appendChild(figure);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  }
+
+  if (currentRewardImage && /quest complete/i.test(step.text)) {
+    const img = document.createElement('img');
+    img.className = 'reward-image';
+    img.src = currentRewardImage;
+    img.alt = 'Quest rewards';
+    stepsDiv.appendChild(img);
   }
 
   if (navBar) {

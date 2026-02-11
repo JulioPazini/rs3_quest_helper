@@ -273,6 +273,25 @@ export function extractQuickGuide(html) {
     return htmlOut;
   };
 
+  const getSectionImageData = (el) => {
+    if (!el || !el.querySelectorAll) return [];
+    const out = [];
+    const figures = el.matches('figure') ? [el] : Array.from(el.querySelectorAll('figure'));
+    figures.forEach((figure) => {
+      const img = figure.querySelector('img');
+      if (!img) return;
+      let src = img.getAttribute('src') || '';
+      if (!src) return;
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+      const alt = (img.getAttribute('alt') || '').trim();
+      const captionEl = figure.querySelector('figcaption');
+      const caption = captionEl ? captionEl.textContent.replace(/\s+/g, ' ').trim() : '';
+      out.push({ src, alt, caption });
+    });
+    return out;
+  };
+
   const getListItemText = (li) => {
     const clone = li.cloneNode(true);
     stripTooltipContent(clone);
@@ -309,8 +328,19 @@ export function extractQuickGuide(html) {
       if (text && !['Contents', 'Overview', 'Rewards', 'Required for completing'].includes(text)) {
         lastHeader = text;
         let seeAlso = [];
-        let sibling = node.nextElementSibling;
-        while (sibling && !/^H[2-4]$/.test(sibling.tagName)) {
+        let sectionImages = [];
+        const headingContainer = node.closest('.mw-heading') || node;
+        let sibling = headingContainer.nextElementSibling;
+        const isNextSectionHeader = (el) => {
+          if (!el) return false;
+          if (el.classList && Array.from(el.classList).some((c) => /^mw-heading[2-4]$/.test(c))) {
+            return true;
+          }
+          if (/^H[2-4]$/.test(el.tagName)) return true;
+          const innerHeader = el.querySelector && el.querySelector('h2, h3, h4');
+          return Boolean(innerHeader && innerHeader.closest('.mw-heading') === el);
+        };
+        while (sibling && !isNextSectionHeader(sibling)) {
           const seeAlsoEl = sibling.classList.contains('seealso')
             ? sibling
             : sibling.querySelector('.seealso');
@@ -318,6 +348,8 @@ export function extractQuickGuide(html) {
             const htmlOut = getSeeAlsoHtml(seeAlsoEl);
             if (htmlOut) seeAlso.push(htmlOut);
           }
+          const images = getSectionImageData(sibling);
+          if (images.length) sectionImages = sectionImages.concat(images);
           sibling = sibling.nextElementSibling;
         }
 
@@ -325,6 +357,7 @@ export function extractQuickGuide(html) {
           type: 'title',
           text,
           seeAlso,
+          sectionImages,
         });
         lastTitleIndex = result.length - 1;
       }

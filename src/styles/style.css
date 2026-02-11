@@ -1102,6 +1102,36 @@ header.hidden {
   opacity: 0.45;
   filter: none;
 }
+
+.scroll-top-btn {
+  position: fixed;
+  right: 10px;
+  bottom: 56px;
+  z-index: 6;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #4b3d1f, #3a311b);
+  color: #e7d08a;
+  font-family: 'IM Fell English SC', 'Source Sans 3', serif;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.scroll-top-btn:hover {
+  filter: brightness(1.08);
+}
+
+.scroll-top-btn.hidden {
+  display: none;
+}
+
 .nav-btn {
   flex: 0 0 auto;
   padding: 0;
@@ -1251,11 +1281,15 @@ header.hidden {
 }
 
 #steps h3 {
-  margin: 0 0 10px 0;
+  margin: 28px 0 12px 0;
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: var(--muted);
+}
+
+#steps h3:first-child {
+  margin-top: 0;
 }
 
 .seealso {
@@ -1351,6 +1385,35 @@ header.hidden {
   border-radius: 8px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.section-images {
+  margin: 8px 0 12px 0;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.section-image {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.section-image img {
+  width: min(100%, 360px);
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+}
+
+.section-image figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
 }
 
 .reset-wrap {

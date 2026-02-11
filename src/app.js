@@ -59,6 +59,7 @@ const {
   navBar,
   toggleBar,
   stickyBar,
+  scrollTopButton,
 } = getAppElements();
 const filterToggle = document.getElementById('filterToggle') || hideCompletedCheckbox;
 
@@ -354,6 +355,26 @@ const setPlayerLookupLoading = (isLoading) => {
   playerLookupButton.disabled = isLoading;
 };
 
+const isElementInViewport = (el) => {
+  if (!el || el.classList.contains('hidden')) return false;
+  const rect = el.getBoundingClientRect();
+  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  return rect.bottom > 0 && rect.top < vh;
+};
+
+const updateScrollTopButtonVisibility = () => {
+  if (!scrollTopButton) return;
+  const inQuestStepsView =
+    !!state.showSteps &&
+    !!backButton &&
+    !backButton.classList.contains('hidden') &&
+    !!stickyBar &&
+    !stickyBar.classList.contains('hidden');
+  const topAreaVisible = isElementInViewport(headerEl) || isElementInViewport(titleDiv);
+  const shouldShow = inQuestStepsView && !topAreaVisible && window.scrollY > 0;
+  scrollTopButton.classList.toggle('hidden', !shouldShow);
+};
+
 const refreshQuestListForCurrentView = () => {
   const isInsideQuest = backButton && !backButton.classList.contains('hidden');
   if (isInsideQuest) {
@@ -449,6 +470,7 @@ const buildQuestContext = () => ({
       }
     }
     updateTopBarsStickyState();
+    updateScrollTopButtonVisibility();
   },
   renderOverview,
   renderOverviewWithState: (overview, target) => renderOverviewWithCurrentState(overview, target),
@@ -523,6 +545,7 @@ const clearSearchResults = () => {
       if (stepsDiv) stepsDiv.classList.add('hidden');
     }
   }
+  updateScrollTopButtonVisibility();
 };
 
 const hideSearchResults = () => {
@@ -656,7 +679,10 @@ const {
   resetSearchInput,
   showMessage,
   loadQuestFromName: (questName) => loadQuest(questName, buildQuestContext()),
-  returnHome: () => returnToHome(buildHomeContext()),
+  returnHome: async () => {
+    await returnToHome(buildHomeContext());
+    updateScrollTopButtonVisibility();
+  },
 });
 
 const { handlePlayerSubmit, handlePlayerLookup } = createPlayerController({
@@ -684,6 +710,15 @@ const setLoading = (isLoading) => {
   if (prevStepButton) prevStepButton.disabled = isLoading;
   if (nextStepButton) nextStepButton.disabled = isLoading;
 };
+
+if (scrollTopButton) {
+  scrollTopButton.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+window.addEventListener('scroll', updateScrollTopButtonVisibility, { passive: true });
+window.addEventListener('resize', updateScrollTopButtonVisibility);
 
 bootstrapApp({
   state,
@@ -735,3 +770,5 @@ bootstrapApp({
   buildSearchRenderParams,
   resultsRefs,
 });
+
+updateScrollTopButtonVisibility();

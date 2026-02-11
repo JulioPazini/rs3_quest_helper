@@ -1,6 +1,6 @@
 const DEFAULT_PLAYER_CACHE_KEY = 'playerDataCacheV1';
 const DEFAULT_PLAYER_CACHE_TTL_MS = 15 * 60 * 1000;
-const DEFAULT_PLAYER_FETCH_TIMEOUT_MS = 3500;
+const DEFAULT_PLAYER_FETCH_TIMEOUT_MS = 8000;
 
 export const normalizeTitleKey = (title) =>
   String(title || '')
@@ -85,6 +85,8 @@ export const createPlayerService = (config = {}) => {
     now = () => Date.now(),
   } = config;
 
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
   const fetchJsonWithTimeout = async (url, timeoutMs) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -100,13 +102,22 @@ export const createPlayerService = (config = {}) => {
   };
 
   const fetchJsonWithCorsFallback = async (url) => {
-    const attempts = [`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`];
+    const attempts = [
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+      `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
+      `https://cors.isomorphic-git.org/${url}`,
+    ];
     let lastError = null;
     for (const candidate of attempts) {
-      try {
-        return await fetchJsonWithTimeout(candidate, fetchTimeoutMs);
-      } catch (err) {
-        lastError = err;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          return await fetchJsonWithTimeout(candidate, fetchTimeoutMs);
+        } catch (err) {
+          lastError = err;
+          if (attempt === 0) {
+            await sleep(250);
+          }
+        }
       }
     }
     throw lastError || new Error('Failed to fetch player data');
@@ -172,18 +183,32 @@ export const createPlayerService = (config = {}) => {
       'https://apps.runescape.com/runemetrics/profile/profile?user=' + encodeURIComponent(username);
 
     try {
-      const [questPayload, profilePayload] = await Promise.all([
+      const [questResult, profileResult] = await Promise.allSettled([
         fetchJsonWithCorsFallback(questEndpoint),
         fetchJsonWithCorsFallback(profileEndpoint),
       ]);
 
+      if (questResult.status !== 'fulfilled') {
+        return { kind: 'error', username, code: 'NETWORK_ERROR' };
+      }
+
+      const questPayload = questResult.value;
+      const profilePayload = profileResult.status === 'fulfilled' ? profileResult.value : null;
+
       const questApiError = detectPlayerApiError(questPayload);
       const profileApiError = detectPlayerApiError(profilePayload);
-      if (questApiError || profileApiError) {
+      if (questApiError) {
         return {
           kind: 'error',
           username,
-          code: profileApiError || questApiError,
+          code: questApiError,
+        };
+      }
+      if (profileApiError && profileApiError !== 'PROFILE_PRIVATE') {
+        return {
+          kind: 'error',
+          username,
+          code: profileApiError,
         };
       }
 
@@ -215,7 +240,7 @@ export const createPlayerService = (config = {}) => {
         ts: now(),
         questFilter: nextFilter,
         questMeta: nextMeta,
-        skills: parseSkillValues(profilePayload),
+        skills: parseSkillValues(profilePayload || {}),
       };
 
       saveCacheEntry(usernameKey, {

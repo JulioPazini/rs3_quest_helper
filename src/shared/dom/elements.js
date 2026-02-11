@@ -24,4 +24,5 @@ export const getAppElements = (doc = document) => ({
   navBar: doc.querySelector('.nav-bar'),
   toggleBar: doc.querySelector('.toggle-bar'),
   stickyBar: doc.getElementById('stickyBar'),
+  scrollTopButton: doc.getElementById('scrollTopButton'),
 });
