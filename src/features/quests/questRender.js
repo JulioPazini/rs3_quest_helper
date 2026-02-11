@@ -367,6 +367,96 @@ export const renderSteps = (params) => {
     return;
   }
 
+  const appendSectionTexts = (sectionTexts) => {
+    if (!Array.isArray(sectionTexts) || sectionTexts.length === 0) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'section-texts';
+    sectionTexts.forEach((textHtml) => {
+      if (!textHtml) return;
+      const block = document.createElement('div');
+      block.className = 'section-text-block';
+      block.innerHTML = textHtml;
+      wrap.appendChild(block);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  };
+
+  const appendSectionImages = (sectionImages) => {
+    if (!Array.isArray(sectionImages) || sectionImages.length === 0) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'section-images';
+    sectionImages.forEach((imgData) => {
+      if (!imgData || !imgData.src) return;
+      const figure = document.createElement('figure');
+      figure.className = 'section-image';
+      const img = document.createElement('img');
+      img.src = imgData.src;
+      img.alt = imgData.alt || '';
+      img.loading = 'lazy';
+      figure.appendChild(img);
+      if (imgData.caption) {
+        const caption = document.createElement('figcaption');
+        caption.textContent = imgData.caption;
+        figure.appendChild(caption);
+      }
+      wrap.appendChild(figure);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  };
+
+  const appendTitleHeading = (titleItem) => {
+    const headingLevel = Number(titleItem?.level) || 2;
+    const tagName = headingLevel >= 3 ? 'h4' : 'h3';
+    const heading = document.createElement(tagName);
+    heading.textContent = titleItem?.text || '';
+    heading.className = headingLevel >= 3 ? 'step-subsection-title' : 'step-section-title';
+    heading.style.marginBottom = '10px';
+    stepsDiv.appendChild(heading);
+  };
+
+  const totalStepCount = items.filter((item) => item.type === 'step').length;
+  if (totalStepCount === 0) {
+    if (filterToggle) filterToggle.classList.add('hidden');
+    if (jumpCurrentButton) jumpCurrentButton.classList.add('hidden');
+    if (navBar) navBar.classList.add('hidden');
+    if (prevStepButton) prevStepButton.disabled = true;
+    if (nextStepButton) nextStepButton.disabled = true;
+
+    let hasSections = false;
+    items.forEach((item) => {
+      if (item.type !== 'title') return;
+      hasSections = true;
+      appendTitleHeading(item);
+
+      if (item.seeAlso && item.seeAlso.length > 0) {
+        const small = document.createElement('div');
+        small.className = 'seealso';
+        small.innerHTML = item.seeAlso.join('<br>');
+        stepsDiv.appendChild(small);
+      }
+      appendSectionTexts(item.sectionTexts);
+      appendSectionImages(item.sectionImages);
+    });
+
+    if (!hasSections) {
+      stepsDiv.textContent = 'No steps found.';
+    }
+    if (currentRewardImage) {
+      const img = document.createElement('img');
+      img.className = 'reward-image';
+      img.src = currentRewardImage;
+      img.alt = 'Quest rewards';
+      stepsDiv.appendChild(img);
+    }
+    showSearchControls();
+    updateProgress();
+    return;
+  }
+
   if (showAllSteps) {
     if (prevStepButton) prevStepButton.disabled = false;
     if (nextStepButton) nextStepButton.disabled = false;
@@ -374,6 +464,7 @@ export const renderSteps = (params) => {
     if (filterToggle) filterToggle.classList.remove('hidden');
     updateProgress();
     const hideCompletedActive = hideCompletedCheckbox && hideCompletedCheckbox.checked;
+    let didRenderRewardImage = false;
     const sectionHasVisibleSteps = (titleIndex) => {
       for (let i = titleIndex + 1; i < items.length; i++) {
         const sectionItem = items[i];
@@ -383,30 +474,6 @@ export const renderSteps = (params) => {
         return true;
       }
       return false;
-    };
-    const appendSectionImages = (sectionImages) => {
-      if (!Array.isArray(sectionImages) || sectionImages.length === 0) return;
-      const wrap = document.createElement('div');
-      wrap.className = 'section-images';
-      sectionImages.forEach((imgData) => {
-        if (!imgData || !imgData.src) return;
-        const figure = document.createElement('figure');
-        figure.className = 'section-image';
-        const img = document.createElement('img');
-        img.src = imgData.src;
-        img.alt = imgData.alt || '';
-        img.loading = 'lazy';
-        figure.appendChild(img);
-        if (imgData.caption) {
-          const caption = document.createElement('figcaption');
-          caption.textContent = imgData.caption;
-          figure.appendChild(caption);
-        }
-        wrap.appendChild(figure);
-      });
-      if (wrap.children.length > 0) {
-        stepsDiv.appendChild(wrap);
-      }
     };
     const currentIndex = items.findIndex((item) => item.type === 'step' && !item.checked);
     if (jumpCurrentButton) {
@@ -421,10 +488,7 @@ export const renderSteps = (params) => {
         continue;
       }
 
-      const h = document.createElement('h3');
-      h.textContent = item.text;
-      h.style.marginBottom = '10px';
-      stepsDiv.appendChild(h);
+      appendTitleHeading(item);
 
       if (item.seeAlso && item.seeAlso.length > 0) {
         const small = document.createElement('div');
@@ -432,6 +496,8 @@ export const renderSteps = (params) => {
         small.innerHTML = item.seeAlso.join('<br>');
         stepsDiv.appendChild(small);
       }
+
+      appendSectionTexts(item.sectionTexts);
 
       let sectionCursor = idx + 1;
       let shouldShowSectionReward = false;
@@ -515,8 +581,17 @@ export const renderSteps = (params) => {
         img.src = currentRewardImage;
         img.alt = 'Quest rewards';
         stepsDiv.appendChild(img);
+        didRenderRewardImage = true;
       }
       idx = sectionCursor - 1;
+    }
+
+    if (currentRewardImage && !didRenderRewardImage) {
+      const img = document.createElement('img');
+      img.className = 'reward-image';
+      img.src = currentRewardImage;
+      img.alt = 'Quest rewards';
+      stepsDiv.appendChild(img);
     }
 
     if (pendingAutoScroll()) {
@@ -555,6 +630,13 @@ export const renderSteps = (params) => {
     if (nextStepButton) nextStepButton.disabled = true;
     if (navBar) navBar.classList.add('hidden');
     if (jumpCurrentButton) jumpCurrentButton.classList.add('hidden');
+    if (currentRewardImage) {
+      const img = document.createElement('img');
+      img.className = 'reward-image';
+      img.src = currentRewardImage;
+      img.alt = 'Quest rewards';
+      stepsDiv.appendChild(img);
+    }
     updateProgress();
     return;
   }
@@ -568,10 +650,9 @@ export const renderSteps = (params) => {
   }
 
   if (currentTitle) {
-    const h = document.createElement('h3');
-    h.textContent = currentTitle;
-    h.style.marginBottom = '10px';
-    stepsDiv.appendChild(h);
+    const currentTitleLevel =
+      Number(items.find((item) => item.type === 'title' && item.text === currentTitle)?.level) || 2;
+    appendTitleHeading({ text: currentTitle, level: currentTitleLevel });
   }
 
   let currentTitleItem = null;
@@ -582,6 +663,9 @@ export const renderSteps = (params) => {
       small.className = 'seealso';
       small.innerHTML = currentTitleItem.seeAlso.join('<br>');
       stepsDiv.appendChild(small);
+    }
+    if (currentTitleItem && currentTitleItem.sectionTexts && currentTitleItem.sectionTexts.length > 0) {
+      appendSectionTexts(currentTitleItem.sectionTexts);
     }
   }
 

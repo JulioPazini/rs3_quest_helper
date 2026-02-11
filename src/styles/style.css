@@ -1292,6 +1292,23 @@ header.hidden {
   margin-top: 0;
 }
 
+#steps h4 {
+  margin: 16px 0 10px 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #cbbb90;
+}
+
+#steps h4:first-child {
+  margin-top: 0;
+}
+
+#steps .step-subsection-title {
+  padding-left: 8px;
+  border-left: 2px solid rgba(184, 161, 75, 0.45);
+}
+
 .seealso {
   margin: -4px 0 10px 0;
   font-size: 13px;
@@ -1414,6 +1431,38 @@ header.hidden {
   font-size: 12px;
   color: var(--muted);
   text-align: center;
+}
+
+.section-texts {
+  margin: 0 0 10px 0;
+  display: grid;
+  gap: 4px;
+}
+
+.section-text-block {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.section-text-block p,
+.section-text-block dl,
+.section-text-block blockquote {
+  margin: 0;
+}
+
+.section-text-block a {
+  color: #f4d97a;
+  text-decoration: none;
+}
+
+.section-text-block a:hover {
+  color: #ffe6a6;
 }
 
 .reset-wrap {

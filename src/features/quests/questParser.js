@@ -1,12 +1,12 @@
 export const formatStepText = (text) => {
   if (!text) return text;
-  const pattern = /\(\s*(?:\d+[^)]*|[^)]*[\u2022\u2713][^)]*)\)\s*[.!?]?\s*$/;
+  const pattern = /\(\s*(?:\d+[^)]*|[^)]*[\u2022\u2713][^)]*|~+)\s*\)\s*[.!?]?\s*$/;
   return pattern.test(text) ? `${text} \uD83D\uDCAC` : text;
 };
 
 export const formatStepHtml = (html, text) => {
   if (!html) return html;
-  const pattern = /\(\s*(?:\d+[^)]*|[^)]*[\u2022\u2713][^)]*)\)\s*[.!?]?\s*$/;
+  const pattern = /\(\s*(?:\d+[^)]*|[^)]*[\u2022\u2713][^)]*|~+)\s*\)\s*[.!?]?\s*$/;
   return pattern.test(text || '') ? `${html} \uD83D\uDCAC` : html;
 };
 
@@ -27,6 +27,14 @@ export const getRewardImage = (html) => {
   const doc = parser.parseFromString(html, 'text/html');
   const rewardsHeader = doc.querySelector('#Rewards');
   let img = null;
+  const normalizeSrc = (src) => {
+    if (!src) return null;
+    let out = src;
+    if (out.startsWith('//')) out = 'https:' + out;
+    if (out.startsWith('/')) out = 'https://runescape.wiki' + out;
+    return out;
+  };
+
   if (rewardsHeader) {
     let node = rewardsHeader.closest('.mw-heading')?.nextElementSibling;
     while (node) {
@@ -38,11 +46,32 @@ export const getRewardImage = (html) => {
       node = node.nextElementSibling;
     }
   }
+
+  if (!img) {
+    const rewardFigure = Array.from(
+      doc.querySelectorAll('figure a[href], figure img[src]')
+    ).find((el) => {
+      const href = (el.getAttribute('href') || '').toLowerCase();
+      const src = (el.getAttribute('src') || '').toLowerCase();
+      return href.includes('_reward') || src.includes('_reward');
+    });
+    if (rewardFigure) {
+      img = rewardFigure.tagName === 'IMG' ? rewardFigure : rewardFigure.querySelector('img');
+    }
+  }
+
+  if (!img) {
+    const centeredFigures = doc.querySelectorAll(
+      'figure.mw-default-size.mw-halign-center img, figure.mw-halign-center img'
+    );
+    if (centeredFigures.length > 0) {
+      img = centeredFigures[centeredFigures.length - 1];
+    }
+  }
+
   if (!img) return null;
-  let src = img.getAttribute('src');
+  const src = normalizeSrc(img.getAttribute('src'));
   if (!src) return null;
-  if (src.startsWith('//')) src = 'https:' + src;
-  if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
   return src;
 };
 
@@ -254,6 +283,11 @@ export function extractQuickGuide(html) {
         el.remove();
       }
     });
+
+    const advancedMaps = rootEl.querySelectorAll('.advanced-map, .mw-kartographer-container');
+    advancedMaps.forEach((el) => el.remove());
+    const mapLinks = rootEl.querySelectorAll('.mw-kartographer-maplink, .mw-kartographer-link');
+    mapLinks.forEach((el) => el.remove());
   };
 
   const getSeeAlsoHtml = (el) => {
@@ -268,6 +302,13 @@ export function extractQuickGuide(html) {
       a.setAttribute('target', '_blank');
       a.setAttribute('rel', 'noopener');
     });
+    const images = clone.querySelectorAll('img[src]');
+    images.forEach((img) => {
+      let src = img.getAttribute('src') || '';
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+      img.setAttribute('src', src);
+    });
     let htmlOut = clone.innerHTML.trim();
     htmlOut = htmlOut.replace(/\b(Needed|Recommended)\b/g, '<strong>$1</strong>');
     return htmlOut;
@@ -278,6 +319,7 @@ export function extractQuickGuide(html) {
     const out = [];
     const figures = el.matches('figure') ? [el] : Array.from(el.querySelectorAll('figure'));
     figures.forEach((figure) => {
+      if (figure.closest('.advanced-map, .mw-kartographer-container')) return;
       const img = figure.querySelector('img');
       if (!img) return;
       let src = img.getAttribute('src') || '';
@@ -288,6 +330,48 @@ export function extractQuickGuide(html) {
       const captionEl = figure.querySelector('figcaption');
       const caption = captionEl ? captionEl.textContent.replace(/\s+/g, ' ').trim() : '';
       out.push({ src, alt, caption });
+    });
+    return out;
+  };
+
+  const getSectionTextData = (el) => {
+    if (!el || !el.querySelectorAll) return [];
+    const out = [];
+    const candidates = [];
+    if (el.matches('p, dl, blockquote')) {
+      candidates.push(el);
+    }
+    const inner = Array.from(el.querySelectorAll('p, dl, blockquote'));
+    inner.forEach((node) => {
+      if (!candidates.includes(node)) candidates.push(node);
+    });
+
+    candidates.forEach((node) => {
+      if (!node) return;
+      if (node.closest('table, figure, .seealso, .advanced-map, .mw-kartographer-container'))
+        return;
+      const clone = node.cloneNode(true);
+      stripTooltipContent(clone);
+      const links = clone.querySelectorAll('a[href]');
+      links.forEach((a) => {
+        let href = a.getAttribute('href') || '';
+        if (href.startsWith('//')) href = 'https:' + href;
+        if (href.startsWith('/')) href = 'https://runescape.wiki' + href;
+        a.setAttribute('href', href);
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener');
+      });
+      const images = clone.querySelectorAll('img[src]');
+      images.forEach((img) => {
+        let src = img.getAttribute('src') || '';
+        if (src.startsWith('//')) src = 'https:' + src;
+        if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+        img.setAttribute('src', src);
+      });
+      const htmlOut = clone.innerHTML.replace(/\s+/g, ' ').trim();
+      const textOut = clone.textContent.replace(/\s+/g, ' ').trim();
+      if (!htmlOut || !textOut) return;
+      out.push(htmlOut);
     });
     return out;
   };
@@ -314,6 +398,13 @@ export function extractQuickGuide(html) {
       a.setAttribute('target', '_blank');
       a.setAttribute('rel', 'noopener');
     });
+    const images = clone.querySelectorAll('img[src]');
+    images.forEach((img) => {
+      let src = img.getAttribute('src') || '';
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+      img.setAttribute('src', src);
+    });
     return clone.innerHTML.replace(/\s+/g, ' ').trim();
   };
 
@@ -325,10 +416,25 @@ export function extractQuickGuide(html) {
 
     if (/^H[2-4]$/.test(node.tagName)) {
       const text = node.textContent.trim();
-      if (text && !['Contents', 'Overview', 'Rewards', 'Required for completing'].includes(text)) {
+      const level = Number(node.tagName.replace('H', '')) || 2;
+      if (/^rewards$/i.test(text)) {
+        finished = true;
+        continue;
+      }
+      if (
+        text &&
+        ![
+          'Contents',
+          'Overview',
+          'Rewards',
+          'Required for completing',
+          'Official description',
+        ].includes(text)
+      ) {
         lastHeader = text;
         let seeAlso = [];
         let sectionImages = [];
+        let sectionTexts = [];
         const headingContainer = node.closest('.mw-heading') || node;
         let sibling = headingContainer.nextElementSibling;
         const isNextSectionHeader = (el) => {
@@ -350,13 +456,17 @@ export function extractQuickGuide(html) {
           }
           const images = getSectionImageData(sibling);
           if (images.length) sectionImages = sectionImages.concat(images);
+          const texts = getSectionTextData(sibling);
+          if (texts.length) sectionTexts = sectionTexts.concat(texts);
           sibling = sibling.nextElementSibling;
         }
 
         result.push({
           type: 'title',
           text,
+          level,
           seeAlso,
+          sectionTexts,
           sectionImages,
         });
         lastTitleIndex = result.length - 1;
@@ -369,7 +479,8 @@ export function extractQuickGuide(html) {
       lastHeader &&
       !node.closest('table') &&
       !node.closest('li') &&
-      !node.closest('.advanced-map.amap-right')
+      !node.closest('.advanced-map') &&
+      !node.closest('.mw-kartographer-container')
     ) {
       const items = node.querySelectorAll(':scope > li');
 
