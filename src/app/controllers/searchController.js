@@ -58,7 +58,14 @@ export const createSearchController = (deps) => {
       await loadQuestList();
     }
     const value = seriesFilter ? seriesFilter.value : 'alphabetical';
-    const allowed = new Set(['alphabetical', 'series', 'length', 'combat', 'membership']);
+    const allowed = new Set([
+      'alphabetical',
+      'series',
+      'length',
+      'combat',
+      'membership',
+      'progress',
+    ]);
     state.selectedSeries = allowed.has(value) ? value : 'alphabetical';
     if (backButton && !backButton.classList.contains('hidden')) {
       showSearchOnlyView(titleDiv, navBar, stepsDiv, overviewDiv);

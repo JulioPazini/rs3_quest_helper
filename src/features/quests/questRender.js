@@ -147,6 +147,17 @@ const normalizeMembershipLabel = (membership, membersIcon = '') => {
   return 'Unknown';
 };
 
+const normalizeProgressLabel = (status) => {
+  const value = String(status || '')
+    .trim()
+    .toLowerCase();
+  if (value === 'completed' || value === 'complete') return 'COMPLETE';
+  if (value === 'started' || value === 'in progress' || value === 'in_progress') {
+    return 'IN PROGRESS';
+  }
+  return 'NOT STARTED';
+};
+
 const getGroupLabel = (item, mode) => {
   if (mode === 'series') return normalizeSeriesLabel(item.series);
   if (mode === 'length') return normalizeLengthLabel(item.length);
@@ -154,6 +165,7 @@ const getGroupLabel = (item, mode) => {
   if (mode === 'membership') {
     return normalizeMembershipLabel(item.membership, item.membersIcon);
   }
+  if (mode === 'progress') return normalizeProgressLabel(item.playerStatus);
   return '';
 };
 

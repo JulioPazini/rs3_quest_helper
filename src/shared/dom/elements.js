@@ -2,7 +2,7 @@ export const getAppElements = (doc = document) => ({
   input: doc.getElementById('questInput'),
   playerInput: doc.getElementById('playerInput'),
   playerLookupButton: doc.getElementById('playerLookup'),
-  seriesFilter: doc.getElementById('seriesFilter'),
+  seriesFilter: doc.getElementById('questFilter'),
   toggleButton: doc.getElementById('toggleAll'),
   searchToggleButton: doc.getElementById('searchToggle'),
   backButton: doc.getElementById('backButton'),

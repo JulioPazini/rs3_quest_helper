@@ -561,7 +561,7 @@ header.hidden {
   }
 }
 
-.series-filter {
+.quest-Filter {
   flex: 0 0 132px;
   min-width: 110px;
   padding: 6px 8px;
@@ -573,7 +573,7 @@ header.hidden {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
 }
 
-.series-filter:focus-visible {
+.quest-Filter:focus-visible {
   outline: 2px solid #f4d97a;
   outline-offset: 2px;
 }
@@ -587,7 +587,7 @@ header.hidden {
   pointer-events: none;
 }
 
-.toggle-bar.search-closed .series-filter {
+.toggle-bar.search-closed .quest-Filter {
   width: 0;
   opacity: 0;
   margin: 0;

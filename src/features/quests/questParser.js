@@ -321,7 +321,10 @@ export function extractQuickGuide(html) {
       img.setAttribute('src', src);
     });
     let htmlOut = clone.innerHTML.trim();
-    htmlOut = htmlOut.replace(/\b(Needed|Recommended)\b/g, '<strong>$1</strong>');
+    htmlOut = htmlOut.replace(
+      /\b(needed|recommended)\b/gi,
+      (match) => `<strong>${match.charAt(0).toUpperCase()}${match.slice(1).toLowerCase()}</strong>`
+    );
     return htmlOut;
   };
 

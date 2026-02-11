@@ -68,3 +68,24 @@ export const normalizeMembershipKey = (membership, membersIcon = '') => {
   if (icon.includes('p2p') || icon.includes('member')) return 'Members';
   return 'Unknown';
 };
+
+export const normalizeProgressKey = (status) => {
+  const value = String(status || '')
+    .trim()
+    .toLowerCase();
+  if (value === 'completed' || value === 'complete') return 'COMPLETE';
+  if (value === 'started' || value === 'in progress' || value === 'in_progress') {
+    return 'IN PROGRESS';
+  }
+  return 'NOT STARTED';
+};
+
+export const getProgressRank = (status) => {
+  const normalized = normalizeProgressKey(status);
+  const order = {
+    'IN PROGRESS': 0,
+    'NOT STARTED': 1,
+    COMPLETE: 2,
+  };
+  return Object.prototype.hasOwnProperty.call(order, normalized) ? order[normalized] : 999;
+};

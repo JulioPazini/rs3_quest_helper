@@ -5,6 +5,8 @@ import {
   normalizeCombatKey,
   getCombatRank,
   normalizeMembershipKey,
+  normalizeProgressKey,
+  getProgressRank,
 } from './grouping.js';
 
 export const getFilteredResults = ({
@@ -32,7 +34,14 @@ export const getFilteredResults = ({
       };
     });
 
-  const allowedModes = new Set(['alphabetical', 'series', 'length', 'combat', 'membership']);
+  const allowedModes = new Set([
+    'alphabetical',
+    'series',
+    'length',
+    'combat',
+    'membership',
+    'progress',
+  ]);
   const mode = allowedModes.has(selectedSeries) ? selectedSeries : 'alphabetical';
 
   if (mode === 'alphabetical') {
@@ -45,6 +54,9 @@ export const getFilteredResults = ({
     if (mode === 'combat') return normalizeCombatKey(item.combat);
     if (mode === 'membership') {
       return normalizeMembershipKey(item.membership, item.membersIcon);
+    }
+    if (mode === 'progress') {
+      return normalizeProgressKey(item.playerStatus);
     }
     return '';
   };
@@ -60,6 +72,11 @@ export const getFilteredResults = ({
     } else if (mode === 'combat') {
       const aRank = getCombatRank(aGroup);
       const bRank = getCombatRank(bGroup);
+      if (aRank !== bRank) return aRank - bRank;
+      if (aGroup !== bGroup) return aGroup.localeCompare(bGroup);
+    } else if (mode === 'progress') {
+      const aRank = getProgressRank(a.playerStatus);
+      const bRank = getProgressRank(b.playerStatus);
       if (aRank !== bRank) return aRank - bRank;
       if (aGroup !== bGroup) return aGroup.localeCompare(bGroup);
     } else if (aGroup !== bGroup) {
