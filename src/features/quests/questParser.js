@@ -364,14 +364,6 @@ export function extractQuickGuide(html) {
       continue;
     }
 
-    if (node.classList && node.classList.contains('seealso')) {
-      if (lastTitleIndex !== null) {
-        const htmlOut = getSeeAlsoHtml(node);
-        if (htmlOut) result[lastTitleIndex].seeAlso.push(htmlOut);
-      }
-      continue;
-    }
-
     if (
       (node.tagName === 'UL' || node.tagName === 'OL') &&
       lastHeader &&

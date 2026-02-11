@@ -83,6 +83,73 @@ export async function resolveQuestTitle(input, onWikiDebug) {
   return null;
 }
 
+const fetchQuickGuideParse = async (baseTitle) => {
+  const page = String(baseTitle || '').replace(/\s+/g, '_') + '/Quick_guide';
+  const url =
+    'https://runescape.wiki/api.php' +
+    '?action=parse' +
+    '&format=json' +
+    '&origin=*' +
+    '&page=' +
+    encodeURIComponent(page) +
+    '&prop=text';
+
+  const data = await fetchJsonWithTimeoutRetry(url, {
+    timeoutMs: 7000,
+    retries: 1,
+    retryDelayMs: 300,
+  });
+  if (!data?.parse?.text?.['*']) return null;
+  return data;
+};
+
+const buildQuickGuideCandidates = (questName) => {
+  const base = String(questName || '').trim();
+  if (!base) return [];
+  const out = [base];
+  if (!/\(quest\)/i.test(base)) {
+    out.push(`${base} (quest)`);
+  }
+  return out;
+};
+
+const resolveQuestQuickGuideData = async (questName, onWikiDebug) => {
+  const isQuestQuickGuideHtml = (html) => {
+    if (!html) return false;
+    const items = extractQuickGuide(html);
+    const overview = getQuestOverview(html);
+    const stepCount = items.filter((item) => item.type === 'step').length;
+    return Boolean(overview) && stepCount > 0;
+  };
+
+  const tried = new Set();
+  const directCandidates = buildQuickGuideCandidates(questName);
+  for (const candidate of directCandidates) {
+    const key = candidate.toLowerCase();
+    if (tried.has(key)) continue;
+    tried.add(key);
+    const parsed = await fetchQuickGuideParse(candidate).catch(() => null);
+    const html = parsed?.parse?.text?.['*'] || '';
+    if (parsed && isQuestQuickGuideHtml(html)) {
+      return { baseTitle: candidate, data: parsed };
+    }
+  }
+
+  const resolvedTitle = await resolveQuestTitle(questName, onWikiDebug);
+  if (resolvedTitle) {
+    const key = resolvedTitle.toLowerCase();
+    if (!tried.has(key)) {
+      const parsed = await fetchQuickGuideParse(resolvedTitle).catch(() => null);
+      const html = parsed?.parse?.text?.['*'] || '';
+      if (parsed && isQuestQuickGuideHtml(html)) {
+        return { baseTitle: resolvedTitle, data: parsed };
+      }
+    }
+  }
+
+  return null;
+};
+
 export async function loadQuest(questName, ctx) {
   const {
     stepsDiv,
@@ -133,10 +200,8 @@ export async function loadQuest(questName, ctx) {
   }
 
   try {
-    const resolvedTitle = await resolveQuestTitle(questName, onWikiDebug);
-    let finalTitle = resolvedTitle || questName;
-
-    if (!resolvedTitle) {
+    const resolved = await resolveQuestQuickGuideData(questName, onWikiDebug);
+    if (!resolved) {
       stepsDiv.innerHTML = 'Quest not found.';
       stepsDiv.classList.remove('hidden');
       if (backButton) backButton.classList.remove('hidden');
@@ -153,26 +218,11 @@ export async function loadQuest(questName, ctx) {
       showSearchControls(toggleBar);
       return;
     }
+    let finalTitle = resolved.baseTitle || questName;
     if (headerEl) {
       headerEl.classList.add('hidden');
     }
-
-    const page = resolvedTitle.replace(/\s+/g, '_') + '/Quick_guide';
-
-    const url =
-      'https://runescape.wiki/api.php' +
-      '?action=parse' +
-      '&format=json' +
-      '&origin=*' +
-      '&page=' +
-      encodeURIComponent(page) +
-      '&prop=text';
-
-    const data = await fetchJsonWithTimeoutRetry(url, {
-      timeoutMs: 7000,
-      retries: 1,
-      retryDelayMs: 300,
-    });
+    const data = resolved.data;
     if (!data.parse || !data.parse.text) {
       stepsDiv.innerHTML = 'Quick guide not available for this quest.';
       stepsDiv.classList.remove('hidden');
