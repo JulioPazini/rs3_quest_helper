@@ -468,7 +468,6 @@ export const renderSteps = (params) => {
     }
   };
 
-
   const appendInlineNote = (noteItem) => {
     if (!noteItem || !noteItem.html) return;
     if (noteItem.noteType === 'infobox') {
@@ -832,7 +831,11 @@ export const renderSteps = (params) => {
         break;
       }
     }
-    if (currentTitleItem && currentTitleItem.sectionTexts && currentTitleItem.sectionTexts.length > 0) {
+    if (
+      currentTitleItem &&
+      currentTitleItem.sectionTexts &&
+      currentTitleItem.sectionTexts.length > 0
+    ) {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(currentTitleItem.sectionTexts);
       }
@@ -859,11 +862,7 @@ export const renderSteps = (params) => {
     ? items.findIndex((item) => item.type === 'title' && item.text === currentTitle)
     : -1;
   if (currentTitleIndex >= 0) {
-    for (
-      let i = currentTitleIndex + 1;
-      i < items.length && items[i].type !== 'title';
-      i += 1
-    ) {
+    for (let i = currentTitleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
       if (i >= currentStepIndex) break;
       const sectionItem = items[i];
       if (sectionItem.type === 'note') {

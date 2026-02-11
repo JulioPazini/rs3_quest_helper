@@ -56,13 +56,13 @@ export const getRewardImage = (html) => {
   }
 
   if (!img) {
-    const rewardFigure = Array.from(
-      doc.querySelectorAll('figure a[href], figure img[src]')
-    ).find((el) => {
-      const href = (el.getAttribute('href') || '').toLowerCase();
-      const src = (el.getAttribute('src') || '').toLowerCase();
-      return href.includes('_reward') || src.includes('_reward');
-    });
+    const rewardFigure = Array.from(doc.querySelectorAll('figure a[href], figure img[src]')).find(
+      (el) => {
+        const href = (el.getAttribute('href') || '').toLowerCase();
+        const src = (el.getAttribute('src') || '').toLowerCase();
+        return href.includes('_reward') || src.includes('_reward');
+      }
+    );
     if (rewardFigure) {
       img = rewardFigure.tagName === 'IMG' ? rewardFigure : rewardFigure.querySelector('img');
     }
@@ -474,7 +474,6 @@ export function extractQuickGuide(html) {
     return out;
   };
 
-
   const getListItemText = (li) => {
     const clone = li.cloneNode(true);
     stripTooltipContent(clone);
@@ -738,4 +737,3 @@ export function extractQuickGuide(html) {
 
   return result;
 }
-
