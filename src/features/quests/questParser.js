@@ -1,8 +1,10 @@
 const DIALOGUE_ICON = '\uD83D\uDCAC';
 const hasDialogueMarker = (value) => {
   if (!value) return false;
-  // Match dialogue/chat markers like "(Chat 1)", "(1•2•3)", "(~)" anywhere in the step.
-  return /\(\s*(?:chat\b[^)]*|~+|(?:\d+\s*[•\u2022]\s*)+\d+)\s*\)/i.test(String(value));
+  // Match dialogue/chat markers like "(Chat 1)", "(1•2•3)", "(2•✓)", "(4)", "(~)" anywhere in the step.
+  return /\(\s*(?:chat\b[^)]*|~+|(?=[^)]*[\d\u2022\u2713])[\d\s\u2022\u2713.,]+)\s*\)/i.test(
+    String(value)
+  );
 };
 
 export const formatStepText = (text) => {
@@ -16,7 +18,6 @@ export const formatStepHtml = (html, text) => {
   if (String(html).includes(DIALOGUE_ICON)) return html;
   return hasDialogueMarker(text || html) ? `${html} ${DIALOGUE_ICON}` : html;
 };
-
 export const getQuestIcon = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -737,3 +738,4 @@ export function extractQuickGuide(html) {
 
   return result;
 }
+
