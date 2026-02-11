@@ -408,6 +408,85 @@ export const renderSteps = (params) => {
     }
   };
 
+  const appendSectionInfoBoxes = (sectionInfoBoxes) => {
+    if (!Array.isArray(sectionInfoBoxes) || sectionInfoBoxes.length === 0) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'section-infoboxes';
+    sectionInfoBoxes.forEach((boxHtml) => {
+      if (!boxHtml) return;
+      const block = document.createElement('div');
+      block.className = 'section-infobox';
+      block.innerHTML = boxHtml;
+      wrap.appendChild(block);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  };
+
+  const appendSectionTables = (sectionTables) => {
+    if (!Array.isArray(sectionTables) || sectionTables.length === 0) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'section-tables';
+    sectionTables.forEach((tableHtml) => {
+      if (!tableHtml) return;
+      const block = document.createElement('div');
+      block.className = 'section-table-card';
+      block.innerHTML = tableHtml;
+      wrap.appendChild(block);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  };
+
+  const appendSectionRefLists = (sectionRefLists) => {
+    if (!Array.isArray(sectionRefLists) || sectionRefLists.length === 0) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'section-reflists';
+    sectionRefLists.forEach((refHtml) => {
+      if (!refHtml) return;
+      const block = document.createElement('div');
+      block.className = 'section-reflist';
+      block.innerHTML = refHtml;
+      wrap.appendChild(block);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  };
+
+
+  const appendInlineNote = (noteItem) => {
+    if (!noteItem || !noteItem.html) return;
+    if (noteItem.noteType === 'infobox') {
+      const wrap = document.createElement('div');
+      wrap.className = 'section-infoboxes';
+      const block = document.createElement('div');
+      block.className = 'section-infobox';
+      block.innerHTML = noteItem.html;
+      wrap.appendChild(block);
+      stepsDiv.appendChild(wrap);
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'section-texts';
+    const block = document.createElement('div');
+    block.className = 'section-text-block';
+    block.innerHTML = noteItem.html;
+    wrap.appendChild(block);
+    stepsDiv.appendChild(wrap);
+  };
+
+  const sectionHasInlineNoteType = (titleIndex, noteType) => {
+    if (titleIndex < 0) return false;
+    for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
+      const item = items[i];
+      if (item.type === 'note' && item.noteType === noteType) return true;
+    }
+    return false;
+  };
+
   const appendTitleHeading = (titleItem) => {
     const headingLevel = Number(titleItem?.level) || 2;
     const tagName = headingLevel >= 3 ? 'h4' : 'h3';
@@ -427,7 +506,7 @@ export const renderSteps = (params) => {
     if (nextStepButton) nextStepButton.disabled = true;
 
     let hasSections = false;
-    items.forEach((item) => {
+    items.forEach((item, idx) => {
       if (item.type !== 'title') return;
       hasSections = true;
       appendTitleHeading(item);
@@ -438,7 +517,21 @@ export const renderSteps = (params) => {
         small.innerHTML = item.seeAlso.join('<br>');
         stepsDiv.appendChild(small);
       }
-      appendSectionTexts(item.sectionTexts);
+      if (!sectionHasInlineNoteType(idx, 'infobox')) {
+        appendSectionInfoBoxes(item.sectionInfoBoxes);
+      }
+      let hasSectionStepsOrNotes = false;
+      for (let probe = idx + 1; probe < items.length && items[probe].type !== 'title'; probe += 1) {
+        if (items[probe].type === 'step' || items[probe].type === 'note') {
+          hasSectionStepsOrNotes = true;
+          break;
+        }
+      }
+      if (!hasSectionStepsOrNotes) {
+        appendSectionTexts(item.sectionTexts);
+      }
+      appendSectionTables(item.sectionTables);
+      appendSectionRefLists(item.sectionRefLists);
       appendSectionImages(item.sectionImages);
     });
 
@@ -497,7 +590,19 @@ export const renderSteps = (params) => {
         stepsDiv.appendChild(small);
       }
 
-      appendSectionTexts(item.sectionTexts);
+      if (!sectionHasInlineNoteType(idx, 'infobox')) {
+        appendSectionInfoBoxes(item.sectionInfoBoxes);
+      }
+      let hasSectionStepsOrNotes = false;
+      for (let probe = idx + 1; probe < items.length && items[probe].type !== 'title'; probe += 1) {
+        if (items[probe].type === 'step' || items[probe].type === 'note') {
+          hasSectionStepsOrNotes = true;
+          break;
+        }
+      }
+      if (!hasSectionStepsOrNotes) {
+        appendSectionTexts(item.sectionTexts);
+      }
 
       let sectionCursor = idx + 1;
       let shouldShowSectionReward = false;
@@ -505,6 +610,11 @@ export const renderSteps = (params) => {
       while (sectionCursor < items.length && items[sectionCursor].type !== 'title') {
         const sectionItem = items[sectionCursor];
         const stepIndex = sectionCursor;
+        if (sectionItem.type === 'note') {
+          appendInlineNote(sectionItem);
+          sectionCursor += 1;
+          continue;
+        }
         if (sectionItem.type !== 'step') {
           sectionCursor += 1;
           continue;
@@ -573,6 +683,8 @@ export const renderSteps = (params) => {
       }
 
       if (!renderedSectionImages) {
+        appendSectionTables(item.sectionTables);
+        appendSectionRefLists(item.sectionRefLists);
         appendSectionImages(item.sectionImages);
       }
       if (shouldShowSectionReward) {
@@ -664,8 +776,59 @@ export const renderSteps = (params) => {
       small.innerHTML = currentTitleItem.seeAlso.join('<br>');
       stepsDiv.appendChild(small);
     }
+    if (
+      currentTitleItem &&
+      currentTitleItem.sectionInfoBoxes &&
+      currentTitleItem.sectionInfoBoxes.length > 0
+    ) {
+      const titleIndex = items.findIndex(
+        (item) => item.type === 'title' && item.text === currentTitleItem.text
+      );
+      if (!sectionHasInlineNoteType(titleIndex, 'infobox')) {
+        appendSectionInfoBoxes(currentTitleItem.sectionInfoBoxes);
+      }
+    }
     if (currentTitleItem && currentTitleItem.sectionTexts && currentTitleItem.sectionTexts.length > 0) {
-      appendSectionTexts(currentTitleItem.sectionTexts);
+      const titleIndex = items.findIndex(
+        (item) => item.type === 'title' && item.text === currentTitleItem.text
+      );
+      let hasSectionStepsOrNotes = false;
+      for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
+        if (items[i].type === 'step' || items[i].type === 'note') {
+          hasSectionStepsOrNotes = true;
+          break;
+        }
+      }
+      if (!hasSectionStepsOrNotes) {
+        appendSectionTexts(currentTitleItem.sectionTexts);
+      }
+    }
+    if (currentTitleItem && currentTitleItem.sectionTables && currentTitleItem.sectionTables.length > 0) {
+      appendSectionTables(currentTitleItem.sectionTables);
+    }
+    if (
+      currentTitleItem &&
+      currentTitleItem.sectionRefLists &&
+      currentTitleItem.sectionRefLists.length > 0
+    ) {
+      appendSectionRefLists(currentTitleItem.sectionRefLists);
+    }
+  }
+
+  const currentTitleIndex = currentTitle
+    ? items.findIndex((item) => item.type === 'title' && item.text === currentTitle)
+    : -1;
+  if (currentTitleIndex >= 0) {
+    for (
+      let i = currentTitleIndex + 1;
+      i < items.length && items[i].type !== 'title';
+      i += 1
+    ) {
+      if (i >= currentStepIndex) break;
+      const sectionItem = items[i];
+      if (sectionItem.type === 'note') {
+        appendInlineNote(sectionItem);
+      }
     }
   }
 

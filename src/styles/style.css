@@ -1465,6 +1465,133 @@ header.hidden {
   color: #ffe6a6;
 }
 
+.section-text-block table,
+.section-text-block .wikitable {
+  width: 30%;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+  background: rgba(47, 40, 26, 0.9);
+}
+
+.section-text-block table th,
+.section-text-block table td,
+.section-text-block .wikitable th,
+.section-text-block .wikitable td {
+  border: 1px solid rgba(106, 90, 46, 0.65);
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.section-infoboxes {
+  margin: 0 0 8px 0;
+  display: grid;
+  gap: 6px;
+}
+
+.section-infobox .messagebox {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+  background: rgba(47, 40, 26, 0.9);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.section-infobox .messagebox.warn {
+  border-color: #8c3b33;
+  background: rgba(72, 28, 24, 0.92);
+}
+
+.section-infobox .messagebox.warn td,
+.section-infobox .messagebox.warn th {
+  border-color: rgba(140, 59, 51, 0.75);
+}
+
+.section-infobox .messagebox.safe {
+  border-color: #3f7f44;
+  background: rgba(31, 60, 33, 0.92);
+}
+
+.section-infobox .messagebox.safe td,
+.section-infobox .messagebox.safe th {
+  border-color: rgba(63, 127, 68, 0.75);
+}
+
+.section-infobox .messagebox td,
+.section-infobox .messagebox th {
+  border: 1px solid rgba(106, 90, 46, 0.6);
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.section-infobox .messagebox a {
+  color: #f4d97a;
+  text-decoration: none;
+}
+
+.section-infobox .messagebox a:hover {
+  color: #ffe6a6;
+}
+
+.section-tables {
+  margin: 0 0 8px 0;
+  display: grid;
+  gap: 6px;
+}
+
+.section-table-card {
+  overflow-x: auto;
+}
+
+.section-table-card table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+  background: rgba(47, 40, 26, 0.9);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.section-table-card th,
+.section-table-card td {
+  border: 1px solid rgba(106, 90, 46, 0.65);
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.section-table-card a {
+  color: #f4d97a;
+  text-decoration: none;
+}
+
+.section-table-card a:hover {
+  color: #ffe6a6;
+}
+
+.section-reflists {
+  margin: 0 0 10px 0;
+}
+
+.section-reflist {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.section-reflist ol,
+.section-reflist ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.section-reflist a {
+  color: #f4d97a;
+  text-decoration: none;
+}
+
+.section-reflist a:hover {
+  color: #ffe6a6;
+}
+
 .reset-wrap {
   margin: 8px 0 6px 0;
   display: flex;

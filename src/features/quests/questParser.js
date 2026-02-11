@@ -247,7 +247,11 @@ export function extractQuickGuide(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
 
-  const root = doc.querySelector('.mw-parser-output');
+  const contentRoot = doc.querySelector('#mw-content-text');
+  const root =
+    contentRoot?.querySelector('.mw-parser-output') ||
+    contentRoot ||
+    doc.querySelector('.mw-parser-output');
   if (!root) return [];
 
   const result = [];
@@ -320,6 +324,7 @@ export function extractQuickGuide(html) {
     const figures = el.matches('figure') ? [el] : Array.from(el.querySelectorAll('figure'));
     figures.forEach((figure) => {
       if (figure.closest('.advanced-map, .mw-kartographer-container')) return;
+      if (figure.closest('table, .messagebox, .lighttable')) return;
       const img = figure.querySelector('img');
       if (!img) return;
       let src = img.getAttribute('src') || '';
@@ -376,6 +381,79 @@ export function extractQuickGuide(html) {
     return out;
   };
 
+  const getSectionInfoBoxData = (el) => {
+    if (!el || !el.querySelectorAll) return [];
+    const out = [];
+    const tables = el.matches('table.messagebox')
+      ? [el]
+      : Array.from(el.querySelectorAll('table.messagebox'));
+    tables.forEach((table) => {
+      if (!table) return;
+      if (table.closest('.advanced-map, .mw-kartographer-container')) return;
+      const clone = table.cloneNode(true);
+      stripTooltipContent(clone);
+      const links = clone.querySelectorAll('a[href]');
+      links.forEach((a) => {
+        let href = a.getAttribute('href') || '';
+        if (href.startsWith('//')) href = 'https:' + href;
+        if (href.startsWith('/')) href = 'https://runescape.wiki' + href;
+        a.setAttribute('href', href);
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener');
+      });
+      const images = clone.querySelectorAll('img[src]');
+      images.forEach((img) => {
+        let src = img.getAttribute('src') || '';
+        if (src.startsWith('//')) src = 'https:' + src;
+        if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+        img.setAttribute('src', src);
+      });
+      out.push(clone.outerHTML);
+    });
+    return out;
+  };
+
+  const getSectionTableData = (el) => {
+    if (!el || !el.querySelectorAll) return [];
+    const out = [];
+    const seen = new Set();
+    const tables = el.matches('table') ? [el] : Array.from(el.querySelectorAll('table'));
+    tables.forEach((table) => {
+      if (!table) return;
+      if (table.classList.contains('messagebox')) return;
+      if (table.classList.contains('questdetails')) return;
+      if (table.closest('div.lighttable.checklist')) return;
+      if (table.closest('.advanced-map, .mw-kartographer-container')) return;
+      if (table.closest('dl, dd')) return;
+      const htmlOut = getNormalizedOuterHtml(table);
+      if (!htmlOut || seen.has(htmlOut)) return;
+      seen.add(htmlOut);
+      out.push(htmlOut);
+    });
+    return out;
+  };
+
+  const getSectionReflistData = (el) => {
+    if (!el || !el.querySelectorAll) return [];
+    const out = [];
+    const seen = new Set();
+    const blocks = [];
+    if (el.matches('.reflist, ol.references, ul.references')) blocks.push(el);
+    blocks.push(...Array.from(el.querySelectorAll('.reflist, ol.references, ul.references')));
+    blocks.forEach((block) => {
+      if (!block) return;
+      if (block.closest('.advanced-map, .mw-kartographer-container')) return;
+      const parentRef = block.parentElement?.closest('.reflist, ol.references, ul.references');
+      if (parentRef) return;
+      const htmlOut = getNormalizedOuterHtml(block);
+      if (!htmlOut || seen.has(htmlOut)) return;
+      seen.add(htmlOut);
+      out.push(htmlOut);
+    });
+    return out;
+  };
+
+
   const getListItemText = (li) => {
     const clone = li.cloneNode(true);
     stripTooltipContent(clone);
@@ -408,6 +486,52 @@ export function extractQuickGuide(html) {
     return clone.innerHTML.replace(/\s+/g, ' ').trim();
   };
 
+  const getContentBlockHtml = (el) => {
+    if (!el) return '';
+    const clone = el.cloneNode(true);
+    stripTooltipContent(clone);
+    const links = clone.querySelectorAll('a[href]');
+    links.forEach((a) => {
+      let href = a.getAttribute('href') || '';
+      if (href.startsWith('//')) href = 'https:' + href;
+      if (href.startsWith('/')) href = 'https://runescape.wiki' + href;
+      a.setAttribute('href', href);
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener');
+    });
+    const images = clone.querySelectorAll('img[src]');
+    images.forEach((img) => {
+      let src = img.getAttribute('src') || '';
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+      img.setAttribute('src', src);
+    });
+    return clone.innerHTML.replace(/\s+/g, ' ').trim();
+  };
+
+  const getNormalizedOuterHtml = (el) => {
+    if (!el) return '';
+    const clone = el.cloneNode(true);
+    stripTooltipContent(clone);
+    const links = clone.querySelectorAll('a[href]');
+    links.forEach((a) => {
+      let href = a.getAttribute('href') || '';
+      if (href.startsWith('//')) href = 'https:' + href;
+      if (href.startsWith('/')) href = 'https://runescape.wiki' + href;
+      a.setAttribute('href', href);
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener');
+    });
+    const images = clone.querySelectorAll('img[src]');
+    images.forEach((img) => {
+      let src = img.getAttribute('src') || '';
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+      img.setAttribute('src', src);
+    });
+    return clone.outerHTML;
+  };
+
   let node;
   while ((node = walker.nextNode())) {
     if (finished) break;
@@ -435,6 +559,9 @@ export function extractQuickGuide(html) {
         let seeAlso = [];
         let sectionImages = [];
         let sectionTexts = [];
+        let sectionInfoBoxes = [];
+        let sectionTables = [];
+        let sectionRefLists = [];
         const headingContainer = node.closest('.mw-heading') || node;
         let sibling = headingContainer.nextElementSibling;
         const isNextSectionHeader = (el) => {
@@ -458,6 +585,12 @@ export function extractQuickGuide(html) {
           if (images.length) sectionImages = sectionImages.concat(images);
           const texts = getSectionTextData(sibling);
           if (texts.length) sectionTexts = sectionTexts.concat(texts);
+          const infoBoxes = getSectionInfoBoxData(sibling);
+          if (infoBoxes.length) sectionInfoBoxes = sectionInfoBoxes.concat(infoBoxes);
+          const tables = getSectionTableData(sibling);
+          if (tables.length) sectionTables = sectionTables.concat(tables);
+          const reflists = getSectionReflistData(sibling);
+          if (reflists.length) sectionRefLists = sectionRefLists.concat(reflists);
           sibling = sibling.nextElementSibling;
         }
 
@@ -467,6 +600,9 @@ export function extractQuickGuide(html) {
           level,
           seeAlso,
           sectionTexts,
+          sectionInfoBoxes,
+          sectionTables,
+          sectionRefLists,
           sectionImages,
         });
         lastTitleIndex = result.length - 1;
@@ -475,8 +611,51 @@ export function extractQuickGuide(html) {
     }
 
     if (
+      lastHeader &&
+      node.tagName === 'TABLE' &&
+      node.classList &&
+      node.classList.contains('messagebox') &&
+      !node.closest('.advanced-map') &&
+      !node.closest('.mw-kartographer-container')
+    ) {
+      const htmlOut = getContentBlockHtml(node);
+      if (htmlOut) {
+        result.push({
+          type: 'note',
+          noteType: 'infobox',
+          html: getNormalizedOuterHtml(node),
+        });
+      }
+      continue;
+    }
+
+    if (
+      lastHeader &&
+      (node.tagName === 'BLOCKQUOTE' ||
+        ((node.tagName === 'P' || node.tagName === 'DL') && !node.closest('blockquote'))) &&
+      !node.closest('li') &&
+      !node.closest('table') &&
+      !node.closest('figure') &&
+      !node.closest('.seealso') &&
+      !node.closest('.advanced-map') &&
+      !node.closest('.mw-kartographer-container')
+    ) {
+      const htmlOut = getContentBlockHtml(node);
+      const textOut = node.textContent.replace(/\s+/g, ' ').trim();
+      if (htmlOut && textOut) {
+        result.push({
+          type: 'note',
+          noteType: 'text',
+          html: htmlOut,
+        });
+      }
+      continue;
+    }
+
+    if (
       (node.tagName === 'UL' || node.tagName === 'OL') &&
       lastHeader &&
+      node.closest('div.lighttable.checklist') &&
       !node.closest('table') &&
       !node.closest('li') &&
       !node.closest('.advanced-map') &&
