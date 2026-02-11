@@ -1,13 +1,20 @@
+const DIALOGUE_ICON = '\uD83D\uDCAC';
+const hasDialogueMarker = (value) => {
+  if (!value) return false;
+  // Match dialogue/chat markers like "(Chat 1)", "(1•2•3)", "(~)" anywhere in the step.
+  return /\(\s*(?:chat\b[^)]*|~+|(?:\d+\s*[•\u2022]\s*)+\d+)\s*\)/i.test(String(value));
+};
+
 export const formatStepText = (text) => {
   if (!text) return text;
-  const pattern = /\(\s*(?:\d+[^)]*|[^)]*[\u2022\u2713][^)]*|~+)\s*\)\s*[.!?]?\s*$/;
-  return pattern.test(text) ? `${text} \uD83D\uDCAC` : text;
+  if (String(text).includes(DIALOGUE_ICON)) return text;
+  return hasDialogueMarker(text) ? `${text} ${DIALOGUE_ICON}` : text;
 };
 
 export const formatStepHtml = (html, text) => {
   if (!html) return html;
-  const pattern = /\(\s*(?:\d+[^)]*|[^)]*[\u2022\u2713][^)]*|~+)\s*\)\s*[.!?]?\s*$/;
-  return pattern.test(text || '') ? `${html} \uD83D\uDCAC` : html;
+  if (String(html).includes(DIALOGUE_ICON)) return html;
+  return hasDialogueMarker(text || html) ? `${html} ${DIALOGUE_ICON}` : html;
 };
 
 export const getQuestIcon = (html) => {
@@ -413,18 +420,31 @@ export function extractQuickGuide(html) {
     return out;
   };
 
+  const isRelevantStandaloneTable = (table) => {
+    if (!table) return false;
+    if (table.classList.contains('messagebox')) return false;
+    if (table.classList.contains('questdetails')) return false;
+    if (table.closest('div.lighttable.checklist')) return false;
+    if (table.closest('.advanced-map, .mw-kartographer-container')) return false;
+    if (table.closest('dl, dd')) return false;
+    return true;
+  };
+
+  const isTopLevelReflist = (block) => {
+    if (!block) return false;
+    if (!block.matches('.reflist, ol.references, ul.references')) return false;
+    if (block.closest('.advanced-map, .mw-kartographer-container')) return false;
+    const parentRef = block.parentElement?.closest('.reflist, ol.references, ul.references');
+    return !parentRef;
+  };
+
   const getSectionTableData = (el) => {
     if (!el || !el.querySelectorAll) return [];
     const out = [];
     const seen = new Set();
     const tables = el.matches('table') ? [el] : Array.from(el.querySelectorAll('table'));
     tables.forEach((table) => {
-      if (!table) return;
-      if (table.classList.contains('messagebox')) return;
-      if (table.classList.contains('questdetails')) return;
-      if (table.closest('div.lighttable.checklist')) return;
-      if (table.closest('.advanced-map, .mw-kartographer-container')) return;
-      if (table.closest('dl, dd')) return;
+      if (!isRelevantStandaloneTable(table)) return;
       const htmlOut = getNormalizedOuterHtml(table);
       if (!htmlOut || seen.has(htmlOut)) return;
       seen.add(htmlOut);
@@ -441,10 +461,7 @@ export function extractQuickGuide(html) {
     if (el.matches('.reflist, ol.references, ul.references')) blocks.push(el);
     blocks.push(...Array.from(el.querySelectorAll('.reflist, ol.references, ul.references')));
     blocks.forEach((block) => {
-      if (!block) return;
-      if (block.closest('.advanced-map, .mw-kartographer-container')) return;
-      const parentRef = block.parentElement?.closest('.reflist, ol.references, ul.references');
-      if (parentRef) return;
+      if (!isTopLevelReflist(block)) return;
       const htmlOut = getNormalizedOuterHtml(block);
       if (!htmlOut || seen.has(htmlOut)) return;
       seen.add(htmlOut);
@@ -624,6 +641,30 @@ export function extractQuickGuide(html) {
           type: 'note',
           noteType: 'infobox',
           html: getNormalizedOuterHtml(node),
+        });
+      }
+      continue;
+    }
+
+    if (lastHeader && node.tagName === 'TABLE' && isRelevantStandaloneTable(node)) {
+      const htmlOut = getNormalizedOuterHtml(node);
+      if (htmlOut) {
+        result.push({
+          type: 'note',
+          noteType: 'table',
+          html: htmlOut,
+        });
+      }
+      continue;
+    }
+
+    if (lastHeader && isTopLevelReflist(node)) {
+      const htmlOut = getNormalizedOuterHtml(node);
+      if (htmlOut) {
+        result.push({
+          type: 'note',
+          noteType: 'reflist',
+          html: htmlOut,
         });
       }
       continue;

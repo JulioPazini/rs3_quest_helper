@@ -469,6 +469,26 @@ export const renderSteps = (params) => {
       stepsDiv.appendChild(wrap);
       return;
     }
+    if (noteItem.noteType === 'table') {
+      const wrap = document.createElement('div');
+      wrap.className = 'section-tables';
+      const block = document.createElement('div');
+      block.className = 'section-table-card';
+      block.innerHTML = noteItem.html;
+      wrap.appendChild(block);
+      stepsDiv.appendChild(wrap);
+      return;
+    }
+    if (noteItem.noteType === 'reflist') {
+      const wrap = document.createElement('div');
+      wrap.className = 'section-reflists';
+      const block = document.createElement('div');
+      block.className = 'section-reflist';
+      block.innerHTML = noteItem.html;
+      wrap.appendChild(block);
+      stepsDiv.appendChild(wrap);
+      return;
+    }
     const wrap = document.createElement('div');
     wrap.className = 'section-texts';
     const block = document.createElement('div');
@@ -683,8 +703,10 @@ export const renderSteps = (params) => {
       }
 
       if (!renderedSectionImages) {
-        appendSectionTables(item.sectionTables);
-        appendSectionRefLists(item.sectionRefLists);
+        if (!hasSectionStepsOrNotes) {
+          appendSectionTables(item.sectionTables);
+          appendSectionRefLists(item.sectionRefLists);
+        }
         appendSectionImages(item.sectionImages);
       }
       if (shouldShowSectionReward) {
@@ -788,25 +810,31 @@ export const renderSteps = (params) => {
         appendSectionInfoBoxes(currentTitleItem.sectionInfoBoxes);
       }
     }
-    if (currentTitleItem && currentTitleItem.sectionTexts && currentTitleItem.sectionTexts.length > 0) {
-      const titleIndex = items.findIndex(
-        (item) => item.type === 'title' && item.text === currentTitleItem.text
-      );
-      let hasSectionStepsOrNotes = false;
-      for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
-        if (items[i].type === 'step' || items[i].type === 'note') {
-          hasSectionStepsOrNotes = true;
-          break;
-        }
+    let hasSectionStepsOrNotes = false;
+    const titleIndex = items.findIndex(
+      (item) => item.type === 'title' && item.text === currentTitleItem.text
+    );
+    for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
+      if (items[i].type === 'step' || items[i].type === 'note') {
+        hasSectionStepsOrNotes = true;
+        break;
       }
+    }
+    if (currentTitleItem && currentTitleItem.sectionTexts && currentTitleItem.sectionTexts.length > 0) {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(currentTitleItem.sectionTexts);
       }
     }
-    if (currentTitleItem && currentTitleItem.sectionTables && currentTitleItem.sectionTables.length > 0) {
+    if (
+      !hasSectionStepsOrNotes &&
+      currentTitleItem &&
+      currentTitleItem.sectionTables &&
+      currentTitleItem.sectionTables.length > 0
+    ) {
       appendSectionTables(currentTitleItem.sectionTables);
     }
     if (
+      !hasSectionStepsOrNotes &&
       currentTitleItem &&
       currentTitleItem.sectionRefLists &&
       currentTitleItem.sectionRefLists.length > 0
