@@ -50,7 +50,7 @@ export const returnToHome = async (ctx) => {
   showToggleBar(toggleBar);
   showMessage(
     stepsDiv,
-    'Ready to search. Type a quest name and press Enter.',
+    'Ready to search. Type a quest name.',
     navBar,
     filterToggle
   );

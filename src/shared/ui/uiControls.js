@@ -45,7 +45,6 @@ export const bindSearchEvents = (params) => {
     backButton,
     toggleBar,
     resultsDiv,
-    onSubmit,
     onToggle,
     onInput,
     onEscape,
@@ -58,9 +57,6 @@ export const bindSearchEvents = (params) => {
   }
 
   if (input) {
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') onSubmit(e);
-    });
     input.addEventListener('input', onInput);
   }
 

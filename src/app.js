@@ -649,7 +649,6 @@ const loadPlayerQuests = async (playerName) => {
 
 // Event handlers
 const {
-  handleSearchSubmit,
   handleSearchInput,
   handleSeriesFilterChange,
   handleSearchToggle,
@@ -741,7 +740,6 @@ bootstrapApp({
   seriesFilter,
   searchToggleButton,
   resultsDiv,
-  handleSearchSubmit,
   handleSearchToggle,
   handleSearchInput,
   handleSearchEscape,

@@ -20,7 +20,6 @@ export const bootstrapApp = (deps) => {
     seriesFilter,
     searchToggleButton,
     resultsDiv,
-    handleSearchSubmit,
     handleSearchToggle,
     handleSearchInput,
     handleSearchEscape,
@@ -58,7 +57,7 @@ export const bootstrapApp = (deps) => {
     if (nextStepButton) nextStepButton.disabled = true;
     toggleButton.classList.add('hidden');
     showSearchControls(toggleBar);
-    stepsDiv.textContent = 'Ready to search. Type a quest name and press Enter.';
+    stepsDiv.textContent = 'Ready to search. Type a quest name.';
     if (backButton) backButton.classList.add('hidden');
   };
 
@@ -137,7 +136,6 @@ export const bootstrapApp = (deps) => {
     backButton,
     toggleBar,
     resultsDiv,
-    onSubmit: handleSearchSubmit,
     onToggle: handleSearchToggle,
     onInput: handleSearchInput,
     onEscape: handleSearchEscape,

@@ -27,15 +27,6 @@ export const createSearchController = (deps) => {
 
   let searchTimer = null;
 
-  const handleSearchSubmit = () => {
-    const questName = input.value.trim();
-    if (!questName) {
-      showMessage(stepsDiv, 'Type a quest name to search.', navBar, filterToggle);
-      return;
-    }
-    loadQuestFromName(questName);
-  };
-
   const handleSearchInput = () => {
     const query = input.value.trim().toLowerCase();
     if (searchTimer) clearTimeout(searchTimer);
@@ -105,7 +96,6 @@ export const createSearchController = (deps) => {
   const handleBack = () => returnHome();
 
   return {
-    handleSearchSubmit,
     handleSearchInput,
     handleSeriesFilterChange,
     handleSearchToggle,
