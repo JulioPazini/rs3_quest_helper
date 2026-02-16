@@ -509,6 +509,42 @@ export const renderSteps = (params) => {
     stepsDiv.appendChild(wrap);
   };
 
+  const buildSubstepsList = (substeps, listClassName = 'substeps') => {
+    if (!Array.isArray(substeps) || substeps.length === 0) return null;
+    const list = document.createElement('ul');
+    list.className = listClassName;
+    substeps.forEach((substep) => {
+      if (!substep || (!substep.text && !substep.html)) return;
+      const li = document.createElement('li');
+      if (listClassName === 'substeps') {
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'overview-check substep-check';
+        checkbox.checked = Boolean(substep.checked);
+        checkbox.addEventListener('click', (event) => {
+          event.stopPropagation();
+        });
+        checkbox.addEventListener('change', () => {
+          substep.checked = checkbox.checked;
+          saveProgress();
+        });
+        li.appendChild(checkbox);
+      }
+
+      const textWrap = document.createElement('span');
+      textWrap.className = 'substep-text';
+      textWrap.innerHTML = substep.html || substep.text || '';
+      li.appendChild(textWrap);
+
+      const nestedList = buildSubstepsList(substep.substeps, 'substeps-nested');
+      if (nestedList) {
+        li.appendChild(nestedList);
+      }
+      list.appendChild(li);
+    });
+    return list.children.length > 0 ? list : null;
+  };
+
   const sectionHasInlineNoteType = (titleIndex, noteType) => {
     if (titleIndex < 0) return false;
     for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
@@ -697,14 +733,10 @@ export const renderSteps = (params) => {
         stepsDiv.appendChild(stepEl);
 
         if (sectionItem.substeps && sectionItem.substeps.length > 0) {
-          const list = document.createElement('ul');
-          list.className = 'substeps';
-          for (const substep of sectionItem.substeps) {
-            const li = document.createElement('li');
-            li.innerHTML = substep.html || substep.text;
-            list.appendChild(li);
+          const list = buildSubstepsList(sectionItem.substeps);
+          if (list) {
+            stepsDiv.appendChild(list);
           }
-          stepsDiv.appendChild(list);
         }
 
         if (currentRewardImage && /quest complete/i.test(sectionItem.text)) {
@@ -926,14 +958,10 @@ export const renderSteps = (params) => {
   stepsDiv.appendChild(stepEl);
 
   if (step.substeps && step.substeps.length > 0) {
-    const list = document.createElement('ul');
-    list.className = 'substeps';
-    for (const substep of step.substeps) {
-      const li = document.createElement('li');
-      li.innerHTML = substep.html || substep.text;
-      list.appendChild(li);
+    const list = buildSubstepsList(step.substeps);
+    if (list) {
+      stepsDiv.appendChild(list);
     }
-    stepsDiv.appendChild(list);
   }
 
   if (

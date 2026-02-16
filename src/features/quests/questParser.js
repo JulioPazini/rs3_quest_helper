@@ -506,6 +506,19 @@ export function extractQuickGuide(html) {
     return clone.innerHTML.replace(/\s+/g, ' ').trim();
   };
 
+  const getNestedSubsteps = (li) => {
+    if (!li || !li.querySelectorAll) return [];
+    const nestedItems = Array.from(li.querySelectorAll(':scope > ul > li, :scope > ol > li'));
+    return nestedItems
+      .map((nestedLi) => ({
+        text: getListItemText(nestedLi),
+        html: getListItemHtml(nestedLi),
+        checked: false,
+        substeps: getNestedSubsteps(nestedLi),
+      }))
+      .filter((item) => item.text.length > 0);
+  };
+
   const getContentBlockHtml = (el) => {
     if (!el) return '';
     const clone = el.cloneNode(true);
@@ -712,12 +725,7 @@ export function extractQuickGuide(html) {
         const htmlOut = getListItemHtml(li);
         if (!text) continue;
 
-        const substeps = Array.from(li.querySelectorAll(':scope > ul > li, :scope > ol > li'))
-          .map((subLi) => ({
-            text: getListItemText(subLi),
-            html: getListItemHtml(subLi),
-          }))
-          .filter((t) => t.text.length > 0);
+        const substeps = getNestedSubsteps(li);
 
         result.push({
           type: 'step',

@@ -1378,18 +1378,54 @@ header.hidden {
 
 .substeps {
   margin: 6px 0 12px 32px;
-  padding-left: 12px;
+  padding-left: 0;
   border-left: 2px solid rgba(184, 161, 75, 0.45);
   font-size: 14px;
   color: #d9cda4;
-  list-style: disc;
+  list-style: none;
 }
 
-.substeps li {
+.substeps > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 6px;
+  align-items: start;
   margin: 5px 0;
 }
 
-.substeps li::marker {
+.substep-check {
+  margin-top: 0.2em;
+}
+
+.substep-text {
+  display: inline;
+  transition:
+    color 120ms ease,
+    opacity 120ms ease;
+}
+
+.substeps > li > .substeps-nested {
+  grid-column: 2;
+}
+
+.substep-check:checked + .substep-text {
+  color: rgba(217, 205, 164, 0.6);
+  opacity: 0.75;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.substeps-nested {
+  margin: 4px 0 0 0;
+  padding-left: 16px;
+  list-style: disc;
+}
+
+.substeps-nested > li {
+  margin: 3px 0;
+}
+
+.substeps-nested > li::marker {
   color: #e0c874;
 }
 
@@ -1598,6 +1634,7 @@ header.hidden {
   justify-content: center;
 }
 
-.substeps li {
+.substeps > li,
+.substeps-nested > li {
   margin: 2px 0;
 }
