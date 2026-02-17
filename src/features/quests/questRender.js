@@ -1,5 +1,63 @@
 ﻿let searchItemCounter = 0;
 
+const LOCAL_PIN_BLUE =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="31" viewBox="0 0 26 31">' +
+      '<defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">' +
+      '<feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.45"/></filter></defs>' +
+      '<g filter="url(#shadow)">' +
+      '<path d="M13 1.5C6.9249 1.5 2 6.4249 2 12.5c0 7.5042 9.5089 16.492 9.9132 16.8706a1.6 1.6 0 0 0 2.1736 0C14.4911 28.992 24 20.0042 24 12.5 24 6.4249 19.0751 1.5 13 1.5z" fill="#2f86f5" stroke="#e8f0ff" stroke-width="1.2"/>' +
+      '<circle cx="13" cy="12.5" r="6.1" fill="#1e5fc7" stroke="#a7c8ff" stroke-width="1"/>' +
+      '</g></svg>'
+  );
+const MARKER_PROFILE_BY_KEYWORD = Object.freeze([
+  { key: 'azzanadra', label: 'AZ', color: '#7a48bf', title: 'Azzanadra' },
+  { key: 'ice_ward', label: 'IW', color: '#4f9fd8', title: 'Ice ward' },
+  { key: 'smoke_ward', label: 'SW', color: '#7a7a7a', title: 'Smoke ward' },
+  { key: 'blood_ward', label: 'BW', color: '#be3e3e', title: 'Blood ward' },
+  { key: 'shadow_ward', label: 'SH', color: '#493a6f', title: 'Shadow ward' },
+  { key: 'gargoyle', label: 'GG', color: '#7e6a58', title: 'Gargoyle sentinel' },
+  { key: 'bloodied_note', label: 'BN', color: '#8d3e33', title: 'Bloodied note' },
+  { key: 'torn_note', label: 'TN', color: '#8f7a52', title: 'Torn note' },
+  { key: 'scrawled_note', label: 'SN', color: '#5a6f8f', title: 'Scrawled note' },
+  { key: 'dungeon_exit', label: 'EX', color: '#48854f', title: 'Dungeon exit' },
+  { key: 'pin_blue', label: 'PB', color: '#2f86f5', title: 'Map pin' },
+]);
+const MARKER_DATA_URI_CACHE = new Map();
+
+const escapeSvgText = (value) =>
+  String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const buildMarkerBadgeDataUri = (label, bgColor) => {
+  const safeLabel = escapeSvgText(label || '?')
+    .slice(0, 2)
+    .toUpperCase();
+  const color = String(bgColor || '#5a6a8f');
+  const cacheKey = `${safeLabel}|${color}`;
+  if (MARKER_DATA_URI_CACHE.has(cacheKey)) {
+    return MARKER_DATA_URI_CACHE.get(cacheKey);
+  }
+  const svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">' +
+    '<defs><filter id="s" x="-40%" y="-40%" width="180%" height="180%">' +
+    '<feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#000" flood-opacity=".35"/></filter></defs>' +
+    '<g filter="url(#s)"><circle cx="13" cy="13" r="10.5" fill="' +
+    color +
+    '" stroke="#efe8d2" stroke-width="1.5"/>' +
+    '<text x="13" y="16" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8.5" font-weight="700" fill="#ffffff">' +
+    safeLabel +
+    '</text></g></svg>';
+  const uri = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  MARKER_DATA_URI_CACHE.set(cacheKey, uri);
+  return uri;
+};
+
 const createMetaRow = (label, value) => {
   const row = document.createElement('div');
   row.className = 'search-item-meta-row';
@@ -356,6 +414,7 @@ export const renderSteps = (params) => {
     nextStepButton,
     jumpCurrentButton,
     currentRewardImage,
+    kartographerLiveData,
     pendingAutoScroll,
     setPendingAutoScroll,
     saveProgress,
@@ -461,6 +520,337 @@ export const renderSteps = (params) => {
       const block = document.createElement('div');
       block.className = 'section-reflist';
       block.innerHTML = refHtml;
+      wrap.appendChild(block);
+    });
+    if (wrap.children.length > 0) {
+      stepsDiv.appendChild(wrap);
+    }
+  };
+
+  const parseOverlayNames = (mapEl) => {
+    const raw = String(mapEl?.getAttribute('data-overlays') || '').trim();
+    if (!raw) return [];
+    const normalized = raw
+      .replace(/&quot;/gi, '"')
+      .replace(/&#34;/gi, '"')
+      .replace(/&#039;/gi, "'");
+    try {
+      const parsed = JSON.parse(normalized);
+      if (Array.isArray(parsed)) return parsed.map((v) => String(v || '').trim()).filter(Boolean);
+    } catch (_err) {
+      // ignore and fallback
+    }
+    return normalized
+      .replace(/^\[|\]$/g, '')
+      .split(',')
+      .map((v) => v.replace(/['"]/g, '').trim())
+      .filter(Boolean);
+  };
+
+  const getMarkerFileName = (src) => {
+    const value = String(src || '').trim();
+    if (!value) return '';
+    const clean = value.split('?')[0].split('#')[0];
+    const lastSlash = clean.lastIndexOf('/');
+    const file = (lastSlash >= 0 ? clean.slice(lastSlash + 1) : clean).toLowerCase();
+    return file.replace(/^\d+px-/, '');
+  };
+
+  const toTitleCaseWords = (value) =>
+    String(value || '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+
+  const getMarkerProfileFromSource = (src) => {
+    const value = String(src || '').trim();
+    if (!value) return null;
+    const filename = getMarkerFileName(value);
+    const lowerSource = `${value} ${filename}`.toLowerCase();
+    return MARKER_PROFILE_BY_KEYWORD.find((profile) => lowerSource.includes(profile.key)) || null;
+  };
+
+  const getMarkerTooltipFromSource = (src) => {
+    const profile = getMarkerProfileFromSource(src);
+    if (profile && profile.title) return profile.title;
+    const filename = getMarkerFileName(src);
+    const base = filename
+      .replace(/\.[a-z0-9]+$/i, '')
+      .replace(/[_-]+/g, ' ')
+      .trim();
+    const cleaned = base
+      .split(/\s+/)
+      .filter(Boolean)
+      .filter((word) => !/^\d+px$/.test(word) && !/^icon$|^map$|^chathead$|^file$/.test(word))
+      .join(' ');
+    return cleaned ? toTitleCaseWords(cleaned) : 'Map marker';
+  };
+
+  const getFeatureTooltip = (props, srcHint = '') => {
+    const candidates = [
+      props?.title,
+      props?.name,
+      props?.label,
+      props?.tooltip,
+      props?.description,
+      props?.popup,
+    ];
+    for (const candidate of candidates) {
+      const text = String(candidate || '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (text) return text;
+    }
+    if (srcHint) return getMarkerTooltipFromSource(srcHint);
+    if (props?.shape === 'Dot' || props?.shape === 'SquareDot') return 'Map marker';
+    return 'Map marker';
+  };
+
+  const isWikiImageHost = (src) => {
+    const value = String(src || '')
+      .trim()
+      .toLowerCase();
+    if (!value) return false;
+    return (
+      value.startsWith('/images/') ||
+      value.includes('://runescape.wiki/images/') ||
+      value.includes('://www.runescape.wiki/images/')
+    );
+  };
+
+  const resolveMarkerIconSrc = (src) => {
+    const value = String(src || '').trim();
+    if (!value) return value;
+    const filename = getMarkerFileName(value);
+    if (filename === 'pin_blue.svg') {
+      return LOCAL_PIN_BLUE;
+    }
+    if (isWikiImageHost(value)) {
+      const matched = getMarkerProfileFromSource(value);
+      if (matched) {
+        return buildMarkerBadgeDataUri(matched.label, matched.color);
+      }
+      const base = filename
+        .replace(/\.[a-z0-9]+$/i, '')
+        .replace(/[_-]+/g, ' ')
+        .trim();
+      const words = base
+        .split(/\s+/)
+        .filter(Boolean)
+        .filter((word) => !/^\d+px$/.test(word) && !/^icon$|^map$|^chathead$|^file$/.test(word));
+      const label =
+        (words[0]?.[0] || '') + (words.length > 1 ? words[1]?.[0] || '' : words[0]?.[1] || '');
+      return buildMarkerBadgeDataUri(label || '?', '#5f7a9e');
+    }
+    return value;
+  };
+
+  const normalizeMarkerIconSources = (root) => {
+    if (!root) return;
+    const icons = root.querySelectorAll('.leaflet-marker-icon[src]');
+    icons.forEach((icon) => {
+      const src = icon.getAttribute('src');
+      const resolved = resolveMarkerIconSrc(src);
+      if (resolved && resolved !== src) {
+        icon.setAttribute('src', resolved);
+        if (icon.hasAttribute('srcset')) {
+          icon.removeAttribute('srcset');
+        }
+      }
+      const tooltip = getMarkerTooltipFromSource(src || resolved || '');
+      if (tooltip) {
+        icon.setAttribute('title', tooltip);
+        icon.setAttribute('aria-label', tooltip);
+      }
+    });
+  };
+
+  const appendMarkerFromFeature = (
+    feature,
+    markerPane,
+    mapEl,
+    width,
+    height,
+    centerLon,
+    centerLat
+  ) => {
+    if (!feature || feature.type !== 'Feature' || !feature.geometry || !feature.properties) return;
+    if (feature.geometry.type !== 'Point' || !Array.isArray(feature.geometry.coordinates)) return;
+    const [lon, lat, plane] = feature.geometry.coordinates;
+    const mapPlane = Number(mapEl.getAttribute('data-plane') || 0);
+    if (Number.isFinite(plane) && Number(plane) !== mapPlane) return;
+    if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+
+    const pxPerSquare = 4; // 256px / 64 map units
+    const x = width / 2 + (Number(lon) - centerLon) * pxPerSquare;
+    const y = height / 2 + (centerLat - Number(lat)) * pxPerSquare;
+    const z = Math.max(1, Math.round(y));
+    const props = feature.properties || {};
+
+    if (props.iconWikiLink) {
+      const iconSize = Array.isArray(props.iconSize) ? props.iconSize : [24, 24];
+      const iconAnchor = Array.isArray(props.iconAnchor)
+        ? props.iconAnchor
+        : [iconSize[0] / 2, iconSize[1] / 2];
+      const img = document.createElement('img');
+      img.src = resolveMarkerIconSrc(props.iconWikiLink);
+      img.alt = '';
+      img.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive';
+      img.tabIndex = 0;
+      const tooltip = getFeatureTooltip(props, props.iconWikiLink);
+      img.title = tooltip;
+      img.setAttribute('aria-label', tooltip);
+      img.style.marginLeft = `-${Number(iconAnchor[0]) || 0}px`;
+      img.style.marginTop = `-${Number(iconAnchor[1]) || 0}px`;
+      img.style.width = `${Number(iconSize[0]) || 24}px`;
+      img.style.height = `${Number(iconSize[1]) || 24}px`;
+      img.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0px)`;
+      img.style.zIndex = String(z);
+      markerPane.appendChild(img);
+      return;
+    }
+
+    if (props.shape === 'Dot' || props.shape === 'SquareDot') {
+      const marker = document.createElement('div');
+      marker.className =
+        'leaflet-marker-icon leaflet-div-dot leaflet-zoom-animated leaflet-interactive';
+      marker.tabIndex = 0;
+      const tooltip = getFeatureTooltip(props);
+      marker.setAttribute('title', tooltip);
+      marker.setAttribute('aria-label', tooltip);
+      marker.style.marginLeft = '-6px';
+      marker.style.marginTop = '-6px';
+      marker.style.width = '12px';
+      marker.style.height = '12px';
+      marker.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0px)`;
+      marker.style.zIndex = String(z);
+      const dot = document.createElement('div');
+      dot.className = props.shape === 'SquareDot' ? 'leaflet-sqdot' : 'leaflet-dot';
+      if (props.fill) dot.style.backgroundColor = String(props.fill);
+      marker.appendChild(dot);
+      markerPane.appendChild(marker);
+    }
+  };
+
+  const ensureMarkerOverlayFromLiveData = (mapEl) => {
+    if (!mapEl || !kartographerLiveData) return;
+    let liveData = kartographerLiveData;
+    if (typeof liveData === 'string') {
+      try {
+        liveData = JSON.parse(liveData);
+      } catch (_err) {
+        return;
+      }
+    }
+    if (!liveData || typeof liveData !== 'object') return;
+    const hasMarkers = mapEl.querySelector(
+      '.leaflet-marker-pane .leaflet-marker-icon, .leaflet-marker-icon'
+    );
+    if (hasMarkers) return;
+    const width = Number(mapEl.getAttribute('data-width')) || 600;
+    const height = Number(mapEl.getAttribute('data-height')) || 600;
+    const centerLon = Number(mapEl.getAttribute('data-lon'));
+    const centerLat = Number(mapEl.getAttribute('data-lat'));
+    if (!Number.isFinite(centerLon) || !Number.isFinite(centerLat)) return;
+
+    const overlayNames = parseOverlayNames(mapEl);
+    if (!overlayNames.length) return;
+
+    const mapPane = mapEl.querySelector('.leaflet-map-pane');
+    let markerPane = null;
+    if (mapPane) {
+      markerPane = mapPane.querySelector(':scope > .leaflet-pane.leaflet-marker-pane');
+      if (!markerPane) {
+        markerPane = document.createElement('div');
+        markerPane.className = 'leaflet-pane leaflet-marker-pane';
+        mapPane.appendChild(markerPane);
+      }
+    } else {
+      // Static Kartographer fallback: map is rendered as background-image on the anchor itself.
+      if (!mapEl.style.position) mapEl.style.position = 'relative';
+      if (!mapEl.style.overflow) mapEl.style.overflow = 'hidden';
+      markerPane = mapEl.querySelector(':scope > .map-marker-overlay.leaflet-marker-pane');
+      if (!markerPane) {
+        markerPane = document.createElement('div');
+        markerPane.className = 'map-marker-overlay leaflet-marker-pane';
+        markerPane.style.position = 'absolute';
+        markerPane.style.left = '0';
+        markerPane.style.top = '0';
+        markerPane.style.width = '100%';
+        markerPane.style.height = '100%';
+        markerPane.style.pointerEvents = 'none';
+        mapEl.appendChild(markerPane);
+      }
+    }
+
+    let appended = 0;
+    overlayNames.forEach((name) => {
+      const collections = liveData[name];
+      if (!Array.isArray(collections)) return;
+      collections.forEach((collection) => {
+        const features = Array.isArray(collection?.features) ? collection.features : [];
+        features.forEach((feature) => {
+          const before = markerPane.childElementCount;
+          appendMarkerFromFeature(feature, markerPane, mapEl, width, height, centerLon, centerLat);
+          if (markerPane.childElementCount > before) appended += 1;
+        });
+      });
+    });
+
+    if (appended === 0 && markerPane.childElementCount === 0 && overlayNames.length > 0) {
+      const fallbackPin = document.createElement('img');
+      fallbackPin.src = LOCAL_PIN_BLUE;
+      fallbackPin.alt = '';
+      fallbackPin.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive';
+      fallbackPin.tabIndex = 0;
+      fallbackPin.title = 'Map pin';
+      fallbackPin.setAttribute('aria-label', 'Map pin');
+      fallbackPin.style.marginLeft = '-13px';
+      fallbackPin.style.marginTop = '-31px';
+      fallbackPin.style.width = '26px';
+      fallbackPin.style.height = '31px';
+      fallbackPin.style.transform = `translate3d(${Math.round(width / 2)}px, ${Math.round(height / 2)}px, 0px)`;
+      fallbackPin.style.zIndex = String(Math.max(1, Math.round(height / 2)));
+      markerPane.appendChild(fallbackPin);
+    }
+  };
+
+  const ensureAdvancedMapVisible = (root) => {
+    if (!root) return;
+    normalizeMarkerIconSources(root);
+    const maps = root.querySelectorAll(
+      '.mw-kartographer-map[data-mw-kartographer], a.mw-kartographer-map, .mw-kartographer-container.mw-kartographer-interactive'
+    );
+    maps.forEach((mapEl) => {
+      const widthAttr = Number(mapEl.getAttribute('data-width'));
+      const heightAttr = Number(mapEl.getAttribute('data-height'));
+      mapEl.style.display = 'block';
+      if (!mapEl.style.width && Number.isFinite(widthAttr)) mapEl.style.width = `${widthAttr}px`;
+      if (!mapEl.style.height && Number.isFinite(heightAttr))
+        mapEl.style.height = `${heightAttr}px`;
+
+      const alreadyRendered =
+        mapEl.querySelector('.leaflet-pane') ||
+        mapEl.querySelector('.leaflet-tile, .leaflet-marker-icon');
+      const isStaticBackgroundMap =
+        !alreadyRendered && /url\(/i.test(String(mapEl.style.backgroundImage || ''));
+      if (!alreadyRendered && !isStaticBackgroundMap) return;
+      ensureMarkerOverlayFromLiveData(mapEl);
+    });
+  };
+
+  const appendSectionAdvancedMaps = (sectionAdvancedMaps) => {
+    if (!Array.isArray(sectionAdvancedMaps) || sectionAdvancedMaps.length === 0) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'section-advanced-maps';
+    sectionAdvancedMaps.forEach((mapHtml) => {
+      if (!mapHtml) return;
+      const block = document.createElement('div');
+      block.className = 'section-advanced-map';
+      block.innerHTML = mapHtml;
+      ensureAdvancedMapVisible(block);
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
@@ -597,6 +987,7 @@ export const renderSteps = (params) => {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(item.sectionTexts);
       }
+      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
       appendSectionTables(item.sectionTables);
       appendSectionRefLists(item.sectionRefLists);
       appendSectionImages(item.sectionImages);
@@ -670,6 +1061,7 @@ export const renderSteps = (params) => {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(item.sectionTexts);
       }
+      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
 
       let sectionCursor = idx + 1;
       let shouldShowSectionReward = false;
@@ -871,6 +1263,13 @@ export const renderSteps = (params) => {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(currentTitleItem.sectionTexts);
       }
+    }
+    if (
+      currentTitleItem &&
+      currentTitleItem.sectionAdvancedMaps &&
+      currentTitleItem.sectionAdvancedMaps.length > 0
+    ) {
+      appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps);
     }
     if (
       !hasSectionStepsOrNotes &&

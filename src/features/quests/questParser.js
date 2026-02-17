@@ -269,7 +269,8 @@ export function extractQuickGuide(html) {
 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
 
-  const stripTooltipContent = (rootEl) => {
+  const stripTooltipContent = (rootEl, options = {}) => {
+    const { preserveAdvancedMaps = false } = options;
     const tooltipSelectors = [
       "[role='tooltip']",
       '.tooltip',
@@ -296,8 +297,10 @@ export function extractQuickGuide(html) {
       }
     });
 
-    const advancedMaps = rootEl.querySelectorAll('.advanced-map, .mw-kartographer-container');
-    advancedMaps.forEach((el) => el.remove());
+    if (!preserveAdvancedMaps) {
+      const advancedMaps = rootEl.querySelectorAll('.advanced-map, .mw-kartographer-container');
+      advancedMaps.forEach((el) => el.remove());
+    }
     const mapLinks = rootEl.querySelectorAll('.mw-kartographer-maplink, .mw-kartographer-link');
     mapLinks.forEach((el) => el.remove());
   };
@@ -506,6 +509,62 @@ export function extractQuickGuide(html) {
     return clone.innerHTML.replace(/\s+/g, ' ').trim();
   };
 
+  const getSectionAdvancedMapData = (el) => {
+    if (!el || !el.querySelectorAll) return [];
+    const out = [];
+    const maps = [];
+    if (el.matches('.advanced-map, .mw-kartographer-container')) {
+      maps.push(el);
+    }
+    maps.push(
+      ...Array.from(el.querySelectorAll('.advanced-map, .mw-kartographer-container')).filter(
+        (node) => !node.closest('.advanced-map .mw-kartographer-container')
+      )
+    );
+    const seen = new Set();
+    maps.forEach((map) => {
+      if (!map) return;
+      if (map.classList.contains('mw-kartographer-container') && map.closest('.advanced-map'))
+        return;
+      const clone = map.cloneNode(true);
+      const isAdvancedMap = clone.classList.contains('advanced-map');
+      if (isAdvancedMap) {
+        const mapArea = clone.querySelector(':scope > .amap-map, .amap-map');
+        const keyArea = clone.querySelector(':scope > .amap-key, .amap-key');
+        if (!mapArea || !keyArea) return;
+      } else {
+        const hasKartographer =
+          clone.classList.contains('mw-kartographer-container') ||
+          clone.querySelector('.mw-kartographer-map, .mw-kartographer-container');
+        if (!hasKartographer) return;
+      }
+
+      const links = clone.querySelectorAll('a[href]');
+      links.forEach((a) => {
+        let href = a.getAttribute('href') || '';
+        if (href.startsWith('//')) href = 'https:' + href;
+        if (href.startsWith('/')) href = 'https://runescape.wiki' + href;
+        a.setAttribute('href', href);
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener');
+      });
+      const images = clone.querySelectorAll('img[src]');
+      images.forEach((img) => {
+        let src = img.getAttribute('src') || '';
+        if (src.startsWith('//')) src = 'https:' + src;
+        if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+        img.setAttribute('src', src);
+        img.setAttribute('loading', 'lazy');
+      });
+
+      const htmlOut = clone.outerHTML;
+      if (!htmlOut || seen.has(htmlOut)) return;
+      seen.add(htmlOut);
+      out.push(htmlOut);
+    });
+    return out;
+  };
+
   const getNestedSubsteps = (li) => {
     if (!li || !li.querySelectorAll) return [];
     const nestedItems = Array.from(li.querySelectorAll(':scope > ul > li, :scope > ol > li'));
@@ -595,6 +654,7 @@ export function extractQuickGuide(html) {
         let sectionInfoBoxes = [];
         let sectionTables = [];
         let sectionRefLists = [];
+        let sectionAdvancedMaps = [];
         const headingContainer = node.closest('.mw-heading') || node;
         let sibling = headingContainer.nextElementSibling;
         const isNextSectionHeader = (el) => {
@@ -624,6 +684,8 @@ export function extractQuickGuide(html) {
           if (tables.length) sectionTables = sectionTables.concat(tables);
           const reflists = getSectionReflistData(sibling);
           if (reflists.length) sectionRefLists = sectionRefLists.concat(reflists);
+          const advancedMaps = getSectionAdvancedMapData(sibling);
+          if (advancedMaps.length) sectionAdvancedMaps = sectionAdvancedMaps.concat(advancedMaps);
           sibling = sibling.nextElementSibling;
         }
 
@@ -637,6 +699,7 @@ export function extractQuickGuide(html) {
           sectionTables,
           sectionRefLists,
           sectionImages,
+          sectionAdvancedMaps,
         });
         lastTitleIndex = result.length - 1;
       }

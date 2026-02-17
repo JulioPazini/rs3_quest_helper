@@ -312,6 +312,7 @@ const buildStepsRenderParams = (items) => ({
   nextStepButton,
   jumpCurrentButton,
   currentRewardImage: state.currentRewardImage,
+  kartographerLiveData: state.currentKartographerLiveData,
   pendingAutoScroll: () => state.pendingAutoScroll,
   setPendingAutoScroll: (val) => {
     state.pendingAutoScroll = val;

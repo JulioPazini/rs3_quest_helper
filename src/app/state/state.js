@@ -5,6 +5,7 @@ export const state = {
   currentQuestKey: null,
   currentRewardImage: null,
   currentOverview: null,
+  currentKartographerLiveData: null,
   overviewChecks: {},
   showSteps: false,
   searchQuery: '',

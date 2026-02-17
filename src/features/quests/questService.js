@@ -93,7 +93,7 @@ const fetchGuideParse = async (baseTitle, guideMode = 'quick') => {
     '&origin=*' +
     '&page=' +
     encodeURIComponent(page) +
-    '&prop=text';
+    '&prop=text|jsconfigvars';
 
   const data = await fetchJsonWithTimeoutRetry(url, {
     timeoutMs: 7000,
@@ -229,6 +229,7 @@ export async function loadQuest(questName, ctx) {
       if (backButton) backButton.classList.remove('hidden');
       state.currentItems = [];
       state.currentQuestKey = null;
+      state.currentKartographerLiveData = null;
       state.showSteps = false;
       setLoading(false);
       hideActionBars(navBar, filterToggle);
@@ -257,6 +258,7 @@ export async function loadQuest(questName, ctx) {
       }
       state.currentItems = [];
       state.currentQuestKey = null;
+      state.currentKartographerLiveData = null;
       state.showSteps = false;
       setLoading(false);
       hideActionBars(navBar, filterToggle);
@@ -281,6 +283,7 @@ export async function loadQuest(questName, ctx) {
     const iconSrc = getQuestIcon(html);
     state.currentRewardImage = getRewardImage(html);
     state.currentOverview = getQuestOverview(html);
+    state.currentKartographerLiveData = data?.parse?.jsconfigvars?.wgKartographerLiveData || null;
     renderTitle(finalTitle, iconSrc);
     if (wikiLink) {
       wikiLink.href = buildWikiHref(resolved.baseTitle || finalTitle, resolved.guideMode);
@@ -345,6 +348,7 @@ export async function loadQuest(questName, ctx) {
   } catch (err) {
     stepsDiv.innerHTML = 'Error loading quest.';
     console.error(err);
+    state.currentKartographerLiveData = null;
     hideActionBars(navBar, filterToggle);
     toggleButton.classList.add('hidden');
     if (viewStepsToggle) viewStepsToggle.classList.add('hidden');
