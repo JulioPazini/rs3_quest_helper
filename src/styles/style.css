@@ -887,7 +887,7 @@ header.hidden {
 .nav-bar.sticky-top {
   position: sticky;
   top: 0;
-  z-index: 6;
+  z-index: 1200;
   margin-top: 0;
   background: linear-gradient(180deg, #3a3120, #2f281a);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32);
@@ -938,7 +938,7 @@ header.hidden {
 
 #progressRow.sticky-top {
   position: sticky;
-  z-index: 5;
+  z-index: 1100;
 }
 
 .progress-indicator {
@@ -1202,7 +1202,7 @@ header.hidden {
 .view-mode-toggle.sticky-top {
   position: sticky;
   top: 0;
-  z-index: 6;
+  z-index: 1200;
   background: linear-gradient(180deg, #3a3120, #2f281a);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32);
 }
