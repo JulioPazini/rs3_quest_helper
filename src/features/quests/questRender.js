@@ -504,6 +504,7 @@ export const renderSteps = (params) => {
       const block = document.createElement('div');
       block.className = 'section-table-card';
       block.innerHTML = tableHtml;
+      ensureAdvancedMapVisible(block);
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
@@ -876,6 +877,7 @@ export const renderSteps = (params) => {
       const block = document.createElement('div');
       block.className = 'section-table-card';
       block.innerHTML = noteItem.html;
+      ensureAdvancedMapVisible(block);
       wrap.appendChild(block);
       stepsDiv.appendChild(wrap);
       return;
@@ -1065,6 +1067,7 @@ export const renderSteps = (params) => {
       let sectionCursor = idx + 1;
       let shouldShowSectionReward = false;
       let renderedSectionImages = false;
+      let renderedSectionAdvancedMaps = false;
       while (sectionCursor < items.length && items[sectionCursor].type !== 'title') {
         const sectionItem = items[sectionCursor];
         const stepIndex = sectionCursor;
@@ -1117,6 +1120,10 @@ export const renderSteps = (params) => {
         };
 
         const isQuestCompleteStep = /quest complete/i.test(sectionItem.text || '');
+        if (isQuestCompleteStep && !renderedSectionAdvancedMaps) {
+          appendSectionAdvancedMaps(item.sectionAdvancedMaps);
+          renderedSectionAdvancedMaps = true;
+        }
         if (isQuestCompleteStep && !renderedSectionImages) {
           appendSectionImages(item.sectionImages);
           renderedSectionImages = true;
@@ -1151,7 +1158,9 @@ export const renderSteps = (params) => {
         stepsDiv.appendChild(img);
         didRenderRewardImage = true;
       }
-      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
+      if (!renderedSectionAdvancedMaps) {
+        appendSectionAdvancedMaps(item.sectionAdvancedMaps);
+      }
       idx = sectionCursor - 1;
     }
 
@@ -1304,6 +1313,14 @@ export const renderSteps = (params) => {
   if (
     isCurrentQuestComplete &&
     currentTitleItem &&
+    currentTitleItem.sectionAdvancedMaps &&
+    currentTitleItem.sectionAdvancedMaps.length > 0
+  ) {
+    appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps);
+  }
+  if (
+    isCurrentQuestComplete &&
+    currentTitleItem &&
     Array.isArray(currentTitleItem.sectionImages) &&
     currentTitleItem.sectionImages.length > 0
   ) {
@@ -1393,6 +1410,7 @@ export const renderSteps = (params) => {
     stepsDiv.appendChild(img);
   }
   if (
+    !isCurrentQuestComplete &&
     currentTitleItem &&
     currentTitleItem.sectionAdvancedMaps &&
     currentTitleItem.sectionAdvancedMaps.length > 0

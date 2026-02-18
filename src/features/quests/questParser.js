@@ -1,22 +1,73 @@
-const DIALOGUE_ICON = '\uD83D\uDCAC';
-const hasDialogueMarker = (value) => {
-  if (!value) return false;
-  // Match dialogue/chat markers like "(Chat 1)", "(1•2•3)", "(2•✓)", "(4)", "(~)" anywhere in the step.
-  return /\(\s*(?:chat\b[^)]*|~+|(?=[^)]*[\d\u2022\u2713])[\d\s\u2022\u2713.,]+)\s*\)/i.test(
-    String(value)
+﻿const DIALOGUE_ICON = '\u{1F5E8}\uFE0F';
+const CHECKMARK_RE = /^[\u2713\u2714]+$/;
+
+const normalizeDialogueMarkerContent = (content) => {
+  const raw = String(content || '').trim();
+  if (!raw) return '';
+  if (/^chat\b/i.test(raw)) return raw.replace(/\s+/g, ' ');
+  return raw.replace(/\s*([\u2022\u00B7\u2219])\s*/g, '\u2022').replace(/\s+/g, ' ');
+};
+
+const isDialogueMarkerContent = (content) => {
+  const normalized = normalizeDialogueMarkerContent(content);
+  if (!normalized) return false;
+  if (/^chat\b/i.test(normalized)) return true;
+  const tokens = normalized
+    .split(/\u2022/g)
+    .map((token) => token.trim())
+    .filter(Boolean);
+  if (tokens.length === 0) return false;
+  return tokens.every(
+    (token) => /^\d+$/.test(token) || /^~+$/.test(token) || CHECKMARK_RE.test(token)
   );
 };
 
+const injectDialogueIconInParentheses = (value) => {
+  if (!value) return value;
+  return String(value).replace(/\(([^()]*)\)/g, (full, inner) => {
+    if (String(inner).includes(DIALOGUE_ICON)) return full;
+    if (!isDialogueMarkerContent(inner)) return full;
+    const normalized = normalizeDialogueMarkerContent(inner);
+    return `(${DIALOGUE_ICON}${normalized ? ` ${normalized}` : ''})`;
+  });
+};
+
+const hasDialogueMarker = (value) => {
+  if (!value) return false;
+  return injectDialogueIconInParentheses(value) !== String(value);
+};
+
+const stripTrailingDialogueIcon = (value) =>
+  String(value || '').replace(/\s*(?:\uD83D\uDCAC|\u{1F5E8}\uFE0F?)\s*$/u, '');
+
 export const formatStepText = (text) => {
   if (!text) return text;
-  if (String(text).includes(DIALOGUE_ICON)) return text;
-  return hasDialogueMarker(text) ? `${text} ${DIALOGUE_ICON}` : text;
+  const cleaned = stripTrailingDialogueIcon(text);
+  return injectDialogueIconInParentheses(cleaned);
 };
 
 export const formatStepHtml = (html, text) => {
   if (!html) return html;
-  if (String(html).includes(DIALOGUE_ICON)) return html;
-  return hasDialogueMarker(text || html) ? `${html} ${DIALOGUE_ICON}` : html;
+  const rawHtml = stripTrailingDialogueIcon(html);
+  const markerSource = stripTrailingDialogueIcon(text || rawHtml);
+  if (!hasDialogueMarker(markerSource)) return rawHtml;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = rawHtml;
+  const chatOptionBlocks = wrap.querySelectorAll('.chat-options');
+  chatOptionBlocks.forEach((block) => {
+    const blockText = block.textContent.replace(/\s+/g, ' ').trim();
+    const formatted = formatStepText(blockText);
+    if (formatted !== blockText) {
+      block.textContent = formatted;
+    }
+  });
+  const walker = document.createTreeWalker(wrap, NodeFilter.SHOW_TEXT, null);
+  let textNode;
+  while ((textNode = walker.nextNode())) {
+    if (textNode.parentElement && textNode.parentElement.closest('.chat-options')) continue;
+    textNode.nodeValue = injectDialogueIconInParentheses(textNode.nodeValue);
+  }
+  return wrap.innerHTML;
 };
 export const getQuestIcon = (html) => {
   const parser = new DOMParser();
@@ -285,6 +336,10 @@ export function extractQuickGuide(html) {
       "img[alt='Chat'], img[alt='Quick chat'], img[alt='Quick Chat'], .chat-options img"
     );
     chatIcons.forEach((el) => el.remove());
+    const chatTables = rootEl.querySelectorAll(
+      '.chat-options table, .chat-options-dialogue table, .js-tooltip-click table, [data-tooltip-name] table'
+    );
+    chatTables.forEach((el) => el.remove());
 
     const ariaHidden = rootEl.querySelectorAll("[aria-hidden='true']");
     ariaHidden.forEach((el) => el.remove());
@@ -301,8 +356,10 @@ export function extractQuickGuide(html) {
       const advancedMaps = rootEl.querySelectorAll('.advanced-map, .mw-kartographer-container');
       advancedMaps.forEach((el) => el.remove());
     }
-    const mapLinks = rootEl.querySelectorAll('.mw-kartographer-maplink, .mw-kartographer-link');
-    mapLinks.forEach((el) => el.remove());
+    if (!preserveAdvancedMaps) {
+      const mapLinks = rootEl.querySelectorAll('.mw-kartographer-maplink, .mw-kartographer-link');
+      mapLinks.forEach((el) => el.remove());
+    }
   };
 
   const getSeeAlsoHtml = (el) => {
@@ -405,7 +462,7 @@ export function extractQuickGuide(html) {
       if (!table) return;
       if (table.closest('.advanced-map, .mw-kartographer-container')) return;
       const clone = table.cloneNode(true);
-      stripTooltipContent(clone);
+      stripTooltipContent(clone, { preserveAdvancedMaps: true });
       const links = clone.querySelectorAll('a[href]');
       links.forEach((a) => {
         let href = a.getAttribute('href') || '';
@@ -429,8 +486,14 @@ export function extractQuickGuide(html) {
 
   const isRelevantStandaloneTable = (table) => {
     if (!table) return false;
+    if (table.parentElement?.closest('table')) return false;
     if (table.classList.contains('messagebox')) return false;
     if (table.classList.contains('questdetails')) return false;
+    if (
+      table.closest('.chat-options, .chat-options-dialogue, .js-tooltip-click, [data-tooltip-name]')
+    ) {
+      return false;
+    }
     if (table.closest('div.lighttable.checklist')) return false;
     if (table.closest('.advanced-map, .mw-kartographer-container')) return false;
     if (table.closest('dl, dd')) return false;
@@ -452,7 +515,7 @@ export function extractQuickGuide(html) {
     const tables = el.matches('table') ? [el] : Array.from(el.querySelectorAll('table'));
     tables.forEach((table) => {
       if (!isRelevantStandaloneTable(table)) return;
-      const htmlOut = getNormalizedOuterHtml(table);
+      const htmlOut = getNormalizedOuterHtml(table, { preserveAdvancedMaps: true });
       if (!htmlOut || seen.has(htmlOut)) return;
       seen.add(htmlOut);
       out.push(htmlOut);
@@ -482,7 +545,7 @@ export function extractQuickGuide(html) {
     stripTooltipContent(clone);
     const nestedLists = clone.querySelectorAll('ul, ol');
     nestedLists.forEach((list) => list.remove());
-    return clone.textContent.replace(/\s+/g, ' ').trim();
+    return formatStepText(clone.textContent.replace(/\s+/g, ' ').trim());
   };
 
   const getListItemHtml = (li) => {
@@ -506,7 +569,8 @@ export function extractQuickGuide(html) {
       if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
       img.setAttribute('src', src);
     });
-    return clone.innerHTML.replace(/\s+/g, ' ').trim();
+    const textOut = clone.textContent.replace(/\s+/g, ' ').trim();
+    return formatStepHtml(clone.innerHTML.replace(/\s+/g, ' ').trim(), textOut);
   };
 
   const getSectionAdvancedMapData = (el) => {
@@ -526,6 +590,7 @@ export function extractQuickGuide(html) {
       if (!map) return;
       if (map.classList.contains('mw-kartographer-container') && map.closest('.advanced-map'))
         return;
+      if (map.closest('table')) return;
       const clone = map.cloneNode(true);
       const isAdvancedMap = clone.classList.contains('advanced-map');
       if (isAdvancedMap) {
@@ -601,10 +666,10 @@ export function extractQuickGuide(html) {
     return clone.innerHTML.replace(/\s+/g, ' ').trim();
   };
 
-  const getNormalizedOuterHtml = (el) => {
+  const getNormalizedOuterHtml = (el, options = {}) => {
     if (!el) return '';
     const clone = el.cloneNode(true);
-    stripTooltipContent(clone);
+    stripTooltipContent(clone, options);
     const links = clone.querySelectorAll('a[href]');
     links.forEach((a) => {
       let href = a.getAttribute('href') || '';
@@ -719,14 +784,14 @@ export function extractQuickGuide(html) {
         result.push({
           type: 'note',
           noteType: 'infobox',
-          html: getNormalizedOuterHtml(node),
+          html: getNormalizedOuterHtml(node, { preserveAdvancedMaps: true }),
         });
       }
       continue;
     }
 
     if (lastHeader && node.tagName === 'TABLE' && isRelevantStandaloneTable(node)) {
-      const htmlOut = getNormalizedOuterHtml(node);
+      const htmlOut = getNormalizedOuterHtml(node, { preserveAdvancedMaps: true });
       if (htmlOut) {
         result.push({
           type: 'note',
