@@ -123,7 +123,9 @@ test('renderSteps uses kartographerLiveData to add marker overlay in advanced ma
     showSearchControls: () => {},
   });
 
-  const marker = stepsDiv.querySelector('.section-advanced-map .leaflet-marker-pane .leaflet-marker-icon');
+  const marker = stepsDiv.querySelector(
+    '.section-advanced-map .leaflet-marker-pane .leaflet-marker-icon'
+  );
   assert.ok(marker, 'expected rendered marker icon from live data');
   assert.match(marker.getAttribute('src') || '', /^data:image\/svg\+xml;utf8,/);
   assert.equal(marker.getAttribute('aria-label'), 'Quest marker');
