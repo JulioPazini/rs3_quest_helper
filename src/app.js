@@ -220,11 +220,14 @@ const ensureUiToast = () => {
 
 const showUiToast = (message, options = {}) => {
   if (!message) return;
-  const { position = 'bottom-right' } = options;
+  const { position = 'bottom-right', type = 'default' } = options;
   const toast = ensureUiToast();
-  toast.classList.remove('top-right');
+  toast.classList.remove('top-right', 'success', 'error');
   if (position === 'top-right') {
     toast.classList.add('top-right');
+  }
+  if (type === 'success' || type === 'error') {
+    toast.classList.add(type);
   }
   toast.textContent = message;
   toast.classList.add('visible');
@@ -628,7 +631,7 @@ const loadPlayerQuests = async (playerName) => {
     state.playerLastFetchAt = result.ts;
     refreshActiveQuestOverview();
     refreshQuestListForCurrentView();
-    showUiToast('Player data loaded successfully', { position: 'top-right' });
+    showUiToast('Player data loaded successfully', { position: 'top-right', type: 'success' });
     return;
   }
 
@@ -640,11 +643,11 @@ const loadPlayerQuests = async (playerName) => {
   refreshActiveQuestOverview();
   refreshQuestListForCurrentView();
   if (result.code === 'PROFILE_PRIVATE') {
-    showUiToast('This player has a private RuneMetrics profile');
+    showUiToast('This player has a private RuneMetrics profile', { type: 'error' });
   } else if (result.code === 'USER_NOT_FOUND') {
-    showUiToast('Player not found');
+    showUiToast('Player not found', { type: 'error' });
   } else {
-    showUiToast('Network error while loading player data');
+    showUiToast('Network error while loading player data', { type: 'error' });
   }
 };
 

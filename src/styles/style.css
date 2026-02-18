@@ -64,6 +64,18 @@ input:focus-visible {
   transform: translateY(0);
 }
 
+.ui-toast.success {
+  border-color: #2f7d44;
+  background: rgba(20, 52, 28, 0.96);
+  color: #d9f7e1;
+}
+
+.ui-toast.error {
+  border-color: #9b3737;
+  background: rgba(65, 24, 24, 0.96);
+  color: #ffdede;
+}
+
 .loading-skeleton {
   position: relative;
   overflow: hidden;
