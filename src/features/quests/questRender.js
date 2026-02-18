@@ -987,10 +987,10 @@ export const renderSteps = (params) => {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(item.sectionTexts);
       }
-      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
       appendSectionTables(item.sectionTables);
       appendSectionRefLists(item.sectionRefLists);
       appendSectionImages(item.sectionImages);
+      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
     });
 
     if (!hasSections) {
@@ -1061,7 +1061,6 @@ export const renderSteps = (params) => {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(item.sectionTexts);
       }
-      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
 
       let sectionCursor = idx + 1;
       let shouldShowSectionReward = false;
@@ -1152,6 +1151,7 @@ export const renderSteps = (params) => {
         stepsDiv.appendChild(img);
         didRenderRewardImage = true;
       }
+      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
       idx = sectionCursor - 1;
     }
 
@@ -1263,13 +1263,6 @@ export const renderSteps = (params) => {
       if (!hasSectionStepsOrNotes) {
         appendSectionTexts(currentTitleItem.sectionTexts);
       }
-    }
-    if (
-      currentTitleItem &&
-      currentTitleItem.sectionAdvancedMaps &&
-      currentTitleItem.sectionAdvancedMaps.length > 0
-    ) {
-      appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps);
     }
     if (
       !hasSectionStepsOrNotes &&
@@ -1398,6 +1391,13 @@ export const renderSteps = (params) => {
     img.src = currentRewardImage;
     img.alt = 'Quest rewards';
     stepsDiv.appendChild(img);
+  }
+  if (
+    currentTitleItem &&
+    currentTitleItem.sectionAdvancedMaps &&
+    currentTitleItem.sectionAdvancedMaps.length > 0
+  ) {
+    appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps);
   }
 
   if (navBar) {

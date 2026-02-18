@@ -130,3 +130,56 @@ test('renderSteps uses kartographerLiveData to add marker overlay in advanced ma
   assert.match(marker.getAttribute('src') || '', /^data:image\/svg\+xml;utf8,/);
   assert.equal(marker.getAttribute('aria-label'), 'Quest marker');
 });
+
+test('renderSteps appends section map block at the end of section content', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    {
+      type: 'title',
+      text: 'Map Section',
+      level: 2,
+      seeAlso: ['See also item'],
+      sectionTexts: ['<p>Section intro</p>'],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [],
+      sectionAdvancedMaps: [
+        `<div class="advanced-map"><div class="amap-map"><a class="mw-kartographer-map" data-mw-kartographer="maplink" data-width="300" data-height="300" data-lat="3200" data-lon="3200" data-plane="0" data-overlays='["sample_overlay"]' style="display:block;width:300px;height:300px;background-image:url(https://example.test/tile.png);"></a></div><div class="amap-key"><ul><li>Key</li></ul></div></div>`,
+      ],
+    },
+    { type: 'step', text: 'Do the thing', html: 'Do the thing', checked: false, substeps: [] },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (value) => value,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  assert.equal(
+    stepsDiv.lastElementChild?.className,
+    'section-advanced-maps',
+    'expected map wrapper as final section block'
+  );
+});
