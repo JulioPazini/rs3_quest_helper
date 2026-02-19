@@ -63,6 +63,7 @@ const {
   scrollTopButton,
 } = getAppElements();
 const filterToggle = document.getElementById('filterToggle') || hideCompletedCheckbox;
+const navLeft = navBar ? navBar.querySelector('.nav-left') : null;
 
 const resultsBatchSize = 20;
 const resultsRefs = { observer: null, sentinel: null };
@@ -200,6 +201,28 @@ const updateTopBarsStickyState = () => {
     const shouldStickOverview = !state.showSteps && !viewModeToggle.classList.contains('hidden');
     viewModeToggle.classList.toggle('sticky-top', shouldStickOverview);
   }
+  updateBackButtonPlacement();
+};
+
+const isNavCurrentlyStuck = () => {
+  if (!navBar || navBar.classList.contains('hidden')) return false;
+  if (!navBar.classList.contains('sticky-top')) return false;
+  const rect = navBar.getBoundingClientRect();
+  return rect.top <= 0 && rect.bottom > 0;
+};
+
+const updateBackButtonPlacement = () => {
+  if (!backButton || !viewModeToggle) return;
+  const shouldPlaceInNav = Boolean(
+    navLeft &&
+    state.showSteps &&
+    state.showAllSteps &&
+    !backButton.classList.contains('hidden') &&
+    isNavCurrentlyStuck()
+  );
+  const target = shouldPlaceInNav && navLeft ? navLeft : viewModeToggle;
+  if (!target || backButton.parentElement === target) return;
+  target.insertBefore(backButton, target.firstChild);
 };
 
 const resetSearchInput = () => {
@@ -724,7 +747,9 @@ if (scrollTopButton) {
 }
 
 window.addEventListener('scroll', updateScrollTopButtonVisibility, { passive: true });
+window.addEventListener('scroll', updateBackButtonPlacement, { passive: true });
 window.addEventListener('resize', updateScrollTopButtonVisibility);
+window.addEventListener('resize', updateBackButtonPlacement);
 
 bootstrapApp({
   state,

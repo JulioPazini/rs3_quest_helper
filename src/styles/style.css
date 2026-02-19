@@ -923,15 +923,16 @@ header.hidden {
   flex-wrap: nowrap;
 }
 
+.nav-left #backButton {
+  position: absolute;
+  left: 0;
+}
+
 .nav-center {
   display: flex;
   justify-content: stretch;
   align-items: center;
   width: 100%;
-}
-
-.nav-link {
-  display: none;
 }
 
 .wiki-link {
@@ -1028,12 +1029,6 @@ header.hidden {
 
 .nav-left .filter-toggle {
   margin-left: 2px;
-}
-
-.nav-actions {
-  display: inline-flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .jump-current-btn {
