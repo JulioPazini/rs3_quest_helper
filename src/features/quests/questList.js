@@ -54,7 +54,6 @@ const parseMembership = (cell) => {
 };
 
 let questList = [];
-let questListLoading = false;
 let questListLoadingPromise = null;
 
 const fetchJsonWithTimeoutRetry = async (
@@ -100,7 +99,6 @@ export const loadQuestList = async () => {
       if (valid) return;
       questList = [];
     }
-    questListLoading = true;
     const cacheRaw = localStorage.getItem(cacheKey);
     if (cacheRaw) {
       const cached = JSON.parse(cacheRaw);
@@ -314,7 +312,6 @@ export const loadQuestList = async () => {
       }
     })
     .finally(() => {
-      questListLoading = false;
       questListLoadingPromise = null;
     });
   return questListLoadingPromise;

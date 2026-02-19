@@ -64,3 +64,88 @@ test('saveUiPreferences/loadUiPreferences roundtrip', () => {
   assert.equal(loaded.showAllSteps, false);
   assert.equal(loaded.hideCompleted, true);
 });
+
+test('progress service handles null inputs, missing keys and storage/json failures', () => {
+  const throwingStorage = {
+    getItem() {
+      throw new Error('read error');
+    },
+    setItem() {
+      throw new Error('write error');
+    },
+  };
+
+  assert.deepEqual(getCheckedIndices(null), []);
+  const items = [{ type: 'step', checked: false }];
+  applyCheckedIndices(items, null);
+  assert.equal(items[0].checked, false);
+
+  // no questKey should do nothing and return null on load
+  saveProgress({
+    storage: throwingStorage,
+    questKey: '',
+    items,
+    overviewChecks: null,
+  });
+  assert.equal(loadProgress({ storage: throwingStorage, questKey: '' }), null);
+
+  // storage failures are ignored and return null/defaults
+  saveProgress({
+    storage: throwingStorage,
+    questKey: 'k',
+    items,
+    overviewChecks: null,
+  });
+  assert.equal(loadProgress({ storage: throwingStorage, questKey: 'k' }), null);
+
+  const malformedStorage = {
+    getItem() {
+      return '{bad json';
+    },
+    setItem() {},
+  };
+  assert.equal(loadProgress({ storage: malformedStorage, questKey: 'k' }), null);
+});
+
+test('loadUiPreferences applies defaults for missing/invalid values', () => {
+  const storage = createMemoryStorage();
+  assert.deepEqual(loadUiPreferences({ storage, key: 'missing' }), {
+    showAllSteps: true,
+    hideCompleted: false,
+  });
+
+  storage.setItem(
+    'prefsPartial',
+    JSON.stringify({
+      showAllSteps: 'yes',
+      hideCompleted: true,
+    })
+  );
+  assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial' }), {
+    showAllSteps: true,
+    hideCompleted: true,
+  });
+
+  storage.setItem(
+    'prefsPartial2',
+    JSON.stringify({
+      showAllSteps: false,
+      hideCompleted: 'no',
+    })
+  );
+  assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial2' }), {
+    showAllSteps: false,
+    hideCompleted: false,
+  });
+
+  const badStorage = {
+    getItem() {
+      return '{broken';
+    },
+    setItem() {},
+  };
+  assert.deepEqual(loadUiPreferences({ storage: badStorage, key: 'x' }), {
+    showAllSteps: true,
+    hideCompleted: false,
+  });
+});

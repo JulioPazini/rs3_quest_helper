@@ -315,7 +315,6 @@ export function extractQuickGuide(html) {
 
   const result = [];
   let lastHeader = null;
-  let lastTitleIndex = null;
   let finished = false;
 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
@@ -766,7 +765,6 @@ export function extractQuickGuide(html) {
           sectionImages,
           sectionAdvancedMaps,
         });
-        lastTitleIndex = result.length - 1;
       }
       continue;
     }

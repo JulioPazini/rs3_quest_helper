@@ -59,7 +59,7 @@ const renderOverviewSkeleton = (overviewDiv) => {
   `;
 };
 
-export async function resolveQuestTitle(input, onWikiDebug) {
+export async function resolveQuestTitle(input) {
   const url =
     'https://runescape.wiki/api.php' +
     '?action=query' +
@@ -123,9 +123,9 @@ const isQuestGuideHtml = (html) => {
   return Boolean(overview) || stepCount > 0;
 };
 
-const resolveQuestGuideData = async (questName, onWikiDebug) => {
+const resolveQuestGuideData = async (questName) => {
   const candidates = buildGuideCandidates(questName);
-  const resolvedTitle = await resolveQuestTitle(questName, onWikiDebug);
+  const resolvedTitle = await resolveQuestTitle(questName);
   if (
     resolvedTitle &&
     !candidates.some((item) => item.toLowerCase() === String(resolvedTitle).toLowerCase())
@@ -176,7 +176,6 @@ export async function loadQuest(questName, ctx) {
   const {
     stepsDiv,
     overviewDiv,
-    renderOverview,
     renderOverviewWithState,
     renderTitle,
     updateToggleState,
@@ -190,7 +189,6 @@ export async function loadQuest(questName, ctx) {
     clearSearchResults,
     toggleButton,
     progressIndicator,
-    hideCompletedCheckbox,
     toggleBar,
     playerBar,
     headerEl,
@@ -202,7 +200,6 @@ export async function loadQuest(questName, ctx) {
     backButton,
     saveProgress,
     updateProgress,
-    onWikiDebug,
   } = ctx;
 
   renderStepsSkeleton(stepsDiv);
@@ -225,7 +222,7 @@ export async function loadQuest(questName, ctx) {
   }
 
   try {
-    const resolved = await resolveQuestGuideData(questName, onWikiDebug);
+    const resolved = await resolveQuestGuideData(questName);
     if (!resolved) {
       stepsDiv.innerHTML = 'Quest not found.';
       stepsDiv.classList.remove('hidden');

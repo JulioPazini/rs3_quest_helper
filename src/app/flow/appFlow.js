@@ -19,7 +19,6 @@ export const returnToHome = async (ctx) => {
     navBar,
     filterToggle,
     progressIndicator,
-    hideCompletedCheckbox,
     prevStepButton,
     nextStepButton,
     backButton,
