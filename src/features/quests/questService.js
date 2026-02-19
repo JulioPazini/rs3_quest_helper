@@ -5,7 +5,7 @@ import {
   getQuestOverview,
 } from './questParser.js';
 import { renderSteps } from './questRender.js';
-import { showSearchControls, hideActionBars, showToggleBar } from '../../shared/ui/uiControls.js';
+import { showSearchControls, hideActionBars } from '../../shared/ui/uiControls.js';
 
 const fetchJsonWithTimeoutRetry = async (
   url,
@@ -192,6 +192,7 @@ export async function loadQuest(questName, ctx) {
     progressIndicator,
     hideCompletedCheckbox,
     toggleBar,
+    playerBar,
     headerEl,
     wikiLink,
     applyCheckedIndices,
@@ -208,6 +209,8 @@ export async function loadQuest(questName, ctx) {
   renderTitle(questName, null);
   updateToggleState(state.showAllSteps);
   setLoading(true);
+  if (toggleBar) toggleBar.classList.add('hidden');
+  if (playerBar) playerBar.classList.add('hidden');
   hideActionBars(navBar, filterToggle);
   clearSearchResults();
   if (overviewDiv) {
@@ -339,8 +342,6 @@ export async function loadQuest(questName, ctx) {
     if (setQuestViewMode) {
       setQuestViewMode(false);
     }
-    showToggleBar(toggleBar);
-    if (toggleBar) toggleBar.classList.add('search-closed');
     toggleButton.classList.remove('hidden');
     if (backButton) backButton.classList.remove('hidden');
     updateProgress();

@@ -11,6 +11,7 @@ export const bootstrapApp = (deps) => {
     toggleButton,
     showSearchControls,
     toggleBar,
+    playerBar,
     stepsDiv,
     backButton,
     bindSearchEvents,
@@ -57,6 +58,8 @@ export const bootstrapApp = (deps) => {
     if (nextStepButton) nextStepButton.disabled = true;
     toggleButton.classList.add('hidden');
     showSearchControls(toggleBar);
+    if (toggleBar) toggleBar.classList.remove('hidden');
+    if (playerBar) playerBar.classList.remove('hidden');
     stepsDiv.textContent = 'Ready to search. Type a quest name.';
     if (backButton) backButton.classList.add('hidden');
   };

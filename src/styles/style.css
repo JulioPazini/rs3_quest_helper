@@ -189,7 +189,8 @@ header.hidden {
 }
 
 .toggle-bar .toggle,
-.nav-bar .toggle {
+.nav-bar .toggle,
+.view-mode-toggle .toggle {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -205,18 +206,21 @@ header.hidden {
 }
 
 .toggle-bar .toggle:hover,
-.nav-bar .toggle:hover {
+.nav-bar .toggle:hover,
+.view-mode-toggle .toggle:hover {
   filter: brightness(1.15);
 }
 
 .toggle-bar .toggle.active,
-.nav-bar .toggle.active {
+.nav-bar .toggle.active,
+.view-mode-toggle .toggle.active {
   color: #9ae6b4;
   text-shadow: 0 0 6px rgba(154, 230, 180, 0.4);
 }
 
 .toggle-bar .toggle.hidden,
-.nav-bar .toggle.hidden {
+.nav-bar .toggle.hidden,
+.view-mode-toggle .toggle.hidden {
   display: none;
 }
 
@@ -486,6 +490,10 @@ header.hidden {
   justify-content: flex-start;
   align-items: center;
   gap: 8px;
+}
+
+.player-bar.hidden {
+  display: none;
 }
 
 .toggle-bar.hidden {
@@ -915,11 +923,6 @@ header.hidden {
   flex-wrap: nowrap;
 }
 
-.nav-left #backButton {
-  position: absolute;
-  left: 0;
-}
-
 .nav-center {
   display: flex;
   justify-content: stretch;
@@ -1090,6 +1093,13 @@ header.hidden {
   transform: translateY(-50%);
 }
 
+.sticky-bar #wikiLink {
+  position: absolute;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .sticky-bar .sticky-action-btn {
   width: 32px;
   height: 32px;
@@ -1212,7 +1222,7 @@ header.hidden {
   align-items: center;
 }
 
-.view-mode-toggle .wiki-link {
+.view-mode-toggle #backButton {
   grid-column: 1;
   justify-self: start;
 }

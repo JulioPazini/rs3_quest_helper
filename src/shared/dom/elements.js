@@ -23,6 +23,7 @@ export const getAppElements = (doc = document) => ({
   headerEl: doc.querySelector('header'),
   navBar: doc.querySelector('.nav-bar'),
   toggleBar: doc.querySelector('.toggle-bar'),
+  playerBar: doc.querySelector('.player-bar'),
   stickyBar: doc.getElementById('stickyBar'),
   scrollTopButton: doc.getElementById('scrollTopButton'),
 });

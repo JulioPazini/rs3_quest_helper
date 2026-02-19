@@ -64,7 +64,15 @@
     <section id="questTitle"></section>
 
     <section id="viewModeToggle" class="view-mode-toggle hidden">
-      <a id="wikiLink" class="wiki-link" href="#" target="_blank" rel="noopener">Wiki</a>
+      <button
+        id="backButton"
+        class="toggle hidden"
+        type="button"
+        title="Back to quests"
+        aria-label="Back to quests"
+      >
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
       <span class="mode-label">Overview</span>
       <button id="viewStepsToggle" class="nav-btn" type="button">
         <span class="material-symbols-outlined">list</span>
@@ -74,15 +82,6 @@
 
     <section class="nav-bar hidden">
       <div class="nav-left">
-        <button
-          id="backButton"
-          class="toggle hidden"
-          type="button"
-          title="Back to quests"
-          aria-label="Back to quests"
-        >
-          <span class="material-symbols-outlined">arrow_back</span>
-        </button>
         <button
           id="toggleAll"
           class="toggle switch-toggle"
@@ -126,6 +125,7 @@
       >
         <span class="material-symbols-outlined">restart_alt</span>
       </button>
+      <a id="wikiLink" class="wiki-link" href="#" target="_blank" rel="noopener">Wiki</a>
       <button
         id="prevStep"
         class="nav-btn sticky-action-btn"

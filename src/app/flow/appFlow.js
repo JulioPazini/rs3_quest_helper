@@ -14,6 +14,7 @@ export const returnToHome = async (ctx) => {
     clearSearchResults,
     input,
     toggleBar,
+    playerBar,
     buildSearchRenderParams,
     navBar,
     filterToggle,
@@ -48,6 +49,7 @@ export const returnToHome = async (ctx) => {
   state.searchQuery = '';
   renderSearchResults(buildSearchRenderParams(true));
   showToggleBar(toggleBar);
+  if (playerBar) playerBar.classList.remove('hidden');
   showMessage(stepsDiv, 'Ready to search. Type a quest name.', navBar, filterToggle);
   if (progressIndicator) progressIndicator.classList.add('hidden');
   if (prevStepButton) prevStepButton.disabled = true;
