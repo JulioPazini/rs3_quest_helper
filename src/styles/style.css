@@ -907,11 +907,17 @@ header.hidden {
 
 .nav-left {
   display: inline-flex;
+  position: relative;
   align-items: center;
   gap: 8px;
   width: 100%;
   justify-content: center;
   flex-wrap: nowrap;
+}
+
+.nav-left #backButton {
+  position: absolute;
+  left: 0;
 }
 
 .nav-center {
