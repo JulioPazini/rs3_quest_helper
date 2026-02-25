@@ -391,20 +391,52 @@ export function extractQuickGuide(html) {
   const getSectionImageData = (el) => {
     if (!el || !el.querySelectorAll) return [];
     const out = [];
+    const seenSrc = new Set();
+    const normalizeSrc = (rawSrc) => {
+      let src = rawSrc || '';
+      if (!src) return '';
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
+      return src;
+    };
+    const pushImageData = ({ rawSrc, alt = '', caption = '' }) => {
+      const src = normalizeSrc(rawSrc);
+      if (!src || seenSrc.has(src)) return;
+      seenSrc.add(src);
+      out.push({
+        src,
+        alt: String(alt || '').trim(),
+        caption: String(caption || '').trim(),
+      });
+    };
+
     const figures = el.matches('figure') ? [el] : Array.from(el.querySelectorAll('figure'));
     figures.forEach((figure) => {
       if (figure.closest('.advanced-map, .mw-kartographer-container')) return;
       if (figure.closest('table, .messagebox, .lighttable')) return;
       const img = figure.querySelector('img');
       if (!img) return;
-      let src = img.getAttribute('src') || '';
-      if (!src) return;
-      if (src.startsWith('//')) src = 'https:' + src;
-      if (src.startsWith('/')) src = 'https://runescape.wiki' + src;
-      const alt = (img.getAttribute('alt') || '').trim();
+      const rawSrc = img.getAttribute('src') || '';
+      if (!rawSrc) return;
+      const alt = img.getAttribute('alt') || '';
       const captionEl = figure.querySelector('figcaption');
       const caption = captionEl ? captionEl.textContent.replace(/\s+/g, ' ').trim() : '';
-      out.push({ src, alt, caption });
+      pushImageData({ rawSrc, alt, caption });
+    });
+
+    // Some quick guides place image galleries in dl/dd > table blocks.
+    // Keep table parsing behavior unchanged, but still surface those images.
+    const tableImgs = el.matches('table img')
+      ? [el]
+      : Array.from(el.querySelectorAll('table img, dl img, dd img'));
+    tableImgs.forEach((img) => {
+      if (!img) return;
+      if (img.closest('.advanced-map, .mw-kartographer-container')) return;
+      if (img.closest('figure, .messagebox, .lighttable')) return;
+      const rawSrc = img.getAttribute('src') || '';
+      if (!rawSrc) return;
+      const alt = img.getAttribute('alt') || '';
+      pushImageData({ rawSrc, alt });
     });
     return out;
   };
