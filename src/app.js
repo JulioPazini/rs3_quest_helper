@@ -82,6 +82,13 @@ const normalizeQuestLookupKey = (title) =>
     .trim()
     .toLowerCase();
 
+const resolveQuestTitleFromAppList = (candidateTitle) => {
+  const lookupKey = normalizeQuestLookupKey(candidateTitle);
+  if (!lookupKey) return null;
+  const match = getQuestList().find((item) => normalizeQuestLookupKey(item?.title) === lookupKey);
+  return match && match.title ? match.title : null;
+};
+
 // State helpers
 const getFilteredResults = () =>
   filterQuestResults({
@@ -358,6 +365,17 @@ const renderOverviewWithCurrentState = (overview, target) =>
     savedChecks: state.overviewChecks,
     playerQuestMeta: state.playerQuestMeta,
     playerSkills: state.playerSkills,
+    onQuestNavigate: (questName) => {
+      const appQuestTitle = resolveQuestTitleFromAppList(questName);
+      if (!appQuestTitle) {
+        showUiToast('This entry is not a quest in the app list.', {
+          position: 'top-right',
+          type: 'error',
+        });
+        return;
+      }
+      loadQuest(appQuestTitle, buildQuestContext());
+    },
     onToggle: (key, checked) => {
       state.overviewChecks = {
         ...(state.overviewChecks || {}),

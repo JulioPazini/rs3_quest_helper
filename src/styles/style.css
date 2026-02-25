@@ -424,6 +424,40 @@ header.hidden {
   color: #ffe6a6;
 }
 
+.quest-overview .overview-quest-nav-link {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: #f4d97a;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.quest-overview .overview-quest-nav-link:hover {
+  color: #ffe6a6;
+  text-decoration: underline;
+}
+
+.quest-overview .overview-quest-wiki-link {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  color: #d1c6a3;
+  text-decoration: none;
+  margin-left: 2px;
+}
+
+.quest-overview .overview-quest-wiki-link:hover {
+  color: #ffe6a6;
+}
+
+.quest-overview .overview-quest-wiki-link .material-symbols-outlined {
+  font-size: 13px;
+  line-height: 1;
+}
+
 .quest-status-marker {
   margin-left: 6px;
   font-size: 12px;

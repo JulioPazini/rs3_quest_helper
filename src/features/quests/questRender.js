@@ -237,7 +237,8 @@ const applyQuestStatusMarkers = (container, playerQuestMeta) => {
   if (!container || !playerQuestMeta) return;
   const items = container.querySelectorAll('li');
   items.forEach((li) => {
-    const markerTarget = li.querySelector('a') || li;
+    const markerTarget =
+      li.querySelector('.overview-quest-nav-link, a:not(.overview-quest-wiki-link)') || li;
     if (!markerTarget) return;
     const questTitle = normalizeQuestKey(markerTarget.textContent);
     if (!questTitle) return;
@@ -256,6 +257,64 @@ const applyQuestStatusMarkers = (container, playerQuestMeta) => {
       isCompleted ? 'Quest completed' : isStarted ? 'Quest started' : `Quest status: ${meta.status}`
     );
     markerTarget.insertAdjacentElement('afterend', marker);
+  });
+};
+
+const normalizeWikiHref = (href) => {
+  let value = String(href || '').trim();
+  if (!value) return '';
+  if (value.startsWith('//')) value = 'https:' + value;
+  if (value.startsWith('/')) value = 'https://runescape.wiki' + value;
+  return value;
+};
+
+const enhanceRequirementsQuestLinks = (container, onQuestNavigate) => {
+  if (!container) return;
+  const listItems = container.querySelectorAll('li');
+  listItems.forEach((li) => {
+    const anchors = Array.from(li.querySelectorAll('a[href]')).filter(
+      (a) => !a.classList.contains('overview-quest-wiki-link')
+    );
+    const questAnchor =
+      anchors.find((a) => {
+        const text = a.textContent.replace(/\s+/g, ' ').trim();
+        if (!text) return false;
+        if (/^open_in_new$/i.test(text)) return false;
+        return true;
+      }) || null;
+    if (!questAnchor) return;
+    const questName = questAnchor.textContent.replace(/\s+/g, ' ').trim();
+    if (!questName) return;
+    const wikiHref = normalizeWikiHref(questAnchor.getAttribute('href'));
+    if (!wikiHref) return;
+
+    const navButton = document.createElement('button');
+    navButton.type = 'button';
+    navButton.className = 'overview-quest-nav-link';
+    navButton.textContent = questName;
+    navButton.title = `Open ${questName}`;
+    navButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof onQuestNavigate === 'function') {
+        onQuestNavigate(questName);
+      }
+    });
+
+    const wikiLink = document.createElement('a');
+    wikiLink.className = 'overview-quest-wiki-link';
+    wikiLink.href = wikiHref;
+    wikiLink.target = '_blank';
+    wikiLink.rel = 'noopener';
+    wikiLink.title = `Open wiki`;
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.textContent = 'open_in_new';
+    wikiLink.appendChild(icon);
+
+    questAnchor.replaceWith(navButton);
+    navButton.insertAdjacentText('afterend', ' ');
+    navButton.insertAdjacentElement('afterend', wikiLink);
   });
 };
 
@@ -1454,7 +1513,7 @@ export const renderOverview = (overview, overviewEl, options = {}) => {
     overviewEl.classList.add('hidden');
     return;
   }
-  const { onToggle, savedChecks, playerQuestMeta, playerSkills } = options;
+  const { onToggle, savedChecks, playerQuestMeta, playerSkills, onQuestNavigate } = options;
 
   const sections = [
     { key: 'requirementsQuests', title: 'Quests', iconKey: 'requirementsQuestsIcon' },
@@ -1483,6 +1542,7 @@ export const renderOverview = (overview, overviewEl, options = {}) => {
     block.className = 'overview-section';
     block.innerHTML = html;
     if (section.key === 'requirementsQuests') {
+      enhanceRequirementsQuestLinks(block, onQuestNavigate);
       applyQuestStatusMarkers(block, playerQuestMeta);
     }
     if (section.key === 'requirementsSkills') {

@@ -279,6 +279,7 @@ test('renderOverview renders checklist with toggles and status markers', () => {
   const overviewEl = dom.window.document.getElementById('overview');
 
   const toggled = [];
+  const navigated = [];
   renderOverview(
     {
       requirementsQuests: '<ul><li><a href="/w/The_Feud">The Feud</a></li></ul>',
@@ -291,6 +292,7 @@ test('renderOverview renders checklist with toggles and status markers', () => {
     overviewEl,
     {
       onToggle: (key, checked) => toggled.push([key, checked]),
+      onQuestNavigate: (questName) => navigated.push(questName),
       savedChecks: { 'requiredItems:0': true },
       playerQuestMeta: { 'the feud': { status: 'COMPLETED' } },
       playerSkills: { attack: 60 },
@@ -300,6 +302,15 @@ test('renderOverview renders checklist with toggles and status markers', () => {
   assert.ok(!overviewEl.classList.contains('hidden'));
   assert.ok(overviewEl.querySelector('.overview-title-icon'));
   assert.ok(overviewEl.querySelector('.quest-status-marker.complete'));
+  const questNavButton = overviewEl.querySelector('.overview-quest-nav-link');
+  assert.ok(questNavButton);
+  assert.equal(questNavButton.textContent.trim(), 'The Feud');
+  const wikiLink = overviewEl.querySelector('.overview-quest-wiki-link');
+  assert.ok(wikiLink);
+  assert.equal(wikiLink.getAttribute('href'), 'https://runescape.wiki/w/The_Feud');
+  assert.equal(wikiLink.querySelector('.material-symbols-outlined')?.textContent, 'open_in_new');
+  questNavButton.click();
+  assert.deepEqual(navigated, ['The Feud']);
   const checklistBox = overviewEl.querySelector('input.overview-check');
   assert.ok(checklistBox);
   assert.equal(checklistBox.checked, true);
@@ -335,6 +346,30 @@ test('renderOverview handles null overview and "none" checklist styles', () => {
   assert.ok(overviewEl.querySelector('.quest-status-marker.started'));
   assert.ok(overviewEl.querySelector('.quest-status-marker.incomplete'));
   assert.ok(overviewEl.querySelectorAll('.overview-bulleted').length >= 1);
+});
+
+test('renderOverview ignores open_in_new icon links when creating quest nav button', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="overview"></div></body></html>');
+  setDomGlobals(dom);
+  const overviewEl = dom.window.document.getElementById('overview');
+  const navigated = [];
+
+  renderOverview(
+    {
+      requirementsQuests:
+        '<ul><li><a href="/w/IconLink">open_in_new</a> <a href="/w/Priest_in_Peril">Priest in Peril</a></li></ul>',
+    },
+    overviewEl,
+    {
+      onQuestNavigate: (questName) => navigated.push(questName),
+    }
+  );
+
+  const questNavButtons = overviewEl.querySelectorAll('.overview-quest-nav-link');
+  assert.equal(questNavButtons.length, 1);
+  assert.equal(questNavButtons[0].textContent.trim(), 'Priest in Peril');
+  questNavButtons[0].click();
+  assert.deepEqual(navigated, ['Priest in Peril']);
 });
 
 test('renderOverview hides when provided object has no usable sections', () => {
