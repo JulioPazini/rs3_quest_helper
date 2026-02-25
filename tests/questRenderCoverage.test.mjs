@@ -965,7 +965,7 @@ test('renderSteps handles malformed kartographerLiveData string safely', () => {
   assert.ok(stepsDiv.querySelector('.section-advanced-maps'));
 });
 
-test('renderSteps updates substep checkbox state and persists progress', () => {
+test('renderSteps updates substep checkbox state, marks parent step, and persists progress', () => {
   const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
   setDomGlobals(dom);
   const stepsDiv = dom.window.document.getElementById('steps');
@@ -985,12 +985,20 @@ test('renderSteps updates substep checkbox state and persists progress', () => {
     },
     {
       type: 'step',
+      text: 'Previous',
+      html: 'Previous',
+      checked: false,
+      substeps: [],
+    },
+    {
+      type: 'step',
       text: 'A',
       html: 'A',
       checked: false,
       substeps: [{ text: 'sub', html: 'sub', checked: false, substeps: [] }],
     },
   ];
+  let rerenders = 0;
   renderSteps({
     items,
     stepsDiv,
@@ -1008,6 +1016,68 @@ test('renderSteps updates substep checkbox state and persists progress', () => {
     saveProgress: () => {
       saves += 1;
     },
+    renderStepsFn: () => {
+      rerenders += 1;
+    },
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+  const checkbox = stepsDiv.querySelector('.substep-check');
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+  assert.equal(items[2].substeps[0].checked, true);
+  assert.equal(items[2].checked, true);
+  assert.equal(items[1].checked, true);
+  assert.equal(saves, 1);
+  assert.equal(rerenders, 1);
+});
+
+test('renderSteps does not demote an already completed parent step on partial substep changes', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    {
+      type: 'title',
+      text: 'S',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [],
+      sectionAdvancedMaps: [],
+    },
+    {
+      type: 'step',
+      text: 'A',
+      html: 'A',
+      checked: true,
+      substeps: [
+        { text: 'sub1', html: 'sub1', checked: false, substeps: [] },
+        { text: 'sub2', html: 'sub2', checked: false, substeps: [] },
+      ],
+    },
+  ];
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
     renderStepsFn: () => {},
     formatStepHtml: (v) => v,
     updateProgress: () => {},
@@ -1019,7 +1089,7 @@ test('renderSteps updates substep checkbox state and persists progress', () => {
   checkbox.checked = true;
   checkbox.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
   assert.equal(items[1].substeps[0].checked, true);
-  assert.equal(saves, 1);
+  assert.equal(items[1].checked, true);
 });
 
 test('renderSteps single mode shows quest-complete section images and reward image', () => {

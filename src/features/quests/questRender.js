@@ -901,7 +901,23 @@ export const renderSteps = (params) => {
     stepsDiv.appendChild(wrap);
   };
 
-  const buildSubstepsList = (substeps, listClassName = 'substeps') => {
+  const areAllDirectSubstepsChecked = (substeps) =>
+    Array.isArray(substeps) &&
+    substeps.length > 0 &&
+    substeps.every((substep) => Boolean(substep?.checked));
+
+  const markPreviousStepsAsCompleted = (targetStep) => {
+    if (!targetStep) return;
+    const targetIndex = items.findIndex((item) => item === targetStep);
+    if (targetIndex <= 0) return;
+    for (let i = 0; i < targetIndex; i += 1) {
+      if (items[i]?.type === 'step') {
+        items[i].checked = true;
+      }
+    }
+  };
+
+  const buildSubstepsList = (substeps, listClassName = 'substeps', parentStep = null) => {
     if (!Array.isArray(substeps) || substeps.length === 0) return null;
     const list = document.createElement('ul');
     list.className = listClassName;
@@ -918,7 +934,15 @@ export const renderSteps = (params) => {
         });
         checkbox.addEventListener('change', () => {
           substep.checked = checkbox.checked;
+          if (parentStep) {
+            const allSubstepsChecked = areAllDirectSubstepsChecked(substeps);
+            if (!parentStep.checked && allSubstepsChecked) {
+              parentStep.checked = true;
+              markPreviousStepsAsCompleted(parentStep);
+            }
+          }
           saveProgress();
+          renderStepsFn(items);
         });
         li.appendChild(checkbox);
       }
@@ -928,7 +952,7 @@ export const renderSteps = (params) => {
       textWrap.innerHTML = substep.html || substep.text || '';
       li.appendChild(textWrap);
 
-      const nestedList = buildSubstepsList(substep.substeps, 'substeps-nested');
+      const nestedList = buildSubstepsList(substep.substeps, 'substeps-nested', parentStep);
       if (nestedList) {
         li.appendChild(nestedList);
       }
@@ -1131,7 +1155,7 @@ export const renderSteps = (params) => {
         stepsDiv.appendChild(stepEl);
 
         if (sectionItem.substeps && sectionItem.substeps.length > 0) {
-          const list = buildSubstepsList(sectionItem.substeps);
+          const list = buildSubstepsList(sectionItem.substeps, 'substeps', sectionItem);
           if (list) {
             stepsDiv.appendChild(list);
           }
@@ -1367,7 +1391,7 @@ export const renderSteps = (params) => {
   stepsDiv.appendChild(stepEl);
 
   if (step.substeps && step.substeps.length > 0) {
-    const list = buildSubstepsList(step.substeps);
+    const list = buildSubstepsList(step.substeps, 'substeps', step);
     if (list) {
       stepsDiv.appendChild(list);
     }
