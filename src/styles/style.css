@@ -1054,7 +1054,7 @@ header.hidden {
   padding: 8px 10px;
   border-top: 2px solid var(--border);
   background: linear-gradient(180deg, #2f281a, #241f14);
-  z-index: 5;
+  z-index: 1250;
 }
 
 .sticky-bar.hidden {
@@ -1122,7 +1122,7 @@ header.hidden {
   position: fixed;
   right: 10px;
   bottom: 56px;
-  z-index: 6;
+  z-index: 1260;
   width: 32px;
   height: 32px;
   padding: 0;
