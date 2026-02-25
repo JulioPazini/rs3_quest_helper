@@ -297,6 +297,29 @@ test('extractQuickGuide captures images inside dl/dd tables without promoting ta
   );
 });
 
+test('extractQuickGuide ignores images inside questdetails overview table', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Steps</h2>
+        <table class="questdetails plainlinks">
+          <tr><td><img src="/images/from_overview.png" alt="overview image"></td></tr>
+        </table>
+        <figure><img src="/images/valid_step_image.png" alt="valid image"></figure>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const title = items.find((i) => i.type === 'title' && i.text === 'Steps');
+  assert.ok(title);
+  assert.equal(title.sectionImages.length, 1);
+  assert.equal(title.sectionImages[0].src, 'https://runescape.wiki/images/valid_step_image.png');
+});
+
 test('getRewardImage stops at next heading and falls back safely when no valid image src', () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
   setDomGlobals(dom);

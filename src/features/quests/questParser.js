@@ -413,6 +413,7 @@ export function extractQuickGuide(html) {
     const figures = el.matches('figure') ? [el] : Array.from(el.querySelectorAll('figure'));
     figures.forEach((figure) => {
       if (figure.closest('.advanced-map, .mw-kartographer-container')) return;
+      if (figure.closest('table.questdetails')) return;
       if (figure.closest('table, .messagebox, .lighttable')) return;
       const img = figure.querySelector('img');
       if (!img) return;
@@ -432,6 +433,7 @@ export function extractQuickGuide(html) {
     tableImgs.forEach((img) => {
       if (!img) return;
       if (img.closest('.advanced-map, .mw-kartographer-container')) return;
+      if (img.closest('table.questdetails')) return;
       if (img.closest('figure, .messagebox, .lighttable')) return;
       const rawSrc = img.getAttribute('src') || '';
       if (!rawSrc) return;
