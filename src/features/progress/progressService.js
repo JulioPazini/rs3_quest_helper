@@ -20,8 +20,14 @@ export const applyCheckedIndices = (items, indices) => {
 export const saveProgress = ({ storage = localStorage, questKey, items, overviewChecks }) => {
   if (!questKey) return;
   try {
+    const stepItems = (items || []).filter((item) => item.type === 'step');
+    const checkedSteps = stepItems.filter((item) => item.checked).length;
     const payload = {
       checkedIndices: getCheckedIndices(items || []),
+      stepProgress: {
+        checkedSteps,
+        totalSteps: stepItems.length,
+      },
       overviewChecks: overviewChecks || {},
     };
     storage.setItem(questKey, JSON.stringify(payload));

@@ -49,6 +49,7 @@ test('saveProgress/loadProgress persist quest payload', () => {
   });
   const loaded = loadProgress({ storage, questKey });
   assert.deepEqual(loaded.checkedIndices, [0]);
+  assert.deepEqual(loaded.stepProgress, { checkedSteps: 1, totalSteps: 2 });
   assert.deepEqual(loaded.overviewChecks, { a: true });
 });
 

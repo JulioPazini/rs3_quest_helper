@@ -89,12 +89,65 @@ const resolveQuestTitleFromAppList = (candidateTitle) => {
   return match && match.title ? match.title : null;
 };
 
+const getLocalProgressQuestMeta = () => {
+  const out = {};
+  const prefix = 'questProgress:';
+  const keys = [];
+  try {
+    if (localStorage && typeof localStorage.length === 'number' && typeof localStorage.key === 'function') {
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (key) keys.push(key);
+      }
+    } else {
+      keys.push(...Object.keys(localStorage || {}));
+    }
+  } catch (_err) {
+    // ignore key enumeration failures
+  }
+
+  keys.forEach((key) => {
+    if (!key || !key.startsWith(prefix)) return;
+    const questTitle = key.slice(prefix.length).trim();
+    if (!questTitle) return;
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(localStorage.getItem(key) || 'null');
+    } catch (_err) {
+      parsed = null;
+    }
+    if (!parsed || typeof parsed !== 'object') return;
+
+    const checkedSteps = Number(parsed?.stepProgress?.checkedSteps);
+    const totalSteps = Number(parsed?.stepProgress?.totalSteps);
+    const checkedIndicesLen = Array.isArray(parsed?.checkedIndices) ? parsed.checkedIndices.length : 0;
+
+    let status = '';
+    if (Number.isFinite(totalSteps) && totalSteps > 0 && Number.isFinite(checkedSteps)) {
+      status = checkedSteps >= totalSteps ? 'completed' : checkedSteps > 0 ? 'started' : '';
+    } else if (checkedIndicesLen > 0) {
+      status = 'started';
+    }
+    if (!status) return;
+    const resolvedTitle = resolveQuestTitleFromAppList(questTitle) || questTitle;
+    out[normalizeTitleKey(resolvedTitle)] = { status };
+  });
+
+  return out;
+};
+
+const hasActivePlayerLookup = () =>
+  state.playerQuestFilter !== null ||
+  Boolean(String(state.playerName || '').trim()) ||
+  Object.keys(state.playerQuestMeta || {}).length > 0;
+
 // State helpers
 const getFilteredResults = () =>
   filterQuestResults({
     questList: getQuestList(),
     playerQuestFilter: state.playerQuestFilter,
-    playerQuestMeta: state.playerQuestMeta,
+    playerQuestMeta: hasActivePlayerLookup() ? state.playerQuestMeta : getLocalProgressQuestMeta(),
     searchQuery: state.searchQuery,
     selectedSeries: state.selectedSeries,
     normalizeTitleKey,
