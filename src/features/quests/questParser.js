@@ -69,6 +69,18 @@ export const formatStepHtml = (html, text) => {
   }
   return wrap.innerHTML;
 };
+
+const isQuestCompleteTerminalStep = (text) => {
+  const normalized = String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  if (!normalized) return false;
+  if (/^quest complete\b/.test(normalized)) return true;
+  if (/^congratulations\b.*\bquest complete\b/.test(normalized)) return true;
+  if (/^you have completed\b/.test(normalized)) return true;
+  return false;
+};
 export const getQuestIcon = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -895,7 +907,7 @@ export function extractQuickGuide(html) {
           substeps,
         });
 
-        if (/quest complete/i.test(text)) {
+        if (isQuestCompleteTerminalStep(text)) {
           finished = true;
           break;
         }

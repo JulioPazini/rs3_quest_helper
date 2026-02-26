@@ -194,6 +194,31 @@ test('extractQuickGuide skips ignored headings and normalizes maps/links/images'
   assert.equal(steps.length, 1);
 });
 
+test('extractQuickGuide does not stop when "Quest Complete!" appears mid-sentence', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Main section</h2>
+        <div class="lighttable checklist">
+          <ul>
+            <li>You will get a kind of "Quest Complete!" notification, but there is one more step.</li>
+            <li>Use the key on the chest to finish the cleanup.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const steps = items.filter((i) => i.type === 'step');
+  assert.equal(steps.length, 2);
+  assert.match(steps[0].text, /Quest Complete!/);
+  assert.match(steps[1].text, /finish the cleanup/i);
+});
+
 test('formatStepHtml keeps raw html when no dialogue marker is present', () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
   setDomGlobals(dom);
