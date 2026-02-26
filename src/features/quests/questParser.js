@@ -447,6 +447,8 @@ export function extractQuickGuide(html) {
       if (img.closest('.advanced-map, .mw-kartographer-container')) return;
       if (img.closest('table.questdetails')) return;
       if (img.closest('figure, .messagebox, .lighttable')) return;
+      const closestTable = img.closest('table');
+      if (closestTable && isRelevantStandaloneTable(closestTable)) return;
       const rawSrc = img.getAttribute('src') || '';
       if (!rawSrc) return;
       const alt = img.getAttribute('alt') || '';

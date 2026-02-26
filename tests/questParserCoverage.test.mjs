@@ -322,6 +322,32 @@ test('extractQuickGuide captures images inside dl/dd tables without promoting ta
   );
 });
 
+test('extractQuickGuide avoids duplicating images from standalone section tables', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Section With Table</h2>
+        <table class="wikitable">
+          <tbody>
+            <tr>
+              <td><img src="/images/inside_table.png" alt="inside table"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const title = items.find((i) => i.type === 'title' && i.text === 'Section With Table');
+  assert.ok(title);
+  assert.equal(title.sectionTables.length, 1);
+  assert.equal(title.sectionImages.length, 0);
+});
+
 test('extractQuickGuide ignores images inside questdetails overview table', () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
   setDomGlobals(dom);
