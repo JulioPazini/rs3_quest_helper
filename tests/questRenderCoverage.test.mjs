@@ -767,10 +767,10 @@ test('renderSteps handles map overlay edge cases and fallback pin', () => {
 
   const markers = stepsDiv.querySelectorAll('.leaflet-marker-icon');
   assert.ok(markers.length >= 1);
-  const converted = Array.from(markers).find((m) =>
-    (m.getAttribute('src') || '').startsWith('data:image/svg+xml')
+  const preserved = Array.from(markers).find((m) =>
+    (m.getAttribute('src') || '').includes('/images/custom_marker.png')
   );
-  assert.ok(converted, 'expected converted marker data uri');
+  assert.ok(preserved, 'expected existing map marker source to be preserved');
 
   const itemsFallback = [
     {
@@ -814,6 +814,74 @@ test('renderSteps handles map overlay edge cases and fallback pin', () => {
     (m.getAttribute('aria-label') || '').toLowerCase().includes('map pin')
   );
   assert.ok(fallback, 'expected fallback map pin marker');
+});
+
+test('renderSteps does not synthesize marker overlay when tiled map is already present', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+
+  const items = [
+    {
+      type: 'title',
+      text: 'Tiled Map',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [],
+      sectionAdvancedMaps: [
+        `<div class="advanced-map"><div class="amap-map"><a class="mw-kartographer-map" data-mw-kartographer data-width="700" data-height="400" data-lat="3418" data-lon="3188" data-plane="0" data-overlays='["ov"]' style="display:block;width:700px;height:400px;"><div class="leaflet-pane leaflet-map-pane"><div class="leaflet-pane leaflet-tile-pane"><div class="leaflet-layer"><div class="leaflet-tile-container"><img class="leaflet-tile" src="https://maps.runescape.wiki/tile.png"></div></div></div><div class="leaflet-pane leaflet-marker-pane"></div></div></a></div><div class="amap-key"><ul><li>k</li></ul></div></div>`,
+      ],
+    },
+  ];
+
+  const liveData = {
+    ov: [
+      {
+        features: [
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [3188, 3418, 0] },
+            properties: { iconWikiLink: '/images/pin_blue.svg', title: 'Should not render' },
+          },
+        ],
+      },
+    ],
+  };
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: liveData,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const markerPane = stepsDiv.querySelector('.leaflet-marker-pane');
+  assert.ok(markerPane, 'expected marker pane');
+  assert.equal(
+    markerPane.querySelectorAll('.leaflet-marker-icon').length,
+    0,
+    'expected no synthetic markers for tiled maps'
+  );
 });
 
 test('renderSteps showAllSteps click branches for marking and unmarking ranges', async () => {
@@ -953,6 +1021,70 @@ test('renderSteps renders dot and square-dot markers from live data', () => {
   });
   assert.ok(stepsDiv.querySelector('.leaflet-dot'));
   assert.ok(stepsDiv.querySelector('.leaflet-sqdot'));
+});
+
+test('renderSteps projects synthetic marker positions using map data-zoom scale', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+
+  const items = [
+    {
+      type: 'title',
+      text: 'Zoom map',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [],
+      sectionAdvancedMaps: [
+        `<div class="advanced-map"><div class="amap-map"><a class="mw-kartographer-map" data-mw-kartographer data-width="300" data-height="300" data-zoom="3" data-lat="3200" data-lon="3200" data-plane="0" data-overlays='["ov"]' style="display:block;width:300px;height:300px;background-image:url(https://example.test/tile.png);"><div class="leaflet-map-pane"></div></a></div><div class="amap-key"><ul><li>k</li></ul></div></div>`,
+      ],
+    },
+  ];
+
+  const liveData = {
+    ov: [
+      {
+        features: [
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [3201, 3200, 0] },
+            properties: { shape: 'Dot', fill: '#ff0000', title: 'z3 marker' },
+          },
+        ],
+      },
+    ],
+  };
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: liveData,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const marker = stepsDiv.querySelector('.leaflet-div-dot');
+  assert.ok(marker, 'expected synthetic marker');
+  assert.match(marker.getAttribute('style') || '', /translate3d\(158px,\s*150px,\s*0px\)/);
 });
 
 test('renderSteps handles malformed kartographerLiveData string safely', () => {

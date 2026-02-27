@@ -11,53 +11,6 @@ const LOCAL_PIN_BLUE =
       '<circle cx="13" cy="12.5" r="6.1" fill="#1e5fc7" stroke="#a7c8ff" stroke-width="1"/>' +
       '</g></svg>'
   );
-const MARKER_PROFILE_BY_KEYWORD = Object.freeze([
-  { key: 'azzanadra', label: 'AZ', color: '#7a48bf', title: 'Azzanadra' },
-  { key: 'ice_ward', label: 'IW', color: '#4f9fd8', title: 'Ice ward' },
-  { key: 'smoke_ward', label: 'SW', color: '#7a7a7a', title: 'Smoke ward' },
-  { key: 'blood_ward', label: 'BW', color: '#be3e3e', title: 'Blood ward' },
-  { key: 'shadow_ward', label: 'SH', color: '#493a6f', title: 'Shadow ward' },
-  { key: 'gargoyle', label: 'GG', color: '#7e6a58', title: 'Gargoyle sentinel' },
-  { key: 'bloodied_note', label: 'BN', color: '#8d3e33', title: 'Bloodied note' },
-  { key: 'torn_note', label: 'TN', color: '#8f7a52', title: 'Torn note' },
-  { key: 'scrawled_note', label: 'SN', color: '#5a6f8f', title: 'Scrawled note' },
-  { key: 'dungeon_exit', label: 'EX', color: '#48854f', title: 'Dungeon exit' },
-  { key: 'pin_blue', label: 'PB', color: '#2f86f5', title: 'Map pin' },
-]);
-const MARKER_DATA_URI_CACHE = new Map();
-
-const escapeSvgText = (value) =>
-  String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-
-const buildMarkerBadgeDataUri = (label, bgColor) => {
-  const safeLabel = escapeSvgText(label || '?')
-    .slice(0, 2)
-    .toUpperCase();
-  const color = String(bgColor || '#5a6a8f');
-  const cacheKey = `${safeLabel}|${color}`;
-  if (MARKER_DATA_URI_CACHE.has(cacheKey)) {
-    return MARKER_DATA_URI_CACHE.get(cacheKey);
-  }
-  const svg =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">' +
-    '<defs><filter id="s" x="-40%" y="-40%" width="180%" height="180%">' +
-    '<feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#000" flood-opacity=".35"/></filter></defs>' +
-    '<g filter="url(#s)"><circle cx="13" cy="13" r="10.5" fill="' +
-    color +
-    '" stroke="#efe8d2" stroke-width="1.5"/>' +
-    '<text x="13" y="16" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="8.5" font-weight="700" fill="#ffffff">' +
-    safeLabel +
-    '</text></g></svg>';
-  const uri = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-  MARKER_DATA_URI_CACHE.set(cacheKey, uri);
-  return uri;
-};
-
 const createMetaRow = (label, value) => {
   const row = document.createElement('div');
   row.className = 'search-item-meta-row';
@@ -623,17 +576,7 @@ export const renderSteps = (params) => {
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
 
-  const getMarkerProfileFromSource = (src) => {
-    const value = String(src || '').trim();
-    if (!value) return null;
-    const filename = getMarkerFileName(value);
-    const lowerSource = `${value} ${filename}`.toLowerCase();
-    return MARKER_PROFILE_BY_KEYWORD.find((profile) => lowerSource.includes(profile.key)) || null;
-  };
-
   const getMarkerTooltipFromSource = (src) => {
-    const profile = getMarkerProfileFromSource(src);
-    if (profile && profile.title) return profile.title;
     const filename = getMarkerFileName(src);
     const base = filename
       .replace(/\.[a-z0-9]+$/i, '')
@@ -680,30 +623,34 @@ export const renderSteps = (params) => {
     );
   };
 
-  const resolveMarkerIconSrc = (src) => {
+  const resolveLegendIconSrc = (src, contextEl) => {
+    const filename = getMarkerFileName(src);
+    if (!filename || !contextEl?.querySelectorAll) return '';
+    const mapRoot = contextEl.closest?.('.advanced-map') || contextEl;
+    if (!mapRoot) return '';
+    const legendIcons = mapRoot.querySelectorAll('.amap-key img[src]');
+    for (const legendImg of legendIcons) {
+      const legendSrc = legendImg.getAttribute('src') || '';
+      if (!legendSrc) continue;
+      if (getMarkerFileName(legendSrc) !== filename) continue;
+      let normalized = legendSrc.trim();
+      if (normalized.startsWith('//')) normalized = `https:${normalized}`;
+      if (normalized.startsWith('/')) normalized = `https://runescape.wiki${normalized}`;
+      return normalized;
+    }
+    return '';
+  };
+
+  const resolveMarkerIconSrc = (src, contextEl = null) => {
     const value = String(src || '').trim();
     if (!value) return value;
     const filename = getMarkerFileName(value);
     if (filename === 'pin_blue.svg') {
       return LOCAL_PIN_BLUE;
     }
-    if (isWikiImageHost(value)) {
-      const matched = getMarkerProfileFromSource(value);
-      if (matched) {
-        return buildMarkerBadgeDataUri(matched.label, matched.color);
-      }
-      const base = filename
-        .replace(/\.[a-z0-9]+$/i, '')
-        .replace(/[_-]+/g, ' ')
-        .trim();
-      const words = base
-        .split(/\s+/)
-        .filter(Boolean)
-        .filter((word) => !/^\d+px$/.test(word) && !/^icon$|^map$|^chathead$|^file$/.test(word));
-      const label =
-        (words[0]?.[0] || '') + (words.length > 1 ? words[1]?.[0] || '' : words[0]?.[1] || '');
-      return buildMarkerBadgeDataUri(label || '?', '#5f7a9e');
-    }
+    const legendResolved = resolveLegendIconSrc(value, contextEl);
+    if (legendResolved) return legendResolved;
+    if (isWikiImageHost(value)) return value;
     return value;
   };
 
@@ -712,7 +659,7 @@ export const renderSteps = (params) => {
     const icons = root.querySelectorAll('.leaflet-marker-icon[src]');
     icons.forEach((icon) => {
       const src = icon.getAttribute('src');
-      const resolved = resolveMarkerIconSrc(src);
+      const resolved = resolveMarkerIconSrc(src, icon);
       if (resolved && resolved !== src) {
         icon.setAttribute('src', resolved);
         if (icon.hasAttribute('srcset')) {
@@ -743,7 +690,15 @@ export const renderSteps = (params) => {
     if (Number.isFinite(plane) && Number(plane) !== mapPlane) return;
     if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
 
-    const pxPerSquare = 4; // 256px / 64 map units
+    const getPxPerSquare = () => {
+      const zoom = Number(mapEl.getAttribute('data-zoom'));
+      if (Number.isFinite(zoom)) {
+        const safeZoom = Math.max(0, Math.round(zoom));
+        return 2 ** safeZoom;
+      }
+      return 4;
+    };
+    const pxPerSquare = getPxPerSquare();
     const x = width / 2 + (Number(lon) - centerLon) * pxPerSquare;
     const y = height / 2 + (centerLat - Number(lat)) * pxPerSquare;
     const z = Math.max(1, Math.round(y));
@@ -755,7 +710,7 @@ export const renderSteps = (params) => {
         ? props.iconAnchor
         : [iconSize[0] / 2, iconSize[1] / 2];
       const img = document.createElement('img');
-      img.src = resolveMarkerIconSrc(props.iconWikiLink);
+      img.src = resolveMarkerIconSrc(props.iconWikiLink, mapEl);
       img.alt = '';
       img.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive';
       img.tabIndex = 0;
@@ -805,6 +760,9 @@ export const renderSteps = (params) => {
       }
     }
     if (!liveData || typeof liveData !== 'object') return;
+    // When a map already has leaflet tiles rendered, do not synthesize markers.
+    // Synthetic projection can drift from the captured leaflet transforms.
+    if (mapEl.querySelector('.leaflet-tile')) return;
     const hasMarkers = mapEl.querySelector(
       '.leaflet-marker-pane .leaflet-marker-icon, .leaflet-marker-icon'
     );
