@@ -467,6 +467,10 @@ export function extractQuickGuide(html) {
       if (img.closest('table.questdetails')) return;
       if (img.closest('figure, .messagebox, .lighttable')) return;
       const closestTable = img.closest('table');
+      if (closestTable && closestTable.closest('dl, dd')) {
+        const tableText = closestTable.textContent.replace(/\s+/g, ' ').trim();
+        if (tableText) return;
+      }
       if (closestTable && isRelevantStandaloneTable(closestTable)) return;
       const rawSrc = img.getAttribute('src') || '';
       if (!rawSrc) return;
@@ -485,6 +489,10 @@ export function extractQuickGuide(html) {
       if (img.closest('table.questdetails')) return;
       if (img.closest('figure, .messagebox, .lighttable')) return;
       const closestTable = img.closest('table');
+      if (closestTable && closestTable.closest('dl, dd')) {
+        const tableText = closestTable.textContent.replace(/\s+/g, ' ').trim();
+        if (tableText) return;
+      }
       if (closestTable && isRelevantStandaloneTable(closestTable)) return;
       const rawSrc = img.getAttribute('src') || '';
       if (!rawSrc) return;

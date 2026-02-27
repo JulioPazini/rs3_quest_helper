@@ -283,7 +283,7 @@ test('extractQuickGuide handles mw-heading wrappers and figure without image', (
   assert.equal(steps.length, 1);
 });
 
-test('extractQuickGuide captures images inside dl/dd tables without promoting tables', () => {
+test('extractQuickGuide does not duplicate images from dl/dd tables into sectionImages', () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
   setDomGlobals(dom);
 
@@ -295,8 +295,10 @@ test('extractQuickGuide captures images inside dl/dd tables without promoting ta
           <dd>
             <table>
               <tbody>
+                <tr><th>Log</th><th>Level</th></tr>
                 <tr>
                   <td><img src="/images/thumb/The_Tale_of_the_Muspah_raft_puzzle_part_1_map.png/300px-The_Tale_of_the_Muspah_raft_puzzle_part_1_map.png?68735" alt="Step 1 for melting ice."></td>
+                  <td>21</td>
                   <td><img src="//runescape.wiki/images/thumb/East_raft.png/200px-East_raft.png?ecaf6" alt="The eastern side of the mound being melted."></td>
                 </tr>
               </tbody>
@@ -311,14 +313,11 @@ test('extractQuickGuide captures images inside dl/dd tables without promoting ta
   const title = items.find((i) => i.type === 'title' && i.text === 'Steps');
   assert.ok(title);
   assert.equal(title.sectionTables.length, 0);
-  assert.equal(title.sectionImages.length, 2);
-  assert.equal(
-    title.sectionImages[0].src,
-    'https://runescape.wiki/images/thumb/The_Tale_of_the_Muspah_raft_puzzle_part_1_map.png/300px-The_Tale_of_the_Muspah_raft_puzzle_part_1_map.png?68735'
-  );
-  assert.equal(
-    title.sectionImages[1].src,
-    'https://runescape.wiki/images/thumb/East_raft.png/200px-East_raft.png?ecaf6'
+  assert.equal(title.sectionImages.length, 0);
+  const textHtml = title.sectionTexts.join(' ');
+  assert.match(
+    textHtml,
+    /https:\/\/runescape\.wiki\/images\/thumb\/The_Tale_of_the_Muspah_raft_puzzle_part_1_map\.png/
   );
 });
 
