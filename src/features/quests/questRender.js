@@ -641,7 +641,8 @@ export const renderSteps = (params) => {
     return '';
   };
 
-  const resolveMarkerIconSrc = (src, contextEl = null) => {
+  const resolveMarkerIconSrc = (src, contextEl = null, options = {}) => {
+    const { useBluePinFallback = true } = options;
     const value = String(src || '').trim();
     if (!value) return value;
     const filename = getMarkerFileName(value);
@@ -650,7 +651,7 @@ export const renderSteps = (params) => {
     }
     const legendResolved = resolveLegendIconSrc(value, contextEl);
     if (legendResolved) return legendResolved;
-    if (isWikiImageHost(value)) return value;
+    if (isWikiImageHost(value) && useBluePinFallback) return LOCAL_PIN_BLUE;
     return value;
   };
 
@@ -659,7 +660,7 @@ export const renderSteps = (params) => {
     const icons = root.querySelectorAll('.leaflet-marker-icon[src]');
     icons.forEach((icon) => {
       const src = icon.getAttribute('src');
-      const resolved = resolveMarkerIconSrc(src, icon);
+      const resolved = resolveMarkerIconSrc(src, icon, { useBluePinFallback: false });
       if (resolved && resolved !== src) {
         icon.setAttribute('src', resolved);
         if (icon.hasAttribute('srcset')) {
@@ -710,7 +711,7 @@ export const renderSteps = (params) => {
         ? props.iconAnchor
         : [iconSize[0] / 2, iconSize[1] / 2];
       const img = document.createElement('img');
-      img.src = resolveMarkerIconSrc(props.iconWikiLink, mapEl);
+      img.src = resolveMarkerIconSrc(props.iconWikiLink, mapEl, { useBluePinFallback: true });
       img.alt = '';
       img.className = 'leaflet-marker-icon leaflet-zoom-animated leaflet-interactive';
       img.tabIndex = 0;
