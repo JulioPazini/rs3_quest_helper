@@ -348,6 +348,79 @@ test('extractQuickGuide avoids duplicating images from standalone section tables
   assert.equal(title.sectionImages.length, 0);
 });
 
+test('extractQuickGuide captures inline paragraph image blocks in sections with steps', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Broken Home style section</h2>
+        <p>
+          <span class="mw-default-size" typeof="mw:File">
+            <a href="/w/File:Broken_Home_-_Getting_raven_key.png" class="mw-file-description">
+              <img src="/images/thumb/Broken_Home_-_Getting_raven_key.png/424px-Broken_Home_-_Getting_raven_key.png?14087" alt="">
+            </a>
+          </span>
+        </p>
+        <div class="lighttable checklist">
+          <ul><li>Do the next step</li></ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const title = items.find((i) => i.type === 'title' && i.text === 'Broken Home style section');
+  assert.ok(title);
+  assert.equal(title.sectionImages.length, 1);
+  assert.equal(
+    title.sectionImages[0].src,
+    'https://runescape.wiki/images/thumb/Broken_Home_-_Getting_raven_key.png/424px-Broken_Home_-_Getting_raven_key.png?14087'
+  );
+  const steps = items.filter((i) => i.type === 'step');
+  assert.equal(steps.length, 1);
+});
+
+test('extractQuickGuide captures images from MediaWiki ul.gallery blocks', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Puzzle section</h2>
+        <ul class="gallery mw-gallery-traditional">
+          <li class="gallerybox">
+            <div class="thumb">
+              <a href="/w/File:A.png"><img src="/images/thumb/A.png/120px-A.png?abc" alt="First image"></a>
+            </div>
+            <div class="gallerytext">First caption.</div>
+          </li>
+          <li class="gallerybox">
+            <div class="thumb">
+              <a href="/w/File:B.png"><img src="/images/thumb/B.png/120px-B.png?def" alt="Second image"></a>
+            </div>
+            <div class="gallerytext">Second caption.</div>
+          </li>
+        </ul>
+        <div class="lighttable checklist">
+          <ul><li>Continue the quest</li></ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const title = items.find((i) => i.type === 'title' && i.text === 'Puzzle section');
+  assert.ok(title);
+  assert.equal(title.sectionImages.length, 2);
+  assert.equal(title.sectionImages[0].src, 'https://runescape.wiki/images/thumb/A.png/120px-A.png?abc');
+  assert.equal(title.sectionImages[0].caption, 'First caption.');
+  assert.equal(title.sectionImages[1].src, 'https://runescape.wiki/images/thumb/B.png/120px-B.png?def');
+  assert.equal(title.sectionImages[1].caption, 'Second caption.');
+});
+
 test('extractQuickGuide ignores images inside questdetails overview table', () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
   setDomGlobals(dom);

@@ -437,12 +437,49 @@ export function extractQuickGuide(html) {
       pushImageData({ rawSrc, alt, caption });
     });
 
+    // MediaWiki galleries: <ul class="gallery"> <li class="gallerybox"> ... </li> </ul>
+    const galleryBoxes = el.matches('li.gallerybox')
+      ? [el]
+      : Array.from(el.querySelectorAll('ul.gallery li.gallerybox'));
+    galleryBoxes.forEach((box) => {
+      if (!box) return;
+      if (box.closest('.advanced-map, .mw-kartographer-container')) return;
+      if (box.closest('table.questdetails')) return;
+      if (box.closest('table, .messagebox, .lighttable')) return;
+      const img = box.querySelector('img[src]');
+      if (!img) return;
+      const rawSrc = img.getAttribute('src') || '';
+      if (!rawSrc) return;
+      const alt = img.getAttribute('alt') || '';
+      const captionEl = box.querySelector('.gallerytext');
+      const caption = captionEl ? captionEl.textContent.replace(/\s+/g, ' ').trim() : '';
+      pushImageData({ rawSrc, alt, caption });
+    });
+
     // Some quick guides place image galleries in dl/dd > table blocks.
     // Keep table parsing behavior unchanged, but still surface those images.
     const tableImgs = el.matches('table img')
       ? [el]
       : Array.from(el.querySelectorAll('table img, dl img, dd img'));
     tableImgs.forEach((img) => {
+      if (!img) return;
+      if (img.closest('.advanced-map, .mw-kartographer-container')) return;
+      if (img.closest('table.questdetails')) return;
+      if (img.closest('figure, .messagebox, .lighttable')) return;
+      const closestTable = img.closest('table');
+      if (closestTable && isRelevantStandaloneTable(closestTable)) return;
+      const rawSrc = img.getAttribute('src') || '';
+      if (!rawSrc) return;
+      const alt = img.getAttribute('alt') || '';
+      pushImageData({ rawSrc, alt });
+    });
+
+    // Some guides use inline <p><img ...></p> (or blockquote/dl variants) instead of <figure>.
+    // Capture those images so they can be rendered even when section text blocks are hidden.
+    const inlineImgs = el.matches('p, blockquote, dl')
+      ? Array.from(el.querySelectorAll('img'))
+      : Array.from(el.querySelectorAll('p img, blockquote img, dl img'));
+    inlineImgs.forEach((img) => {
       if (!img) return;
       if (img.closest('.advanced-map, .mw-kartographer-container')) return;
       if (img.closest('table.questdetails')) return;

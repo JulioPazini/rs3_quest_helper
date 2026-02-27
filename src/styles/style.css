@@ -1516,11 +1516,14 @@ header.hidden {
   margin: 0;
   padding: 0;
   background: transparent;
+  width: min(100%, 360px);
 }
 
 .section-image img {
-  width: min(100%, 360px);
+  width: 100%;
   height: auto;
+  object-fit: contain;
+  background: rgba(15, 12, 8, 0.85);
   display: block;
   margin: 0 auto;
   border: 2px solid var(--border);
