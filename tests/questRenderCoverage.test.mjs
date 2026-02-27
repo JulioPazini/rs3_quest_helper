@@ -884,6 +884,60 @@ test('renderSteps does not synthesize marker overlay when tiled map is already p
   );
 });
 
+test('renderSteps keeps inline image notes in wiki order and skips section-end duplication', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+
+  const items = [
+    {
+      type: 'title',
+      text: 'Ordered Section',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [{ src: 'https://example.test/fallback.png', alt: 'fallback' }],
+      sectionAdvancedMaps: [],
+    },
+    {
+      type: 'note',
+      noteType: 'images',
+      images: [{ src: 'https://example.test/inline.png', alt: 'inline' }],
+    },
+    { type: 'step', text: 'Do step', html: 'Do step', checked: false, substeps: [] },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const allImages = Array.from(stepsDiv.querySelectorAll('.section-image img'));
+  assert.equal(allImages.length, 1);
+  assert.equal(allImages[0].getAttribute('src'), 'https://example.test/inline.png');
+});
+
 test('renderSteps showAllSteps click branches for marking and unmarking ranges', async () => {
   const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
   setDomGlobals(dom);

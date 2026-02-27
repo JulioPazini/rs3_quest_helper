@@ -676,17 +676,10 @@ export function extractQuickGuide(html) {
         return;
       if (map.closest('table')) return;
       const clone = map.cloneNode(true);
-      const isAdvancedMap = clone.classList.contains('advanced-map');
-      if (isAdvancedMap) {
-        const mapArea = clone.querySelector(':scope > .amap-map, .amap-map');
-        const keyArea = clone.querySelector(':scope > .amap-key, .amap-key');
-        if (!mapArea || !keyArea) return;
-      } else {
-        const hasKartographer =
-          clone.classList.contains('mw-kartographer-container') ||
-          clone.querySelector('.mw-kartographer-map, .mw-kartographer-container');
-        if (!hasKartographer) return;
-      }
+      const hasKartographer =
+        clone.classList.contains('mw-kartographer-container') ||
+        clone.querySelector('.mw-kartographer-map, .mw-kartographer-container');
+      if (!hasKartographer) return;
 
       const links = clone.querySelectorAll('a[href]');
       links.forEach((a) => {
@@ -771,6 +764,31 @@ export function extractQuickGuide(html) {
       img.setAttribute('src', src);
     });
     return clone.outerHTML;
+  };
+
+  const getImageNotePayload = (el) => {
+    if (!el || !el.tagName) return null;
+    if (el.closest('li')) return null;
+    if (el.closest('table')) return null;
+    if (el.closest('.advanced-map, .mw-kartographer-container')) return null;
+
+    const tag = String(el.tagName || '').toUpperCase();
+    if (tag === 'FIGURE') {
+      const images = getSectionImageData(el);
+      return images.length > 0 ? images : null;
+    }
+    if (tag === 'UL' && el.classList?.contains('gallery')) {
+      const images = getSectionImageData(el);
+      return images.length > 0 ? images : null;
+    }
+    if (tag === 'P' || tag === 'DL' || tag === 'BLOCKQUOTE') {
+      if (!el.querySelector('img')) return null;
+      const hasVisibleText = el.textContent.replace(/\s+/g, ' ').trim().length > 0;
+      if (hasVisibleText) return null;
+      const images = getSectionImageData(el);
+      return images.length > 0 ? images : null;
+    }
+    return null;
   };
 
   let node;
@@ -895,6 +913,18 @@ export function extractQuickGuide(html) {
         });
       }
       continue;
+    }
+
+    if (lastHeader) {
+      const imageNoteImages = getImageNotePayload(node);
+      if (imageNoteImages && imageNoteImages.length > 0) {
+        result.push({
+          type: 'note',
+          noteType: 'images',
+          images: imageNoteImages,
+        });
+        continue;
+      }
     }
 
     if (

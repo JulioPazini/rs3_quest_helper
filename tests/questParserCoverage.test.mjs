@@ -421,6 +421,63 @@ test('extractQuickGuide captures images from MediaWiki ul.gallery blocks', () =>
   assert.equal(title.sectionImages[1].caption, 'Second caption.');
 });
 
+test('extractQuickGuide emits inline image notes to preserve wiki flow', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Flow section</h2>
+        <figure><img src="/images/first.png" alt="first"></figure>
+        <div class="lighttable checklist"><ul><li>Do thing</li></ul></div>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const imageNote = items.find((i) => i.type === 'note' && i.noteType === 'images');
+  assert.ok(imageNote);
+  assert.equal(imageNote.images.length, 1);
+  assert.equal(imageNote.images[0].src, 'https://runescape.wiki/images/first.png');
+});
+
+test('extractQuickGuide keeps composite advanced-map blocks without direct .amap-map wrapper', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Composite map section</h2>
+        <div class="advanced-map" style="width:740px;">
+          <div class="amap-title">Asgarnian Ice Dungeon</div>
+          <div style="display:flex;">
+            <div>
+              <a class="mw-kartographer-map mw-kartographer-container" data-mw-kartographer data-mapid="544"></a>
+            </div>
+            <div>
+              <a class="mw-kartographer-map mw-kartographer-container" data-mw-kartographer data-mapid="686"></a>
+            </div>
+            <div>
+              <div class="advanced-map" style="width:350px">
+                <div class="amap-key"><ul><li>legend only</li></ul></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const title = items.find((i) => i.type === 'title' && i.text === 'Composite map section');
+  assert.ok(title);
+  assert.equal(title.sectionAdvancedMaps.length, 1);
+  assert.match(title.sectionAdvancedMaps[0], /data-mapid=\"544\"/);
+  assert.match(title.sectionAdvancedMaps[0], /data-mapid=\"686\"/);
+});
+
 test('extractQuickGuide ignores images inside questdetails overview table', () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
   setDomGlobals(dom);

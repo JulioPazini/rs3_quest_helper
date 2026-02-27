@@ -878,7 +878,12 @@ export const renderSteps = (params) => {
   };
 
   const appendInlineNote = (noteItem) => {
-    if (!noteItem || !noteItem.html) return;
+    if (!noteItem) return;
+    if (noteItem.noteType === 'images') {
+      appendSectionImages(noteItem.images);
+      return;
+    }
+    if (!noteItem.html) return;
     if (noteItem.noteType === 'infobox') {
       const wrap = document.createElement('div');
       wrap.className = 'section-infoboxes';
@@ -988,6 +993,14 @@ export const renderSteps = (params) => {
     return false;
   };
 
+  const sectionHasAnyInlineNotes = (titleIndex) => {
+    if (titleIndex < 0) return false;
+    for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
+      if (items[i].type === 'note') return true;
+    }
+    return false;
+  };
+
   const appendTitleHeading = (titleItem) => {
     const headingLevel = Number(titleItem?.level) || 2;
     const tagName = headingLevel >= 3 ? 'h4' : 'h3';
@@ -1018,7 +1031,8 @@ export const renderSteps = (params) => {
         small.innerHTML = item.seeAlso.join('<br>');
         stepsDiv.appendChild(small);
       }
-      if (!sectionHasInlineNoteType(idx, 'infobox')) {
+      const hasInlineNotes = sectionHasAnyInlineNotes(idx);
+      if (!hasInlineNotes && !sectionHasInlineNoteType(idx, 'infobox')) {
         appendSectionInfoBoxes(item.sectionInfoBoxes);
       }
       let hasSectionStepsOrNotes = false;
@@ -1028,13 +1042,17 @@ export const renderSteps = (params) => {
           break;
         }
       }
-      if (!hasSectionStepsOrNotes) {
+      if (hasInlineNotes) {
+        for (let i = idx + 1; i < items.length && items[i].type !== 'title'; i += 1) {
+          if (items[i].type === 'note') appendInlineNote(items[i]);
+        }
+      } else if (!hasSectionStepsOrNotes) {
         appendSectionTexts(item.sectionTexts);
+        appendSectionTables(item.sectionTables);
+        appendSectionRefLists(item.sectionRefLists);
+        appendSectionImages(item.sectionImages);
+        appendSectionAdvancedMaps(item.sectionAdvancedMaps);
       }
-      appendSectionTables(item.sectionTables);
-      appendSectionRefLists(item.sectionRefLists);
-      appendSectionImages(item.sectionImages);
-      appendSectionAdvancedMaps(item.sectionAdvancedMaps);
     });
 
     if (!hasSections) {
@@ -1166,7 +1184,11 @@ export const renderSteps = (params) => {
           appendSectionAdvancedMaps(item.sectionAdvancedMaps);
           renderedSectionAdvancedMaps = true;
         }
-        if (isQuestCompleteStep && !renderedSectionImages) {
+        if (
+          isQuestCompleteStep &&
+          !renderedSectionImages &&
+          !sectionHasInlineNoteType(idx, 'images')
+        ) {
           appendSectionImages(item.sectionImages);
           renderedSectionImages = true;
         }
@@ -1185,7 +1207,7 @@ export const renderSteps = (params) => {
         sectionCursor += 1;
       }
 
-      if (!renderedSectionImages) {
+      if (!renderedSectionImages && !sectionHasInlineNoteType(idx, 'images')) {
         if (!hasSectionStepsOrNotes) {
           appendSectionTables(item.sectionTables);
           appendSectionRefLists(item.sectionRefLists);
@@ -1364,7 +1386,8 @@ export const renderSteps = (params) => {
     isCurrentQuestComplete &&
     currentTitleItem &&
     Array.isArray(currentTitleItem.sectionImages) &&
-    currentTitleItem.sectionImages.length > 0
+    currentTitleItem.sectionImages.length > 0 &&
+    !sectionHasInlineNoteType(currentTitleIndex, 'images')
   ) {
     const wrap = document.createElement('div');
     wrap.className = 'section-images';
@@ -1419,7 +1442,8 @@ export const renderSteps = (params) => {
     !isCurrentQuestComplete &&
     currentTitleItem &&
     Array.isArray(currentTitleItem.sectionImages) &&
-    currentTitleItem.sectionImages.length > 0
+    currentTitleItem.sectionImages.length > 0 &&
+    !sectionHasInlineNoteType(currentTitleIndex, 'images')
   ) {
     const wrap = document.createElement('div');
     wrap.className = 'section-images';
