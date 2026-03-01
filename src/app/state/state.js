@@ -1,5 +1,6 @@
 export const state = {
   showAllSteps: false,
+  sequentialStepChecking: true,
   currentItems: [],
   pendingAutoScroll: false,
   currentQuestKey: null,

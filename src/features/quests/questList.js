@@ -88,11 +88,7 @@ export const setQuestList = (list) => {
   questList = Array.isArray(list) ? list : questList;
 };
 
-const normalizeListTitleKey = (value) =>
-  cleanText(value)
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
+const normalizeListTitleKey = (value) => cleanText(value).replace(/\s+/g, ' ').trim().toLowerCase();
 
 const buildParseUrl = (page) =>
   'https://runescape.wiki/api.php' +
@@ -132,11 +128,12 @@ const findQuestTableInDocument = (doc) => {
     if (!header) return;
     const cols = header.cols;
     const hasQuest = cols.some(
-      (c) =>
-        /^quest\b/.test(c) || c.includes('quest name') || c === 'name' || c.includes('quests')
+      (c) => /^quest\b/.test(c) || c.includes('quest name') || c === 'name' || c.includes('quests')
     );
     const hasMembers = cols.some((c) => c.includes('members') || c.includes('member'));
-    const hasQp = cols.some((c) => c.includes('quest points') || c.includes('qp') || c.includes('q.p'));
+    const hasQp = cols.some(
+      (c) => c.includes('quest points') || c.includes('qp') || c.includes('q.p')
+    );
     if (hasQuest && hasMembers && hasQp) {
       table = t;
       headerRow = header.row;
@@ -168,14 +165,16 @@ const findMiniquestTableInDocument = (doc) => {
   const headingContainer = marker.closest('.mw-heading') || marker.closest('h2, h3, h4') || marker;
   let node = headingContainer.nextElementSibling;
   while (node) {
-    if (node.classList && Array.from(node.classList).some((c) => /^mw-heading[2-4]$/.test(c))) break;
+    if (node.classList && Array.from(node.classList).some((c) => /^mw-heading[2-4]$/.test(c)))
+      break;
     if (/^H[2-4]$/.test(node.tagName || '')) break;
     if (node.matches && node.matches('table.wikitable')) {
       const header = findHeaderRow(node);
       return { table: node, headerRow: header?.row || null, headers: header?.cols || [] };
     }
     const nestedTable =
-      node.querySelector && node.querySelector('table.wikitable:not(table.wikitable table.wikitable)');
+      node.querySelector &&
+      node.querySelector('table.wikitable:not(table.wikitable table.wikitable)');
     if (nestedTable) {
       const header = findHeaderRow(nestedTable);
       return { table: nestedTable, headerRow: header?.row || null, headers: header?.cols || [] };
@@ -219,7 +218,8 @@ const parseQuestLikeRowsFromTable = (tableInfo) => {
     const titleCell = questIdx >= 0 ? cells[questIdx] : cells[0];
     if (!titleCell) return;
     const titleLink =
-      titleCell.querySelector('a[href*="/w/"]:not([href*="redlink=1"]):not([href*="File:"])') || null;
+      titleCell.querySelector('a[href*="/w/"]:not([href*="redlink=1"]):not([href*="File:"])') ||
+      null;
     const title = cleanText(titleLink ? titleLink.textContent : titleCell.textContent);
     if (!title || seen.has(title)) return;
     seen.add(title);
@@ -229,19 +229,22 @@ const parseQuestLikeRowsFromTable = (tableInfo) => {
     const membersIcon = membersImg ? normalizeSrc(membersImg.getAttribute('src')) : '';
     const membership = parseMembership(membersCell);
 
-    const lengthCell = lengthIdx >= 0 ? cells[lengthIdx] : !hasHeaders && cells[2] ? cells[2] : null;
+    const lengthCell =
+      lengthIdx >= 0 ? cells[lengthIdx] : !hasHeaders && cells[2] ? cells[2] : null;
     const length = lengthCell ? cleanText(lengthCell.textContent) : '';
 
     const ageCell = ageIdx >= 0 ? cells[ageIdx] : !hasHeaders && cells[3] ? cells[3] : null;
     const age = ageCell ? cleanText(ageCell.textContent) : '';
 
-    const combatCell = combatIdx >= 0 ? cells[combatIdx] : !hasHeaders && cells[4] ? cells[4] : null;
+    const combatCell =
+      combatIdx >= 0 ? cells[combatIdx] : !hasHeaders && cells[4] ? cells[4] : null;
     const combat = combatCell ? cleanText(combatCell.textContent) : '';
 
     const qpCell = qpIdx >= 0 ? cells[qpIdx] : !hasHeaders && cells[5] ? cells[5] : null;
     const questPoints = qpCell ? cleanText(qpCell.textContent) : '';
 
-    const seriesCell = seriesIdx >= 0 ? cells[seriesIdx] : !hasHeaders && cells[6] ? cells[6] : null;
+    const seriesCell =
+      seriesIdx >= 0 ? cells[seriesIdx] : !hasHeaders && cells[6] ? cells[6] : null;
     const series = seriesCell ? cleanText(seriesCell.textContent) : '';
 
     const releaseDateCell =
@@ -278,19 +281,17 @@ const mergeQuestLikeLists = (...lists) => {
 };
 
 const buildFallbackQuestLikeList = (titles) =>
-  titles
-    .filter(Boolean)
-    .map((title) => ({
-      title,
-      membersIcon: '',
-      membership: '',
-      length: '',
-      age: '',
-      combat: '',
-      questPoints: '',
-      series: '',
-      releaseDate: '',
-    }));
+  titles.filter(Boolean).map((title) => ({
+    title,
+    membersIcon: '',
+    membership: '',
+    length: '',
+    age: '',
+    combat: '',
+    questPoints: '',
+    series: '',
+    releaseDate: '',
+  }));
 
 const fetchCategoryTitles = async (categoryTitle) => {
   const catUrl =

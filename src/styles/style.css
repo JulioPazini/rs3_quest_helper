@@ -190,10 +190,61 @@ header {
   font-family: 'IM Fell English SC', 'Source Sans 3', serif;
   letter-spacing: 0.6px;
   text-transform: uppercase;
+  position: relative;
+}
+
+header h2 {
+  margin: 0;
 }
 
 header.hidden {
   display: none;
+}
+
+.settings-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: #e7d08a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-button:hover {
+  filter: brightness(1.15);
+}
+
+.settings-panel {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--border);
+  background: linear-gradient(180deg, #3a311b, #2f2816);
+}
+
+.settings-panel.hidden {
+  display: none;
+}
+
+.settings-toggle {
+  width: 100%;
+  padding: 7px 10px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
 }
 
 .toggle-bar .toggle,

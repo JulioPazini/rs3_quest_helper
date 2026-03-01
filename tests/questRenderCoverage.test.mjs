@@ -1013,6 +1013,64 @@ test('renderSteps showAllSteps click branches for marking and unmarking ranges',
   assert.ok(rerenders >= 2);
 });
 
+test('renderSteps supports free step marking when sequential mode is disabled', async () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    {
+      type: 'title',
+      text: 'T',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [],
+      sectionAdvancedMaps: [],
+    },
+    { type: 'step', text: 'S1', html: 'S1', checked: false, substeps: [] },
+    { type: 'step', text: 'S2', html: 'S2', checked: false, substeps: [] },
+    { type: 'step', text: 'S3', html: 'S3', checked: false, substeps: [] },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    sequentialStepChecking: false,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const s3 = Array.from(stepsDiv.querySelectorAll('.step-item')).find((n) =>
+    n.textContent.includes('S3')
+  );
+  s3.click();
+  await wait();
+
+  assert.equal(items[0].type, 'title');
+  assert.equal(items[1].checked, false);
+  assert.equal(items[2].checked, false);
+  assert.equal(items[3].checked, true);
+});
+
 test('renderSteps renders dot and square-dot markers from live data', () => {
   const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
   setDomGlobals(dom);

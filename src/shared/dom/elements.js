@@ -1,4 +1,8 @@
 export const getAppElements = (doc = document) => ({
+  settingsButton: doc.getElementById('settingsButton'),
+  settingsPanel: doc.getElementById('settingsPanel'),
+  sequentialStepToggleWrap: doc.getElementById('sequentialStepToggleWrap'),
+  sequentialStepToggle: doc.getElementById('sequentialStepToggle'),
   input: doc.getElementById('questInput'),
   playerInput: doc.getElementById('playerInput'),
   playerLookupButton: doc.getElementById('playerLookup'),

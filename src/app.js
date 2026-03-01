@@ -34,6 +34,10 @@ import {
 // }
 
 const {
+  settingsButton,
+  settingsPanel,
+  sequentialStepToggleWrap,
+  sequentialStepToggle,
   input,
   playerInput,
   playerLookupButton,
@@ -94,7 +98,11 @@ const getLocalProgressQuestMeta = () => {
   const prefix = 'questProgress:';
   const keys = [];
   try {
-    if (localStorage && typeof localStorage.length === 'number' && typeof localStorage.key === 'function') {
+    if (
+      localStorage &&
+      typeof localStorage.length === 'number' &&
+      typeof localStorage.key === 'function'
+    ) {
       for (let i = 0; i < localStorage.length; i += 1) {
         const key = localStorage.key(i);
         if (key) keys.push(key);
@@ -121,7 +129,9 @@ const getLocalProgressQuestMeta = () => {
 
     const checkedSteps = Number(parsed?.stepProgress?.checkedSteps);
     const totalSteps = Number(parsed?.stepProgress?.totalSteps);
-    const checkedIndicesLen = Array.isArray(parsed?.checkedIndices) ? parsed.checkedIndices.length : 0;
+    const checkedIndicesLen = Array.isArray(parsed?.checkedIndices)
+      ? parsed.checkedIndices.length
+      : 0;
 
     let status = '';
     if (Number.isFinite(totalSteps) && totalSteps > 0 && Number.isFinite(checkedSteps)) {
@@ -179,6 +189,7 @@ const saveUiPreferences = () => {
     key: uiPrefsKey,
     showAllSteps: state.showAllSteps,
     hideCompleted: !!(hideCompletedCheckbox && hideCompletedCheckbox.checked),
+    sequentialStepChecking: !!state.sequentialStepChecking,
   });
 };
 
@@ -245,6 +256,26 @@ const initHideCompletedToggle = (initialValue = false) => {
     },
   });
   hideCompletedCheckbox.checked = Boolean(initialValue);
+};
+
+const updateSequentialStepToggleUi = () => {
+  if (!sequentialStepToggle) return;
+  const enabled = !!state.sequentialStepChecking;
+  sequentialStepToggle.checked = enabled;
+  if (sequentialStepToggleWrap) {
+    sequentialStepToggleWrap.title = enabled
+      ? 'When enabled, checking a step also checks previous steps'
+      : 'When disabled, each step can be checked freely';
+  } else {
+    sequentialStepToggle.title = enabled
+      ? 'When enabled, checking a step also checks previous steps'
+      : 'When disabled, each step can be checked freely';
+  }
+};
+
+const initSequentialStepToggle = (initialValue = true) => {
+  state.sequentialStepChecking = Boolean(initialValue);
+  updateSequentialStepToggleUi();
 };
 
 const updateTopBarsStickyState = () => {
@@ -392,6 +423,7 @@ const buildStepsRenderParams = (items) => ({
   items,
   stepsDiv,
   showAllSteps: state.showAllSteps,
+  sequentialStepChecking: state.sequentialStepChecking,
   hideCompletedCheckbox,
   filterToggle,
   navBar,
@@ -826,6 +858,7 @@ bootstrapApp({
   state,
   loadUiPreferences,
   initHideCompletedToggle,
+  initSequentialStepToggle,
   setLoading,
   renderTitle,
   updateToggleState,
@@ -872,5 +905,41 @@ bootstrapApp({
   buildSearchRenderParams,
   resultsRefs,
 });
+
+if (settingsButton && settingsPanel) {
+  settingsButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const willOpen = settingsPanel.classList.contains('hidden');
+    settingsPanel.classList.toggle('hidden', !willOpen);
+    settingsButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  });
+}
+
+if (sequentialStepToggle) {
+  sequentialStepToggle.addEventListener('change', () => {
+    state.sequentialStepChecking = !!sequentialStepToggle.checked;
+    updateSequentialStepToggleUi();
+    saveUiPreferences();
+    showUiToast(
+      state.sequentialStepChecking ? 'Sequential step marking enabled' : 'Free step marking enabled'
+    );
+    if (state.currentItems.length > 0 && state.showSteps) {
+      renderSteps(buildStepsRenderParams(state.currentItems));
+    }
+  });
+}
+
+if (settingsPanel) {
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (settingsPanel.classList.contains('hidden')) return;
+    if (settingsPanel.contains(target)) return;
+    if (settingsButton && settingsButton.contains(target)) return;
+    settingsPanel.classList.add('hidden');
+    if (settingsButton) {
+      settingsButton.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
 
 updateScrollTopButtonVisibility();

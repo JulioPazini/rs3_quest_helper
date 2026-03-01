@@ -60,10 +60,12 @@ test('saveUiPreferences/loadUiPreferences roundtrip', () => {
     key: 'prefs',
     showAllSteps: false,
     hideCompleted: true,
+    sequentialStepChecking: false,
   });
   const loaded = loadUiPreferences({ storage, key: 'prefs' });
   assert.equal(loaded.showAllSteps, false);
   assert.equal(loaded.hideCompleted, true);
+  assert.equal(loaded.sequentialStepChecking, false);
 });
 
 test('progress service handles null inputs, missing keys and storage/json failures', () => {
@@ -113,6 +115,7 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
   assert.deepEqual(loadUiPreferences({ storage, key: 'missing' }), {
     showAllSteps: true,
     hideCompleted: false,
+    sequentialStepChecking: true,
   });
 
   storage.setItem(
@@ -120,11 +123,13 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     JSON.stringify({
       showAllSteps: 'yes',
       hideCompleted: true,
+      sequentialStepChecking: false,
     })
   );
   assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial' }), {
     showAllSteps: true,
     hideCompleted: true,
+    sequentialStepChecking: false,
   });
 
   storage.setItem(
@@ -132,11 +137,13 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     JSON.stringify({
       showAllSteps: false,
       hideCompleted: 'no',
+      sequentialStepChecking: 'no',
     })
   );
   assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial2' }), {
     showAllSteps: false,
     hideCompleted: false,
+    sequentialStepChecking: true,
   });
 
   const badStorage = {
@@ -148,5 +155,6 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
   assert.deepEqual(loadUiPreferences({ storage: badStorage, key: 'x' }), {
     showAllSteps: true,
     hideCompleted: false,
+    sequentialStepChecking: true,
   });
 });

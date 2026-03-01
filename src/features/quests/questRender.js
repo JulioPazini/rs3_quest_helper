@@ -419,6 +419,7 @@ export const renderSteps = (params) => {
     items,
     stepsDiv,
     showAllSteps,
+    sequentialStepChecking = true,
     hideCompletedCheckbox,
     filterToggle,
     navBar,
@@ -930,6 +931,7 @@ export const renderSteps = (params) => {
     substeps.every((substep) => Boolean(substep?.checked));
 
   const markPreviousStepsAsCompleted = (targetStep) => {
+    if (!sequentialStepChecking) return;
     if (!targetStep) return;
     const targetIndex = items.findIndex((item) => item === targetStep);
     if (targetIndex <= 0) return;
@@ -1158,7 +1160,9 @@ export const renderSteps = (params) => {
           }
           stepEl.classList.add('clicked');
           setTimeout(() => {
-            if (currentIndex !== -1 && stepIndex > currentIndex) {
+            if (!sequentialStepChecking) {
+              sectionItem.checked = !sectionItem.checked;
+            } else if (currentIndex !== -1 && stepIndex > currentIndex) {
               for (let i = currentIndex; i <= stepIndex; i += 1) {
                 if (items[i].type === 'step') {
                   items[i].checked = true;

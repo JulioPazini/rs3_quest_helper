@@ -414,9 +414,15 @@ test('extractQuickGuide captures images from MediaWiki ul.gallery blocks', () =>
   const title = items.find((i) => i.type === 'title' && i.text === 'Puzzle section');
   assert.ok(title);
   assert.equal(title.sectionImages.length, 2);
-  assert.equal(title.sectionImages[0].src, 'https://runescape.wiki/images/thumb/A.png/120px-A.png?abc');
+  assert.equal(
+    title.sectionImages[0].src,
+    'https://runescape.wiki/images/thumb/A.png/120px-A.png?abc'
+  );
   assert.equal(title.sectionImages[0].caption, 'First caption.');
-  assert.equal(title.sectionImages[1].src, 'https://runescape.wiki/images/thumb/B.png/120px-B.png?def');
+  assert.equal(
+    title.sectionImages[1].src,
+    'https://runescape.wiki/images/thumb/B.png/120px-B.png?def'
+  );
   assert.equal(title.sectionImages[1].caption, 'Second caption.');
 });
 
@@ -473,8 +479,8 @@ test('extractQuickGuide keeps composite advanced-map blocks without direct .amap
   const title = items.find((i) => i.type === 'title' && i.text === 'Composite map section');
   assert.ok(title);
   assert.equal(title.sectionAdvancedMaps.length, 1);
-  assert.match(title.sectionAdvancedMaps[0], /data-mapid=\"544\"/);
-  assert.match(title.sectionAdvancedMaps[0], /data-mapid=\"686\"/);
+  assert.match(title.sectionAdvancedMaps[0], /data-mapid="544"/);
+  assert.match(title.sectionAdvancedMaps[0], /data-mapid="686"/);
 });
 
 test('extractQuickGuide ignores images inside questdetails overview table', () => {

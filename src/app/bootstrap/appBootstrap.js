@@ -3,6 +3,7 @@ export const bootstrapApp = (deps) => {
     state,
     loadUiPreferences,
     initHideCompletedToggle,
+    initSequentialStepToggle,
     setLoading,
     renderTitle,
     updateToggleState,
@@ -128,6 +129,7 @@ export const bootstrapApp = (deps) => {
   const uiPrefs = loadUiPreferences();
   state.showAllSteps = uiPrefs.showAllSteps;
   initHideCompletedToggle(uiPrefs.hideCompleted);
+  initSequentialStepToggle(uiPrefs.sequentialStepChecking);
   setupInitialUI();
 
   bindSearchEvents({

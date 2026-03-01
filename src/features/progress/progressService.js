@@ -51,16 +51,20 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
   try {
     const raw = storage.getItem(key);
     if (!raw) {
-      return { showAllSteps: true, hideCompleted: false };
+      return { showAllSteps: true, hideCompleted: false, sequentialStepChecking: true };
     }
     const parsed = JSON.parse(raw);
     return {
       showAllSteps: parsed && typeof parsed.showAllSteps === 'boolean' ? parsed.showAllSteps : true,
       hideCompleted:
         parsed && typeof parsed.hideCompleted === 'boolean' ? parsed.hideCompleted : false,
+      sequentialStepChecking:
+        parsed && typeof parsed.sequentialStepChecking === 'boolean'
+          ? parsed.sequentialStepChecking
+          : true,
     };
   } catch (_err) {
-    return { showAllSteps: true, hideCompleted: false };
+    return { showAllSteps: true, hideCompleted: false, sequentialStepChecking: true };
   }
 };
 
@@ -69,6 +73,7 @@ export const saveUiPreferences = ({
   key = 'uiPreferences',
   showAllSteps,
   hideCompleted,
+  sequentialStepChecking,
 }) => {
   try {
     storage.setItem(
@@ -76,6 +81,7 @@ export const saveUiPreferences = ({
       JSON.stringify({
         showAllSteps: !!showAllSteps,
         hideCompleted: !!hideCompleted,
+        sequentialStepChecking: !!sequentialStepChecking,
       })
     );
   } catch (_err) {
