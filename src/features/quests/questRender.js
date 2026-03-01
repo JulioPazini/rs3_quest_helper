@@ -430,6 +430,8 @@ export const renderSteps = (params) => {
     kartographerLiveData,
     pendingAutoScroll,
     setPendingAutoScroll,
+    focusedStepIndex = null,
+    setFocusedStepIndex = () => {},
     saveProgress,
     renderStepsFn,
     formatStepHtml,
@@ -1090,7 +1092,29 @@ export const renderSteps = (params) => {
       }
       return false;
     };
-    const currentIndex = items.findIndex((item) => item.type === 'step' && !item.checked);
+    const firstUncheckedIndex = items.findIndex((item) => item.type === 'step' && !item.checked);
+    const getNextVisibleStepIndex = (fromIndex) => {
+      const start = Number.isInteger(fromIndex) ? fromIndex : 0;
+      for (let i = Math.max(0, start); i < items.length; i += 1) {
+        const candidate = items[i];
+        if (candidate?.type !== 'step') continue;
+        if (hideCompletedActive && candidate.checked) continue;
+        return i;
+      }
+      return -1;
+    };
+    let currentIndex = firstUncheckedIndex;
+    if (!sequentialStepChecking && Number.isInteger(focusedStepIndex)) {
+      const focusedVisibleIndex = getNextVisibleStepIndex(focusedStepIndex);
+      currentIndex = focusedVisibleIndex !== -1 ? focusedVisibleIndex : firstUncheckedIndex;
+    }
+    let lastStepIndex = -1;
+    for (let i = items.length - 1; i >= 0; i -= 1) {
+      if (items[i]?.type === 'step') {
+        lastStepIndex = i;
+        break;
+      }
+    }
     if (jumpCurrentButton) {
       jumpCurrentButton.classList.remove('hidden');
       jumpCurrentButton.disabled = currentIndex === -1;
@@ -1148,7 +1172,9 @@ export const renderSteps = (params) => {
         }
 
         const stepEl = document.createElement('div');
-        const isCurrent = !sectionItem.checked && sectionCursor === currentIndex;
+        const isCurrent = sequentialStepChecking
+          ? !sectionItem.checked && sectionCursor === currentIndex
+          : sectionCursor === currentIndex;
         stepEl.className =
           'step-item' + (sectionItem.checked ? ' completed' : '') + (isCurrent ? ' current' : '');
         const displayHtml = formatStepHtml(sectionItem.html || sectionItem.text, sectionItem.text);
@@ -1161,20 +1187,41 @@ export const renderSteps = (params) => {
           stepEl.classList.add('clicked');
           setTimeout(() => {
             if (!sequentialStepChecking) {
+              const wasChecked = Boolean(sectionItem.checked);
               sectionItem.checked = !sectionItem.checked;
+              let nextFocusIndex = stepIndex;
+              for (let i = stepIndex + 1; i < items.length; i += 1) {
+                if (items[i]?.type === 'step') {
+                  nextFocusIndex = i;
+                  break;
+                }
+              }
+              const markedLastStep =
+                !wasChecked && sectionItem.checked && stepIndex === lastStepIndex;
+              if (markedLastStep) {
+                for (let i = 0; i < items.length; i += 1) {
+                  if (items[i]?.type === 'step') {
+                    items[i].checked = true;
+                  }
+                }
+              }
+              setFocusedStepIndex(nextFocusIndex);
             } else if (currentIndex !== -1 && stepIndex > currentIndex) {
+              setFocusedStepIndex(null);
               for (let i = currentIndex; i <= stepIndex; i += 1) {
                 if (items[i].type === 'step') {
                   items[i].checked = true;
                 }
               }
             } else if (sectionItem.checked) {
+              setFocusedStepIndex(null);
               for (let i = stepIndex; i < items.length; i += 1) {
                 if (items[i].type === 'step') {
                   items[i].checked = false;
                 }
               }
             } else {
+              setFocusedStepIndex(null);
               sectionItem.checked = true;
             }
             saveProgress();

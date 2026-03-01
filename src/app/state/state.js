@@ -3,6 +3,7 @@ export const state = {
   sequentialStepChecking: true,
   currentItems: [],
   pendingAutoScroll: false,
+  focusedStepIndex: null,
   currentQuestKey: null,
   currentRewardImage: null,
   currentOverview: null,

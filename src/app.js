@@ -436,6 +436,10 @@ const buildStepsRenderParams = (items) => ({
   setPendingAutoScroll: (val) => {
     state.pendingAutoScroll = val;
   },
+  focusedStepIndex: state.focusedStepIndex,
+  setFocusedStepIndex: (val) => {
+    state.focusedStepIndex = Number.isInteger(val) ? val : null;
+  },
   saveProgress,
   renderStepsFn: (nextItems) => renderSteps(buildStepsRenderParams(nextItems)),
   formatStepHtml,

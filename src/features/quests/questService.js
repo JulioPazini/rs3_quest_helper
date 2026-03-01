@@ -228,6 +228,7 @@ export async function loadQuest(questName, ctx) {
       stepsDiv.classList.remove('hidden');
       if (backButton) backButton.classList.remove('hidden');
       state.currentItems = [];
+      state.focusedStepIndex = null;
       state.currentQuestKey = null;
       state.currentKartographerLiveData = null;
       state.showSteps = false;
@@ -257,6 +258,7 @@ export async function loadQuest(questName, ctx) {
         overviewDiv.classList.add('hidden');
       }
       state.currentItems = [];
+      state.focusedStepIndex = null;
       state.currentQuestKey = null;
       state.currentKartographerLiveData = null;
       state.showSteps = false;
@@ -291,6 +293,7 @@ export async function loadQuest(questName, ctx) {
 
     const items = extractQuickGuide(html);
     state.currentItems = items;
+    state.focusedStepIndex = null;
     state.currentQuestKey = `questProgress:${finalTitle}`;
 
     const saved = loadProgress();

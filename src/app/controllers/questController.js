@@ -28,6 +28,7 @@ export const createQuestController = (deps) => {
 
   const handleReset = () => {
     if (!state.currentItems.length) return;
+    state.focusedStepIndex = null;
     state.currentItems.forEach((item) => {
       if (item.type === 'step') item.checked = false;
     });
@@ -52,6 +53,7 @@ export const createQuestController = (deps) => {
   };
 
   const handlePrev = () => {
+    state.focusedStepIndex = null;
     const currentIndex = state.currentItems.findIndex(
       (item) => item.type === 'step' && !item.checked
     );
@@ -73,6 +75,7 @@ export const createQuestController = (deps) => {
   };
 
   const handleNext = () => {
+    state.focusedStepIndex = null;
     const currentIndex = state.currentItems.findIndex(
       (item) => item.type === 'step' && !item.checked
     );

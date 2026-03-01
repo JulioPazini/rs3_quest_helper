@@ -1017,6 +1017,7 @@ test('renderSteps supports free step marking when sequential mode is disabled', 
   const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
   setDomGlobals(dom);
   const stepsDiv = dom.window.document.getElementById('steps');
+  let focusedStepIndex = null;
   const items = [
     {
       type: 'title',
@@ -1035,39 +1036,59 @@ test('renderSteps supports free step marking when sequential mode is disabled', 
     { type: 'step', text: 'S3', html: 'S3', checked: false, substeps: [] },
   ];
 
-  renderSteps({
-    items,
-    stepsDiv,
-    showAllSteps: true,
-    sequentialStepChecking: false,
-    hideCompletedCheckbox: null,
-    filterToggle: null,
-    navBar: null,
-    prevStepButton: null,
-    nextStepButton: null,
-    jumpCurrentButton: null,
-    currentRewardImage: null,
-    kartographerLiveData: null,
-    pendingAutoScroll: () => false,
-    setPendingAutoScroll: () => {},
-    saveProgress: () => {},
-    renderStepsFn: () => {},
-    formatStepHtml: (v) => v,
-    updateProgress: () => {},
-    resetQuestButton: null,
-    currentItems: items,
-    showSearchControls: () => {},
-  });
+  const render = () =>
+    renderSteps({
+      items,
+      stepsDiv,
+      showAllSteps: true,
+      sequentialStepChecking: false,
+      hideCompletedCheckbox: null,
+      filterToggle: null,
+      navBar: null,
+      prevStepButton: null,
+      nextStepButton: null,
+      jumpCurrentButton: null,
+      currentRewardImage: null,
+      kartographerLiveData: null,
+      focusedStepIndex,
+      setFocusedStepIndex: (value) => {
+        focusedStepIndex = Number.isInteger(value) ? value : null;
+      },
+      pendingAutoScroll: () => false,
+      setPendingAutoScroll: () => {},
+      saveProgress: () => {},
+      renderStepsFn: () => {
+        render();
+      },
+      formatStepHtml: (v) => v,
+      updateProgress: () => {},
+      resetQuestButton: null,
+      currentItems: items,
+      showSearchControls: () => {},
+    });
+
+  render();
+
+  const s2 = Array.from(stepsDiv.querySelectorAll('.step-item')).find((n) =>
+    n.textContent.includes('S2')
+  );
+  s2.click();
+  await wait();
+  assert.match(stepsDiv.querySelector('.step-item.current')?.textContent || '', /S3/);
+
+  assert.equal(items[1].checked, false);
+  assert.equal(items[2].checked, true);
+  assert.equal(items[3].checked, false);
+
+  render();
 
   const s3 = Array.from(stepsDiv.querySelectorAll('.step-item')).find((n) =>
     n.textContent.includes('S3')
   );
   s3.click();
   await wait();
-
-  assert.equal(items[0].type, 'title');
-  assert.equal(items[1].checked, false);
-  assert.equal(items[2].checked, false);
+  assert.equal(items[1].checked, true);
+  assert.equal(items[2].checked, true);
   assert.equal(items[3].checked, true);
 });
 
