@@ -184,7 +184,10 @@ test('extractQuickGuide stops section sibling capture when next heading is wrapp
   assert.equal(titleItem.sectionImages.length, 1);
   assert.equal(titleItem.sectionImages[0].src, 'https://runescape.wiki/images/keep.png');
   assert.equal(titleItem.sectionTexts.length, 0);
-  assert.equal(items.some((item) => item.type === 'title' && item.text === 'Rewards'), false);
+  assert.equal(
+    items.some((item) => item.type === 'title' && item.text === 'Rewards'),
+    false
+  );
 });
 
 test('extractQuickGuide stops when Rewards or Achievements appear as lower-level headings', () => {
@@ -208,7 +211,10 @@ test('extractQuickGuide stops when Rewards or Achievements appear as lower-level
   const steps = items.filter((item) => item.type === 'step');
   assert.equal(steps.length, 1);
   assert.equal(steps[0].text, 'Step one');
-  assert.equal(items.some((item) => item.type === 'title' && /Achievements/i.test(item.text)), false);
+  assert.equal(
+    items.some((item) => item.type === 'title' && /Achievements/i.test(item.text)),
+    false
+  );
 });
 
 test('extractQuickGuide stops when Reward appears as heading text variant', () => {
@@ -230,7 +236,10 @@ test('extractQuickGuide stops when Reward appears as heading text variant', () =
   const steps = items.filter((item) => item.type === 'step');
   assert.equal(steps.length, 1);
   assert.equal(steps[0].text, 'Step one');
-  assert.equal(items.some((item) => item.type === 'title' && /reward/i.test(item.text)), false);
+  assert.equal(
+    items.some((item) => item.type === 'title' && /reward/i.test(item.text)),
+    false
+  );
 });
 
 test('extractQuickGuide skips ignored headings and normalizes maps/links/images', () => {

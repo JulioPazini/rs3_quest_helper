@@ -474,7 +474,9 @@ export const renderSteps = (params) => {
     if (!src) return '';
     try {
       const url = new URL(src, 'https://runescape.wiki');
-      const host = String(url.hostname || '').replace(/^www\./i, '').toLowerCase();
+      const host = String(url.hostname || '')
+        .replace(/^www\./i, '')
+        .toLowerCase();
       let path = String(url.pathname || '');
       if (/^\/images\/thumb\//i.test(path)) {
         const parts = path.split('/').filter(Boolean);
