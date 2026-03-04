@@ -300,9 +300,10 @@ export async function loadQuest(questName, ctx) {
     if (saved && Array.isArray(saved.checkedIndices)) {
       applyCheckedIndices(state.currentItems, saved.checkedIndices);
     }
-    if (saved && saved.overviewChecks && typeof saved.overviewChecks === 'object') {
-      state.overviewChecks = saved.overviewChecks;
-    }
+    state.overviewChecks =
+      saved && saved.overviewChecks && typeof saved.overviewChecks === 'object'
+        ? saved.overviewChecks
+        : {};
 
     const playerMeta = state?.playerQuestMeta || {};
     const lookupKeys = buildQuestMetaLookupKeys([
