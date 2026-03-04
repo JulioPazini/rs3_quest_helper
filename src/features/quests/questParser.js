@@ -81,6 +81,18 @@ const isQuestCompleteTerminalStep = (text) => {
   if (/^you have completed\b/.test(normalized)) return true;
   return false;
 };
+
+const normalizeHeadingText = (value) =>
+  String(value || '')
+    .replace(/\[[^\]]*\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+const isTerminalQuickGuideHeading = (value) => {
+  const normalized = normalizeHeadingText(value);
+  return /^(reward|rewards|achievement|achievements)$/.test(normalized);
+};
 export const getQuestIcon = (html) => {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
@@ -799,16 +811,55 @@ export function extractQuickGuide(html) {
     return null;
   };
 
+  const getHeadingFromElement = (el) => {
+    if (!el || !el.tagName) return null;
+    if (/^H[2-6]$/.test(el.tagName)) return el;
+
+    const classes = Array.from(el.classList || []);
+    const isHeadingWrapper =
+      classes.includes('mw-heading') || classes.some((c) => /^mw-heading[2-6]$/.test(c));
+
+    const directChildren = Array.from(el.children || []);
+    if (isHeadingWrapper) {
+      const ownHeading = directChildren.find((child) => /^H[2-6]$/.test(child.tagName));
+      if (ownHeading) return ownHeading;
+    }
+
+    for (const child of directChildren) {
+      if (!child || !child.tagName) continue;
+      if (/^H[2-6]$/.test(child.tagName)) return child;
+      const childClasses = Array.from(child.classList || []);
+      const childIsHeadingWrapper =
+        childClasses.includes('mw-heading') ||
+        childClasses.some((c) => /^mw-heading[2-6]$/.test(c));
+      if (!childIsHeadingWrapper) continue;
+      const nestedHeading = Array.from(child.children || []).find((grandChild) =>
+        /^H[2-6]$/.test(grandChild.tagName)
+      );
+      if (nestedHeading) return nestedHeading;
+    }
+
+    return null;
+  };
+
   let node;
   while ((node = walker.nextNode())) {
     if (finished) break;
 
     if (node.id === 'toc') continue;
 
+    if (/^H[2-6]$/.test(node.tagName)) {
+      const stopText = node.textContent.trim();
+      if (isTerminalQuickGuideHeading(stopText)) {
+        finished = true;
+        continue;
+      }
+    }
+
     if (/^H[2-4]$/.test(node.tagName)) {
       const text = node.textContent.trim();
       const level = Number(node.tagName.replace('H', '')) || 2;
-      if (/^rewards$/i.test(text)) {
+      if (isTerminalQuickGuideHeading(text)) {
         finished = true;
         continue;
       }
@@ -817,7 +868,10 @@ export function extractQuickGuide(html) {
         ![
           'Contents',
           'Overview',
+          'Reward',
           'Rewards',
+          'Achievement',
+          'Achievements',
           'Required for completing',
           'Official description',
         ].includes(text)
@@ -833,13 +887,7 @@ export function extractQuickGuide(html) {
         const headingContainer = node.closest('.mw-heading') || node;
         let sibling = headingContainer.nextElementSibling;
         const isNextSectionHeader = (el) => {
-          if (!el) return false;
-          if (el.classList && Array.from(el.classList).some((c) => /^mw-heading[2-4]$/.test(c))) {
-            return true;
-          }
-          if (/^H[2-4]$/.test(el.tagName)) return true;
-          const innerHeader = el.querySelector && el.querySelector('h2, h3, h4');
-          return Boolean(innerHeader && innerHeader.closest('.mw-heading') === el);
+          return Boolean(getHeadingFromElement(el));
         };
         while (sibling && !isNextSectionHeader(sibling)) {
           const seeAlsoEl = sibling.classList.contains('seealso')

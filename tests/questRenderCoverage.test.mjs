@@ -1442,3 +1442,184 @@ test('renderSteps single mode shows quest-complete section images and reward ima
   assert.ok(stepsDiv.querySelector('.section-images'));
   assert.ok(stepsDiv.querySelector('.reward-image'));
 });
+
+test('renderSteps single mode avoids duplicating reward image already present in section images', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const rewardSrc = 'https://example.test/reward.png?123';
+  const items = [
+    {
+      type: 'title',
+      text: 'Quest end',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [
+        { src: rewardSrc, alt: 'reward duplicate', caption: 'reward duplicate' },
+        { src: 'https://example.test/other.png', alt: 'other' },
+      ],
+      sectionAdvancedMaps: [],
+    },
+    {
+      type: 'step',
+      text: 'Quest complete!',
+      html: 'Quest complete!',
+      checked: false,
+      substeps: [],
+    },
+  ];
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: false,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: 'https://example.test/reward.png',
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const sectionImages = stepsDiv.querySelectorAll('.section-image img');
+  assert.equal(sectionImages.length, 1);
+  assert.equal(sectionImages[0].getAttribute('src'), 'https://example.test/other.png');
+  const rewardImages = stepsDiv.querySelectorAll('.reward-image');
+  assert.equal(rewardImages.length, 1);
+  assert.equal(rewardImages[0].getAttribute('src'), 'https://example.test/reward.png');
+});
+
+test('renderSteps showAllSteps avoids appending final reward image when inline images already include it', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    {
+      type: 'title',
+      text: 'End',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [],
+      sectionAdvancedMaps: [],
+    },
+    {
+      type: 'note',
+      noteType: 'images',
+      images: [{ src: 'https://example.test/reward.png?abc', alt: 'reward inline', caption: '' }],
+    },
+    {
+      type: 'step',
+      text: 'Quest complete!',
+      html: 'Quest complete!',
+      checked: false,
+      substeps: [],
+    },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: 'https://example.test/reward.png',
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const allRewardLike = Array.from(stepsDiv.querySelectorAll('img[src]')).filter((img) =>
+    String(img.getAttribute('src') || '').includes('reward.png')
+  );
+  assert.equal(allRewardLike.length, 1);
+  assert.equal(stepsDiv.querySelectorAll('.reward-image').length, 0);
+});
+
+test('renderSteps normalizes wiki thumbnail variants as the same image and avoids duplicates', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    {
+      type: 'title',
+      text: 'End',
+      level: 2,
+      seeAlso: [],
+      sectionTexts: [],
+      sectionInfoBoxes: [],
+      sectionTables: [],
+      sectionRefLists: [],
+      sectionImages: [
+        {
+          src: 'https://runescape.wiki/images/thumb/a/ab/Example_reward.png/320px-Example_reward.png',
+          alt: 'thumb',
+        },
+      ],
+      sectionAdvancedMaps: [],
+    },
+    {
+      type: 'step',
+      text: 'Quest complete!',
+      html: 'Quest complete!',
+      checked: false,
+      substeps: [],
+    },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: 'https://runescape.wiki/images/a/ab/Example_reward.png',
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const allRewardLike = Array.from(stepsDiv.querySelectorAll('img[src]')).filter((img) =>
+    String(img.getAttribute('src') || '').includes('Example_reward.png')
+  );
+  assert.equal(allRewardLike.length, 1);
+});

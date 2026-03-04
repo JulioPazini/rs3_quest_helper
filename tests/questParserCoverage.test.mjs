@@ -160,6 +160,79 @@ test('extractQuickGuide captures notes/text/reflist and stops at Rewards heading
   assert.match(steps[0].text, /Step one/);
 });
 
+test('extractQuickGuide stops section sibling capture when next heading is wrapped', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Section One</h2>
+        <figure><img src="/images/keep.png" alt="keep"></figure>
+        <section class="portable-heading">
+          <h2>Rewards</h2>
+        </section>
+        <p>Should not be captured</p>
+        <figure><img src="/images/after-rewards.png" alt="after"></figure>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const titleItem = items.find((item) => item.type === 'title' && item.text === 'Section One');
+  assert.ok(titleItem);
+  assert.equal(titleItem.sectionImages.length, 1);
+  assert.equal(titleItem.sectionImages[0].src, 'https://runescape.wiki/images/keep.png');
+  assert.equal(titleItem.sectionTexts.length, 0);
+  assert.equal(items.some((item) => item.type === 'title' && item.text === 'Rewards'), false);
+});
+
+test('extractQuickGuide stops when Rewards or Achievements appear as lower-level headings', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Section One</h2>
+        <div class="lighttable checklist"><ul><li>Step one</li></ul></div>
+        <h5>Rewards</h5>
+        <div class="lighttable checklist"><ul><li>Should not parse</li></ul></div>
+        <h5>Achievements</h5>
+        <p>Should not parse either</p>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const steps = items.filter((item) => item.type === 'step');
+  assert.equal(steps.length, 1);
+  assert.equal(steps[0].text, 'Step one');
+  assert.equal(items.some((item) => item.type === 'title' && /Achievements/i.test(item.text)), false);
+});
+
+test('extractQuickGuide stops when Reward appears as heading text variant', () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const html = `
+    <div id="mw-content-text">
+      <div class="mw-parser-output">
+        <h2>Section One</h2>
+        <div class="lighttable checklist"><ul><li>Step one</li></ul></div>
+        <h3>Reward [edit]</h3>
+        <div class="lighttable checklist"><ul><li>Should not parse</li></ul></div>
+      </div>
+    </div>
+  `;
+
+  const items = extractQuickGuide(html);
+  const steps = items.filter((item) => item.type === 'step');
+  assert.equal(steps.length, 1);
+  assert.equal(steps[0].text, 'Step one');
+  assert.equal(items.some((item) => item.type === 'title' && /reward/i.test(item.text)), false);
+});
+
 test('extractQuickGuide skips ignored headings and normalizes maps/links/images', () => {
   const dom = new JSDOM('<!doctype html><html><body></body></html>');
   setDomGlobals(dom);

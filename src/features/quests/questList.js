@@ -313,7 +313,7 @@ const fetchCategoryTitles = async (categoryTitle) => {
 
 export const loadQuestList = async () => {
   if (questListLoadingPromise) return questListLoadingPromise;
-  const cacheKey = 'questListCacheV4';
+  const cacheKey = 'questListCacheV5';
   questListLoadingPromise = (async () => {
     if (questList.length > 0) {
       const valid = questList.every(
@@ -352,8 +352,21 @@ export const loadQuestList = async () => {
       const combinedTableInfo = findQuestTableInDocument(combinedDoc);
       const combinedList = parseQuestLikeRowsFromTable(combinedTableInfo);
       if (combinedList.length > 0) {
-        questList = combinedList;
-        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), list: combinedList }));
+        // Keep the fast combined source, but merge explicit miniquests to avoid missing entries.
+        let miniquestEntries = [];
+        const miniquestHtml = await fetchParsedHtml('Miniquests', {
+          timeoutMs: 7000,
+          retries: 1,
+          retryDelayMs: 300,
+        }).catch(() => '');
+        if (miniquestHtml) {
+          const miniquestDoc = parser.parseFromString(miniquestHtml, 'text/html');
+          const miniquestTableInfo = findMiniquestTableInDocument(miniquestDoc);
+          miniquestEntries = parseQuestLikeRowsFromTable(miniquestTableInfo);
+        }
+        const mergedList = mergeQuestLikeLists(combinedList, miniquestEntries);
+        questList = mergedList;
+        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), list: mergedList }));
         return;
       }
     }

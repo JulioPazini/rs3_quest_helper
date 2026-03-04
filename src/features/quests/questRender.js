@@ -469,12 +469,62 @@ export const renderSteps = (params) => {
     }
   };
 
-  const appendSectionImages = (sectionImages) => {
+  const toImageKey = (value) => {
+    const src = String(value || '').trim();
+    if (!src) return '';
+    try {
+      const url = new URL(src, 'https://runescape.wiki');
+      const host = String(url.hostname || '').replace(/^www\./i, '').toLowerCase();
+      let path = String(url.pathname || '');
+      if (/^\/images\/thumb\//i.test(path)) {
+        const parts = path.split('/').filter(Boolean);
+        const thumbIndex = parts.findIndex((part) => part.toLowerCase() === 'thumb');
+        if (thumbIndex >= 0 && parts.length >= thumbIndex + 5) {
+          const segA = parts[thumbIndex + 1];
+          const segB = parts[thumbIndex + 2];
+          const fileName = parts[thumbIndex + 3];
+          path = `/images/${segA}/${segB}/${fileName}`;
+        }
+      }
+      if (/^runescape\.wiki$/i.test(host)) return path;
+      return `${url.origin}${path}`;
+    } catch (_err) {
+      return src.split(/[?#]/)[0];
+    }
+  };
+
+  const hasRenderedImageSrc = (src) => {
+    const targetKey = toImageKey(src);
+    if (!targetKey) return false;
+    const renderedImages = stepsDiv.querySelectorAll('img[src]');
+    return Array.from(renderedImages).some(
+      (img) => toImageKey(img.getAttribute('src') || '') === targetKey
+    );
+  };
+
+  const appendRewardImage = () => {
+    if (!currentRewardImage) return false;
+    if (hasRenderedImageSrc(currentRewardImage)) return false;
+    const img = document.createElement('img');
+    img.className = 'reward-image';
+    img.src = currentRewardImage;
+    img.alt = 'Quest rewards';
+    stepsDiv.appendChild(img);
+    return true;
+  };
+
+  const appendSectionImages = (sectionImages, options = {}) => {
     if (!Array.isArray(sectionImages) || sectionImages.length === 0) return;
+    const omitImageKey = toImageKey(options.omitSrc);
+    const seenInBlock = new Set();
     const wrap = document.createElement('div');
     wrap.className = 'section-images';
     sectionImages.forEach((imgData) => {
       if (!imgData || !imgData.src) return;
+      const imageKey = toImageKey(imgData.src);
+      if (omitImageKey && imageKey === omitImageKey) return;
+      if (imageKey && (seenInBlock.has(imageKey) || hasRenderedImageSrc(imgData.src))) return;
+      if (imageKey) seenInBlock.add(imageKey);
       const figure = document.createElement('figure');
       figure.className = 'section-image';
       const img = document.createElement('img');
@@ -1062,13 +1112,7 @@ export const renderSteps = (params) => {
     if (!hasSections) {
       stepsDiv.textContent = 'No steps found.';
     }
-    if (currentRewardImage) {
-      const img = document.createElement('img');
-      img.className = 'reward-image';
-      img.src = currentRewardImage;
-      img.alt = 'Quest rewards';
-      stepsDiv.appendChild(img);
-    }
+    appendRewardImage();
     showSearchControls();
     updateProgress();
     return;
@@ -1240,7 +1284,7 @@ export const renderSteps = (params) => {
           !renderedSectionImages &&
           !sectionHasInlineNoteType(idx, 'images')
         ) {
-          appendSectionImages(item.sectionImages);
+          appendSectionImages(item.sectionImages, { omitSrc: currentRewardImage });
           renderedSectionImages = true;
         }
         stepsDiv.appendChild(stepEl);
@@ -1263,15 +1307,12 @@ export const renderSteps = (params) => {
           appendSectionTables(item.sectionTables);
           appendSectionRefLists(item.sectionRefLists);
         }
-        appendSectionImages(item.sectionImages);
+        appendSectionImages(item.sectionImages, {
+          omitSrc: shouldShowSectionReward ? currentRewardImage : null,
+        });
       }
       if (shouldShowSectionReward) {
-        const img = document.createElement('img');
-        img.className = 'reward-image';
-        img.src = currentRewardImage;
-        img.alt = 'Quest rewards';
-        stepsDiv.appendChild(img);
-        didRenderRewardImage = true;
+        didRenderRewardImage = appendRewardImage() || didRenderRewardImage;
       }
       if (!renderedSectionAdvancedMaps) {
         appendSectionAdvancedMaps(item.sectionAdvancedMaps);
@@ -1280,11 +1321,7 @@ export const renderSteps = (params) => {
     }
 
     if (currentRewardImage && !didRenderRewardImage) {
-      const img = document.createElement('img');
-      img.className = 'reward-image';
-      img.src = currentRewardImage;
-      img.alt = 'Quest rewards';
-      stepsDiv.appendChild(img);
+      appendRewardImage();
     }
 
     if (pendingAutoScroll()) {
@@ -1323,13 +1360,7 @@ export const renderSteps = (params) => {
     if (nextStepButton) nextStepButton.disabled = true;
     if (navBar) navBar.classList.add('hidden');
     if (jumpCurrentButton) jumpCurrentButton.classList.add('hidden');
-    if (currentRewardImage) {
-      const img = document.createElement('img');
-      img.className = 'reward-image';
-      img.src = currentRewardImage;
-      img.alt = 'Quest rewards';
-      stepsDiv.appendChild(img);
-    }
+    appendRewardImage();
     updateProgress();
     return;
   }
@@ -1440,27 +1471,7 @@ export const renderSteps = (params) => {
     currentTitleItem.sectionImages.length > 0 &&
     !sectionHasInlineNoteType(currentTitleIndex, 'images')
   ) {
-    const wrap = document.createElement('div');
-    wrap.className = 'section-images';
-    currentTitleItem.sectionImages.forEach((imgData) => {
-      if (!imgData || !imgData.src) return;
-      const figure = document.createElement('figure');
-      figure.className = 'section-image';
-      const img = document.createElement('img');
-      img.src = imgData.src;
-      img.alt = imgData.alt || '';
-      img.loading = 'lazy';
-      figure.appendChild(img);
-      if (imgData.caption) {
-        const caption = document.createElement('figcaption');
-        caption.textContent = imgData.caption;
-        figure.appendChild(caption);
-      }
-      wrap.appendChild(figure);
-    });
-    if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
-    }
+    appendSectionImages(currentTitleItem.sectionImages, { omitSrc: currentRewardImage });
   }
 
   const stepEl = document.createElement('div');
@@ -1496,35 +1507,11 @@ export const renderSteps = (params) => {
     currentTitleItem.sectionImages.length > 0 &&
     !sectionHasInlineNoteType(currentTitleIndex, 'images')
   ) {
-    const wrap = document.createElement('div');
-    wrap.className = 'section-images';
-    currentTitleItem.sectionImages.forEach((imgData) => {
-      if (!imgData || !imgData.src) return;
-      const figure = document.createElement('figure');
-      figure.className = 'section-image';
-      const img = document.createElement('img');
-      img.src = imgData.src;
-      img.alt = imgData.alt || '';
-      img.loading = 'lazy';
-      figure.appendChild(img);
-      if (imgData.caption) {
-        const caption = document.createElement('figcaption');
-        caption.textContent = imgData.caption;
-        figure.appendChild(caption);
-      }
-      wrap.appendChild(figure);
-    });
-    if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
-    }
+    appendSectionImages(currentTitleItem.sectionImages);
   }
 
   if (currentRewardImage && /quest complete/i.test(step.text)) {
-    const img = document.createElement('img');
-    img.className = 'reward-image';
-    img.src = currentRewardImage;
-    img.alt = 'Quest rewards';
-    stepsDiv.appendChild(img);
+    appendRewardImage();
   }
   if (
     !isCurrentQuestComplete &&
