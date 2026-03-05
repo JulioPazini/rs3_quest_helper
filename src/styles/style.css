@@ -1248,6 +1248,53 @@ header.hidden {
   display: none;
 }
 
+.quest-translate-btn-global {
+  position: fixed;
+  right: 10px;
+  top: 96px;
+  z-index: 1260;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #4b3d1f, #3a311b);
+  color: #e7d08a;
+  cursor: pointer;
+}
+
+.quest-translate-btn-global .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.quest-translate-btn-global:hover {
+  filter: brightness(1.08);
+}
+
+.quest-translate-btn-global.loading {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.quest-translate-btn-global.translated {
+  background: #245f2f;
+  border-color: #3f9d56;
+  color: #d9ffe2;
+}
+
+.quest-translate-btn-global.error {
+  border-color: #cf6666;
+  color: #ffb8b8;
+}
+
+.quest-translate-btn-global.hidden {
+  display: none;
+}
+
 .nav-btn {
   flex: 0 0 auto;
   padding: 0;
@@ -1480,72 +1527,6 @@ header.hidden {
   transition:
     transform 120ms ease,
     box-shadow 120ms ease;
-}
-
-.step-content-body {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.step-content-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.step-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  min-width: 28px;
-  position: relative;
-}
-
-.step-translate-btn {
-  border: 1px solid var(--border);
-  background: #2a2a2a;
-  color: #f2e7ba;
-  font-weight: 700;
-  font-size: 12px;
-  line-height: 1;
-  min-width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  padding: 0 6px;
-}
-
-.step-translate-btn.loading {
-  opacity: 0.8;
-  cursor: wait;
-}
-
-.step-translate-btn.translated {
-  background: #245f2f;
-  border-color: #3f9d56;
-  color: #d9ffe2;
-}
-
-.step-translate-btn .material-symbols-outlined {
-  font-size: 16px;
-  line-height: 1;
-  display: block;
-}
-
-.step-translate-status {
-  font-size: 11px;
-  color: var(--muted);
-  position: absolute;
-  top: 50%;
-  right: 32px;
-  transform: translateY(-50%);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.step-translate-status.error {
-  color: #ff8a8a;
 }
 
 .step-item a,

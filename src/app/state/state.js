@@ -8,6 +8,13 @@ export const state = {
   currentRewardImage: null,
   currentOverview: null,
   currentKartographerLiveData: null,
+  questTranslation: {
+    isTranslated: false,
+    isLoading: false,
+    hasError: false,
+    originalHtml: [],
+    translatedHtml: [],
+  },
   overviewChecks: {},
   showSteps: false,
   searchQuery: '',

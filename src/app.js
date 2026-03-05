@@ -62,6 +62,7 @@ const {
   jumpCurrentButton,
   headerEl,
   navBar,
+  questTranslateButton,
   toggleBar,
   playerBar,
   stickyBar,
@@ -294,6 +295,7 @@ const updateTopBarsStickyState = () => {
     viewModeToggle.classList.toggle('sticky-top', shouldStickOverview);
   }
   updateBackButtonPlacement();
+  updateQuestTranslateButtonVisibility();
 };
 
 const isNavCurrentlyStuck = () => {
@@ -315,6 +317,186 @@ const updateBackButtonPlacement = () => {
   const target = shouldPlaceInNav && navLeft ? navLeft : viewModeToggle;
   if (!target || backButton.parentElement === target) return;
   target.insertBefore(backButton, target.firstChild);
+};
+
+const createEmptyQuestTranslationState = () => ({
+  isTranslated: false,
+  isLoading: false,
+  hasError: false,
+  originalHtml: [],
+  translatedHtml: [],
+});
+
+const ensureQuestTranslationState = () => {
+  if (!state.questTranslation || typeof state.questTranslation !== 'object') {
+    state.questTranslation = createEmptyQuestTranslationState();
+  }
+  return state.questTranslation;
+};
+
+const walkSubsteps = (substeps, visit) => {
+  if (!Array.isArray(substeps) || typeof visit !== 'function') return;
+  substeps.forEach((substep) => {
+    if (!substep || typeof substep !== 'object') return;
+    visit(substep);
+    walkSubsteps(substep.substeps, visit);
+  });
+};
+
+const htmlToText = (html) =>
+  String(html || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const collectTranslatableEntries = (items) => {
+  const entries = [];
+  (Array.isArray(items) ? items : []).forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    if (item.type === 'title') {
+      entries.push({
+        get: () => String(item.text || '').trim(),
+        set: (value) => {
+          item.text = String(value || '').trim();
+        },
+        textHint: String(item.text || '').trim(),
+      });
+      if (Array.isArray(item.seeAlso)) {
+        item.seeAlso.forEach((_value, seeAlsoIndex) => {
+          entries.push({
+            get: () => String(item.seeAlso?.[seeAlsoIndex] || '').trim(),
+            set: (value) => {
+              if (!Array.isArray(item.seeAlso)) item.seeAlso = [];
+              item.seeAlso[seeAlsoIndex] = String(value || '').trim();
+            },
+            textHint: htmlToText(item.seeAlso?.[seeAlsoIndex]),
+          });
+        });
+      }
+      return;
+    }
+    if (item.type !== 'step') return;
+    entries.push({
+      get: () => String(item.html || item.text || '').trim(),
+      set: (value) => {
+        item.html = String(value || '').trim();
+      },
+      textHint: String(item.text || '').trim(),
+    });
+    walkSubsteps(item.substeps, (substep) => {
+      entries.push({
+        get: () => String(substep.html || substep.text || '').trim(),
+        set: (value) => {
+          substep.html = String(value || '').trim();
+        },
+        textHint: String(substep.text || '').trim(),
+      });
+    });
+  });
+  return entries;
+};
+
+const applyValueListToEntries = (entries, valueList) => {
+  if (!Array.isArray(entries) || !Array.isArray(valueList)) return;
+  entries.forEach((entry, index) => {
+    if (!entry || typeof entry.set !== 'function') return;
+    entry.set(String(valueList[index] || '').trim());
+  });
+};
+
+const setQuestTranslateButtonState = () => {
+  if (!questTranslateButton) return;
+  const translationState = ensureQuestTranslationState();
+  const icon = translationState.isLoading ? 'hourglass_top' : 'g_translate';
+  questTranslateButton.innerHTML = `<span class="material-symbols-outlined">${icon}</span>`;
+  questTranslateButton.disabled = translationState.isLoading;
+  questTranslateButton.classList.toggle('loading', translationState.isLoading);
+  questTranslateButton.classList.toggle('translated', translationState.isTranslated);
+  questTranslateButton.classList.toggle('error', translationState.hasError);
+  const label = translationState.isTranslated
+    ? 'Restore original quest steps'
+    : 'Translate quest steps to PT-BR';
+  questTranslateButton.title = label;
+  questTranslateButton.setAttribute('aria-label', label);
+};
+
+const updateQuestTranslateButtonVisibility = () => {
+  if (!questTranslateButton) return;
+  setQuestTranslateButtonState();
+  const hasStep = state.currentItems.some((item) => item?.type === 'step');
+  const shouldShow =
+    hasStep &&
+    !!state.showSteps &&
+    !!backButton &&
+    !backButton.classList.contains('hidden') &&
+    !!navBar &&
+    !navBar.classList.contains('hidden');
+  questTranslateButton.classList.toggle('hidden', !shouldShow);
+  if (!shouldShow) return;
+  const navRect = navBar.getBoundingClientRect();
+  const progressVisible = progressRow && !progressRow.classList.contains('hidden');
+  const progressBottom = progressVisible ? progressRow.getBoundingClientRect().bottom : 0;
+  const top = Math.max(12, Math.round(Math.max(navRect.bottom, progressBottom) + 8));
+  questTranslateButton.style.top = `${top}px`;
+};
+
+const toggleQuestTranslation = async () => {
+  if (!state.currentItems.length) return;
+  const translationState = ensureQuestTranslationState();
+  if (translationState.isLoading) return;
+  const entries = collectTranslatableEntries(state.currentItems);
+  if (!entries.length) return;
+
+  if (
+    !Array.isArray(translationState.originalHtml) ||
+    translationState.originalHtml.length !== entries.length
+  ) {
+    translationState.originalHtml = entries.map((entry) => String(entry.get?.() || '').trim());
+  }
+
+  if (translationState.isTranslated) {
+    applyValueListToEntries(entries, translationState.originalHtml);
+    translationState.isTranslated = false;
+    translationState.hasError = false;
+    renderSteps(buildStepsRenderParams(state.currentItems));
+    setQuestTranslateButtonState();
+    return;
+  }
+
+  translationState.isLoading = true;
+  translationState.hasError = false;
+  setQuestTranslateButtonState();
+  try {
+    let translatedHtml = translationState.translatedHtml;
+    if (!Array.isArray(translatedHtml) || translatedHtml.length !== entries.length) {
+      translatedHtml = [];
+      for (const entry of entries) {
+        const sourceHtml = String(entry.get?.() || '').trim();
+        if (!sourceHtml) {
+          translatedHtml.push(sourceHtml);
+          continue;
+        }
+        const textHint = String(entry.textHint || '').trim() || htmlToText(sourceHtml);
+        const translated = await translateStepHtmlToPtBr({
+          html: sourceHtml,
+          text: textHint,
+          targetLang: 'pt-BR',
+        });
+        const translatedText = String(translated || '').trim();
+        translatedHtml.push(translatedText || sourceHtml);
+      }
+      translationState.translatedHtml = translatedHtml;
+    }
+    applyValueListToEntries(entries, translatedHtml);
+    translationState.isTranslated = true;
+    renderSteps(buildStepsRenderParams(state.currentItems));
+  } catch (_err) {
+    translationState.hasError = true;
+    showUiToast('Translation failed', { type: 'error' });
+  } finally {
+    translationState.isLoading = false;
+    setQuestTranslateButtonState();
+  }
 };
 
 const resetSearchInput = () => {
@@ -449,8 +631,6 @@ const buildStepsRenderParams = (items) => ({
   resetQuestButton,
   currentItems: state.currentItems,
   showSearchControls: () => showSearchControls(toggleBar),
-  translateStepHtml: ({ html, text, targetLang }) =>
-    translateStepHtmlToPtBr({ html, text, targetLang }),
 });
 
 const renderOverviewWithCurrentState = (overview, target) =>
@@ -687,6 +867,7 @@ const clearSearchResults = () => {
     }
   }
   updateScrollTopButtonVisibility();
+  updateQuestTranslateButtonVisibility();
 };
 
 const hideSearchResults = () => {
@@ -856,10 +1037,17 @@ if (scrollTopButton) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
+if (questTranslateButton) {
+  questTranslateButton.addEventListener('click', () => {
+    toggleQuestTranslation();
+  });
+}
 
 window.addEventListener('scroll', updateScrollTopButtonVisibility, { passive: true });
+window.addEventListener('scroll', updateQuestTranslateButtonVisibility, { passive: true });
 window.addEventListener('scroll', updateBackButtonPlacement, { passive: true });
 window.addEventListener('resize', updateScrollTopButtonVisibility);
+window.addEventListener('resize', updateQuestTranslateButtonVisibility);
 window.addEventListener('resize', updateBackButtonPlacement);
 
 bootstrapApp({
@@ -951,3 +1139,4 @@ if (settingsPanel) {
 }
 
 updateScrollTopButtonVisibility();
+updateQuestTranslateButtonVisibility();

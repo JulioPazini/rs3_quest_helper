@@ -26,6 +26,7 @@ export const getAppElements = (doc = document) => ({
   jumpCurrentButton: doc.getElementById('jumpCurrent'),
   headerEl: doc.querySelector('header'),
   navBar: doc.querySelector('.nav-bar'),
+  questTranslateButton: doc.getElementById('questTranslateButton'),
   toggleBar: doc.querySelector('.toggle-bar'),
   playerBar: doc.querySelector('.player-bar'),
   stickyBar: doc.getElementById('stickyBar'),

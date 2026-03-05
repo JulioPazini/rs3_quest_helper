@@ -201,6 +201,16 @@ export async function loadQuest(questName, ctx) {
     saveProgress,
     updateProgress,
   } = ctx;
+  const resetQuestTranslationState = () => {
+    if (!state || typeof state !== 'object') return;
+    state.questTranslation = {
+      isTranslated: false,
+      isLoading: false,
+      hasError: false,
+      originalHtml: [],
+      translatedHtml: [],
+    };
+  };
 
   renderStepsSkeleton(stepsDiv);
   renderTitle(questName, null);
@@ -228,6 +238,7 @@ export async function loadQuest(questName, ctx) {
       stepsDiv.classList.remove('hidden');
       if (backButton) backButton.classList.remove('hidden');
       state.currentItems = [];
+      resetQuestTranslationState();
       state.focusedStepIndex = null;
       state.currentQuestKey = null;
       state.currentKartographerLiveData = null;
@@ -258,6 +269,7 @@ export async function loadQuest(questName, ctx) {
         overviewDiv.classList.add('hidden');
       }
       state.currentItems = [];
+      resetQuestTranslationState();
       state.focusedStepIndex = null;
       state.currentQuestKey = null;
       state.currentKartographerLiveData = null;
@@ -293,6 +305,7 @@ export async function loadQuest(questName, ctx) {
 
     const items = extractQuickGuide(html);
     state.currentItems = items;
+    resetQuestTranslationState();
     state.focusedStepIndex = null;
     state.currentQuestKey = `questProgress:${finalTitle}`;
 
@@ -351,6 +364,7 @@ export async function loadQuest(questName, ctx) {
     stepsDiv.innerHTML = 'Error loading quest.';
     console.error(err);
     state.currentKartographerLiveData = null;
+    resetQuestTranslationState();
     hideActionBars(navBar, filterToggle);
     toggleButton.classList.add('hidden');
     if (viewStepsToggle) viewStepsToggle.classList.add('hidden');

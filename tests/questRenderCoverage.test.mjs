@@ -1669,7 +1669,7 @@ test('renderSteps normalizes wiki thumbnail variants as the same image and avoid
   assert.equal(allRewardLike.length, 1);
 });
 
-test('renderSteps shows translate button and translates only clicked step html', async () => {
+test('renderSteps does not render per-step translate button', () => {
   const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
   setDomGlobals(dom);
   const stepsDiv = dom.window.document.getElementById('steps');
@@ -1713,62 +1713,10 @@ test('renderSteps shows translate button and translates only clicked step html',
     resetQuestButton: null,
     currentItems: items,
     showSearchControls: () => {},
-    translateStepHtml: async ({ html }) =>
-      html.replace('Open', 'Abra').replace('Talk to', 'Fale com'),
   });
 
   const buttons = stepsDiv.querySelectorAll('.step-translate-btn');
-  assert.equal(buttons.length, 2);
-  buttons[0].click();
-  await wait(0);
-  assert.match(stepsDiv.textContent, /Abra the door/);
-  assert.match(stepsDiv.textContent, /Fale com Ozan/);
-  assert.match(stepsDiv.textContent, /Take key/);
-  assert.ok(stepsDiv.querySelector('.step-content-text a[href="/w/Door"]'));
-  assert.ok(stepsDiv.querySelector('.substep-text a[href="/w/Ozan"]'));
-});
-
-test('renderSteps translate button shows fallback status on translation error', async () => {
-  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
-  setDomGlobals(dom);
-  const stepsDiv = dom.window.document.getElementById('steps');
-  const items = [
-    { type: 'title', text: 'S', level: 2, seeAlso: [] },
-    { type: 'step', text: 'Open the door', html: 'Open the door', checked: false, substeps: [] },
-  ];
-
-  renderSteps({
-    items,
-    stepsDiv,
-    showAllSteps: true,
-    hideCompletedCheckbox: null,
-    filterToggle: null,
-    navBar: null,
-    prevStepButton: null,
-    nextStepButton: null,
-    jumpCurrentButton: null,
-    currentRewardImage: null,
-    kartographerLiveData: null,
-    pendingAutoScroll: () => false,
-    setPendingAutoScroll: () => {},
-    saveProgress: () => {},
-    renderStepsFn: () => {},
-    formatStepHtml: (v) => v,
-    updateProgress: () => {},
-    resetQuestButton: null,
-    currentItems: items,
-    showSearchControls: () => {},
-    translateStepHtml: async () => {
-      throw new Error('fail');
-    },
-  });
-
-  const button = stepsDiv.querySelector('.step-translate-btn');
-  button.click();
-  await wait(0);
-  const status = stepsDiv.querySelector('.step-translate-status');
-  assert.match(status.textContent, /Translation failed/);
-  assert.match(button.textContent, /g_translate/);
+  assert.equal(buttons.length, 0);
 });
 
 test('renderSteps showAllSteps marks substeps when parent step is completed', async () => {
