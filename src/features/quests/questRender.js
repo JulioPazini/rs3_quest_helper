@@ -439,6 +439,7 @@ export const renderSteps = (params) => {
     resetQuestButton,
     currentItems,
     showSearchControls,
+    translateStepHtml = null,
   } = params;
 
   stepsDiv.innerHTML = '';
@@ -1067,6 +1068,130 @@ export const renderSteps = (params) => {
     stepsDiv.appendChild(heading);
   };
 
+  const buildStepContentHtml = (isChecked, html) => `${isChecked ? '\u2714 ' : ''}${html || ''}`;
+
+  const attachTranslateButton = ({ stepEl, stepItem, displayHtml }) => {
+    if (typeof translateStepHtml !== 'function') return;
+    if (!stepEl) return;
+    const body = document.createElement('div');
+    body.className = 'step-content-body';
+    const content = document.createElement('div');
+    content.className = 'step-content-text';
+    content.innerHTML = buildStepContentHtml(Boolean(stepItem?.checked), displayHtml);
+
+    const actionWrap = document.createElement('div');
+    actionWrap.className = 'step-actions';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'step-translate-btn';
+    button.title = 'Translate this step to PT-BR';
+    button.setAttribute('aria-label', 'Translate this step to PT-BR');
+    const translateIconHtml = '<span class="material-symbols-outlined">g_translate</span>';
+    button.innerHTML = translateIconHtml;
+
+    const status = document.createElement('span');
+    status.className = 'step-translate-status';
+    status.setAttribute('aria-live', 'polite');
+
+    const setLoading = (loading) => {
+      button.disabled = loading;
+      button.classList.toggle('loading', loading);
+      button.innerHTML = loading
+        ? '<span class="material-symbols-outlined">hourglass_top</span>'
+        : translateIconHtml;
+    };
+
+    const translateSubstepsRecursive = async (substeps, targetLang) => {
+      if (!Array.isArray(substeps) || substeps.length === 0) return;
+      for (const substep of substeps) {
+        if (!substep) continue;
+        const sourceHtml = String(substep.html || substep.text || '').trim();
+        if (sourceHtml) {
+          const translatedSubstepHtml = await translateStepHtml({
+            html: sourceHtml,
+            text: substep.text || '',
+            targetLang,
+          });
+          if (translatedSubstepHtml && String(translatedSubstepHtml).trim()) {
+            substep.html = translatedSubstepHtml;
+          }
+        }
+        if (Array.isArray(substep.substeps) && substep.substeps.length > 0) {
+          await translateSubstepsRecursive(substep.substeps, targetLang);
+        }
+      }
+    };
+
+    const syncSubstepsDom = (listEl, substeps) => {
+      if (!listEl || !Array.isArray(substeps) || substeps.length === 0) return;
+      const childItems = Array.from(listEl.children).filter((el) => el.tagName === 'LI');
+      for (let i = 0; i < childItems.length && i < substeps.length; i += 1) {
+        const li = childItems[i];
+        const substep = substeps[i];
+        if (!substep) continue;
+        const textWrap = li.querySelector(':scope > .substep-text');
+        if (textWrap) {
+          textWrap.innerHTML = substep.html || substep.text || '';
+        }
+        const nested = li.querySelector(':scope > .substeps-nested');
+        if (nested && Array.isArray(substep.substeps)) {
+          syncSubstepsDom(nested, substep.substeps);
+        }
+      }
+    };
+
+    const showStatus = (text, isError = false) => {
+      status.textContent = text || '';
+      status.classList.toggle('error', Boolean(isError));
+    };
+
+    button.addEventListener('click', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setLoading(true);
+      showStatus('');
+      try {
+        const translatedHtml = await translateStepHtml({
+          html: displayHtml || '',
+          text: stepItem?.text || '',
+          targetLang: 'pt-BR',
+        });
+        if (!translatedHtml || !String(translatedHtml).trim()) {
+          throw new Error('Empty translation');
+        }
+        content.innerHTML = buildStepContentHtml(Boolean(stepItem?.checked), translatedHtml);
+        if (stepItem) {
+          stepItem.html = translatedHtml;
+        }
+        if (Array.isArray(stepItem?.substeps) && stepItem.substeps.length > 0) {
+          await translateSubstepsRecursive(stepItem.substeps, 'pt-BR');
+          const renderedSubstepsList = stepEl.nextElementSibling;
+          if (
+            renderedSubstepsList &&
+            renderedSubstepsList.classList &&
+            renderedSubstepsList.classList.contains('substeps')
+          ) {
+            syncSubstepsDom(renderedSubstepsList, stepItem.substeps);
+          }
+        }
+        button.classList.add('translated');
+        showStatus('');
+      } catch (_err) {
+        showStatus('Translation failed', true);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    actionWrap.appendChild(button);
+    actionWrap.appendChild(status);
+    body.appendChild(content);
+    body.appendChild(actionWrap);
+
+    stepEl.innerHTML = '';
+    stepEl.appendChild(body);
+  };
+
   const totalStepCount = items.filter((item) => item.type === 'step').length;
   if (totalStepCount === 0) {
     if (filterToggle) filterToggle.classList.add('hidden');
@@ -1224,7 +1349,10 @@ export const renderSteps = (params) => {
         stepEl.className =
           'step-item' + (sectionItem.checked ? ' completed' : '') + (isCurrent ? ' current' : '');
         const displayHtml = formatStepHtml(sectionItem.html || sectionItem.text, sectionItem.text);
-        stepEl.innerHTML = (sectionItem.checked ? '\u2714 ' : '') + (displayHtml || '');
+        attachTranslateButton({ stepEl, stepItem: sectionItem, displayHtml });
+        if (!stepEl.firstChild) {
+          stepEl.innerHTML = buildStepContentHtml(Boolean(sectionItem.checked), displayHtml);
+        }
 
         stepEl.onclick = (event) => {
           if (event && event.target && event.target.closest && event.target.closest('a')) {
@@ -1479,7 +1607,10 @@ export const renderSteps = (params) => {
   const stepEl = document.createElement('div');
   stepEl.className = 'step-item current';
   const currentHtml = formatStepHtml(step.html || step.text, step.text);
-  stepEl.innerHTML = (step.checked ? '\u2714 ' : '') + (currentHtml || '');
+  attachTranslateButton({ stepEl, stepItem: step, displayHtml: currentHtml });
+  if (!stepEl.firstChild) {
+    stepEl.innerHTML = buildStepContentHtml(Boolean(step.checked), currentHtml);
+  }
 
   stepEl.onclick = (event) => {
     if (event && event.target && event.target.closest && event.target.closest('a')) {

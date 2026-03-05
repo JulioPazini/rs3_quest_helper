@@ -12,6 +12,7 @@ import {
 } from './shared/ui/uiControls.js';
 import { state } from './app/state/state.js';
 import { loadQuest } from './features/quests/questService.js';
+import { translateStepHtmlToPtBr } from './features/quests/questTranslate.js';
 import { returnToHome } from './app/flow/appFlow.js';
 import { createPlayerService, normalizeTitleKey } from './features/player/playerService.js';
 import { getAppElements } from './shared/dom/elements.js';
@@ -447,6 +448,8 @@ const buildStepsRenderParams = (items) => ({
   resetQuestButton,
   currentItems: state.currentItems,
   showSearchControls: () => showSearchControls(toggleBar),
+  translateStepHtml: ({ html, text, targetLang }) =>
+    translateStepHtmlToPtBr({ html, text, targetLang }),
 });
 
 const renderOverviewWithCurrentState = (overview, target) =>
