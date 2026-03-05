@@ -67,6 +67,16 @@ const escapeHtml = (value) =>
 const LINK_TOKEN_PREFIX = '__AQH_LINK_';
 const buildLinkToken = (index) => `${LINK_TOKEN_PREFIX}${index}__`;
 
+const canUseFullSentenceLinkTranslation = (sourceHtml) => {
+  const wrap = document.createElement('div');
+  wrap.innerHTML = String(sourceHtml || '');
+  const anchors = wrap.querySelectorAll('a[href], a');
+  if (anchors.length === 0) return false;
+  // Full-sentence mode rehydrates only links.
+  // Use it only when markup is anchors + text, so we don't lose formatting tags.
+  return !wrap.querySelector('*:not(a)');
+};
+
 const translateWholeTextPreservingLinks = async (sourceHtml, targetLang) => {
   const wrap = document.createElement('div');
   wrap.innerHTML = sourceHtml;
@@ -121,8 +131,10 @@ export const translateStepHtmlToPtBr = async ({ html, text = '', targetLang = 'p
 
   // Prefer full-sentence translation when links are present, to preserve context.
   try {
-    const fullWithLinks = await translateWholeTextPreservingLinks(sourceHtml, targetLang);
-    if (fullWithLinks) return fullWithLinks;
+    if (canUseFullSentenceLinkTranslation(sourceHtml)) {
+      const fullWithLinks = await translateWholeTextPreservingLinks(sourceHtml, targetLang);
+      if (fullWithLinks) return fullWithLinks;
+    }
   } catch (_err) {
     // Fallback below preserves current behavior.
   }

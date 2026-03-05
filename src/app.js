@@ -72,12 +72,18 @@ const {
 const filterToggle = document.getElementById('filterToggle') || hideCompletedCheckbox;
 const navLeft = navBar ? navBar.querySelector('.nav-left') : null;
 const settingsCloseButton = document.getElementById('settingsCloseButton');
+const autoTranslateToggle = document.getElementById('autoTranslateToggle');
+const autoTranslateToggleWrap = document.getElementById('autoTranslateToggleWrap');
+const confirmResetToggle = document.getElementById('confirmResetToggle');
+const confirmResetToggleWrap = document.getElementById('confirmResetToggleWrap');
+const stepFontSizeSelect = document.getElementById('stepFontSizeSelect');
 let lastSettingsTrigger = null;
 
 const resultsBatchSize = 20;
 const resultsRefs = { observer: null, sentinel: null };
 let toastTimer = null;
 let progressFlashTimer = null;
+let confirmResolver = null;
 const uiPrefsKey = 'uiPreferences';
 const playerService = createPlayerService();
 
@@ -195,6 +201,9 @@ const saveUiPreferences = () => {
     showAllSteps: state.showAllSteps,
     hideCompleted: !!(hideCompletedCheckbox && hideCompletedCheckbox.checked),
     sequentialStepChecking: !!state.sequentialStepChecking,
+    autoTranslateSteps: !!state.autoTranslateSteps,
+    stepFontSize: state.stepFontSize || 'medium',
+    confirmResetQuestProgress: !!state.confirmResetQuestProgress,
   });
 };
 
@@ -258,6 +267,13 @@ const initHideCompletedToggle = (initialValue = false) => {
       this.setAttribute('aria-pressed', next ? 'true' : 'false');
       this.classList.toggle('active', next);
       this.title = next ? 'Show completed steps in the list' : 'Hide completed steps from the list';
+      this.setAttribute(
+        'aria-label',
+        next ? 'Show completed steps in the list' : 'Hide completed steps from the list'
+      );
+      this.innerHTML = `<span class="material-symbols-outlined">${
+        next ? 'visibility_off' : 'visibility'
+      }</span>`;
     },
   });
   hideCompletedCheckbox.checked = Boolean(initialValue);
@@ -281,6 +297,49 @@ const updateSequentialStepToggleUi = () => {
 const initSequentialStepToggle = (initialValue = true) => {
   state.sequentialStepChecking = Boolean(initialValue);
   updateSequentialStepToggleUi();
+};
+
+const normalizeStepFontSize = (value) => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'small' || normalized === 'large') return normalized;
+  return 'medium';
+};
+
+const applyStepFontSize = (value) => {
+  const nextValue = normalizeStepFontSize(value);
+  state.stepFontSize = nextValue;
+  if (stepsDiv) {
+    stepsDiv.dataset.stepFontSize = nextValue;
+  }
+  if (stepFontSizeSelect) {
+    stepFontSizeSelect.value = nextValue;
+  }
+};
+
+const initAdvancedSettingsUi = (prefs = {}) => {
+  state.autoTranslateSteps = Boolean(prefs.autoTranslateSteps);
+  state.confirmResetQuestProgress =
+    typeof prefs.confirmResetQuestProgress === 'boolean' ? prefs.confirmResetQuestProgress : true;
+  applyStepFontSize(prefs.stepFontSize || 'medium');
+
+  if (autoTranslateToggle) {
+    autoTranslateToggle.checked = state.autoTranslateSteps;
+  }
+  if (autoTranslateToggleWrap) {
+    autoTranslateToggleWrap.title = state.autoTranslateSteps
+      ? 'Automatically translates quest steps when opening Steps view'
+      : 'Enable to auto-translate steps when opening Steps view';
+  }
+  if (confirmResetToggle) {
+    confirmResetToggle.checked = state.confirmResetQuestProgress;
+  }
+  if (confirmResetToggleWrap) {
+    confirmResetToggleWrap.title = state.confirmResetQuestProgress
+      ? 'Ask confirmation before resetting quest progress'
+      : 'Reset quest progress immediately';
+  }
 };
 
 const updateTopBarsStickyState = () => {
@@ -435,12 +494,6 @@ const updateQuestTranslateButtonVisibility = () => {
     !!navBar &&
     !navBar.classList.contains('hidden');
   questTranslateButton.classList.toggle('hidden', !shouldShow);
-  if (!shouldShow) return;
-  const navRect = navBar.getBoundingClientRect();
-  const progressVisible = progressRow && !progressRow.classList.contains('hidden');
-  const progressBottom = progressVisible ? progressRow.getBoundingClientRect().bottom : 0;
-  const top = Math.max(12, Math.round(Math.max(navRect.bottom, progressBottom) + 8));
-  questTranslateButton.style.top = `${top}px`;
 };
 
 const toggleQuestTranslation = async () => {
@@ -537,6 +590,75 @@ const showUiToast = (message, options = {}) => {
     toast.classList.remove('visible');
   }, 1400);
 };
+
+const ensureConfirmDialog = () => {
+  let dialog = document.getElementById('appConfirmDialog');
+  if (dialog) return dialog;
+  dialog = document.createElement('div');
+  dialog.id = 'appConfirmDialog';
+  dialog.className = 'app-confirm hidden';
+  dialog.setAttribute('aria-hidden', 'true');
+  dialog.innerHTML = `
+    <div class="app-confirm-card" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle">
+      <h3 id="appConfirmTitle">Confirm</h3>
+      <p id="appConfirmMessage"></p>
+      <div class="app-confirm-actions">
+        <button id="appConfirmCancel" type="button" class="app-confirm-btn">Cancel</button>
+        <button id="appConfirmOk" type="button" class="app-confirm-btn app-confirm-btn-danger">Reset</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(dialog);
+  return dialog;
+};
+
+const closeConfirmDialog = (result = false) => {
+  const dialog = document.getElementById('appConfirmDialog');
+  if (!dialog) return;
+  dialog.classList.add('hidden');
+  dialog.setAttribute('aria-hidden', 'true');
+  if (typeof confirmResolver === 'function') {
+    const resolve = confirmResolver;
+    confirmResolver = null;
+    resolve(Boolean(result));
+  }
+};
+
+const askConfirm = (message) =>
+  new Promise((resolve) => {
+    const dialog = ensureConfirmDialog();
+    const messageEl = dialog.querySelector('#appConfirmMessage');
+    const okBtn = dialog.querySelector('#appConfirmOk');
+    const cancelBtn = dialog.querySelector('#appConfirmCancel');
+    if (messageEl) messageEl.textContent = String(message || 'Are you sure?');
+    confirmResolver = resolve;
+    dialog.classList.remove('hidden');
+    dialog.setAttribute('aria-hidden', 'false');
+
+    const onBackdropClick = (event) => {
+      if (event.target === dialog) closeConfirmDialog(false);
+    };
+    const onKeyDown = (event) => {
+      if (dialog.classList.contains('hidden')) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeConfirmDialog(false);
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        closeConfirmDialog(true);
+      }
+    };
+    dialog.addEventListener('click', onBackdropClick, { once: true });
+    document.addEventListener('keydown', onKeyDown, { once: true });
+    if (cancelBtn) {
+      cancelBtn.onclick = () => closeConfirmDialog(false);
+    }
+    if (okBtn) {
+      okBtn.onclick = () => closeConfirmDialog(true);
+      okBtn.focus();
+    }
+  });
 
 const openSettingsModal = (triggerEl = null) => {
   if (!settingsPanel) return;
@@ -671,6 +793,7 @@ const buildStepsRenderParams = (items) => ({
   formatStepHtml,
   updateProgress,
   resetQuestButton,
+  onResetQuest: handleResetQuestAction,
   currentItems: state.currentItems,
   showSearchControls: () => showSearchControls(toggleBar),
 });
@@ -745,6 +868,28 @@ const refreshQuestListForCurrentView = () => {
   renderSearchResults(buildSearchRenderParams(true));
 };
 
+const resetCurrentQuestProgress = () => {
+  if (!state.currentItems.length) return false;
+  state.focusedStepIndex = null;
+  state.currentItems.forEach((item) => {
+    if (item.type === 'step') item.checked = false;
+  });
+  saveProgress();
+  renderSteps(buildStepsRenderParams(state.currentItems));
+  return true;
+};
+
+const handleResetQuestAction = async () => {
+  if (!state.currentItems.length) return;
+  if (state.confirmResetQuestProgress) {
+    const confirmed = await askConfirm('Reset all step progress for this quest?');
+    if (!confirmed) return;
+  }
+  if (resetCurrentQuestProgress()) {
+    showUiToast('Quest progress reset');
+  }
+};
+
 // Context builders
 const buildQuestContext = () => ({
   stepsDiv,
@@ -797,6 +942,13 @@ const buildQuestContext = () => ({
       if (toggleButton) toggleButton.title = 'Show only the current step';
       if (state.currentItems.length > 0) {
         renderSteps(buildStepsRenderParams(state.currentItems));
+        applyStepFontSize(state.stepFontSize);
+        if (state.autoTranslateSteps) {
+          const translationState = ensureQuestTranslationState();
+          if (!translationState.isTranslated && !translationState.isLoading) {
+            toggleQuestTranslation();
+          }
+        }
       }
     } else {
       if (viewModeToggle) viewModeToggle.classList.remove('hidden');
@@ -1061,6 +1213,11 @@ const updateToggleState = (isActive) => {
   state.showAllSteps = isActive;
   toggleButton.classList.toggle('active', state.showAllSteps);
   toggleButton.setAttribute('aria-pressed', state.showAllSteps ? 'true' : 'false');
+  toggleButton.setAttribute(
+    'aria-label',
+    state.showAllSteps ? 'Show current step only' : 'Show all quest steps'
+  );
+  toggleButton.innerHTML = '<span class="material-symbols-outlined">list_alt</span>';
   toggleButton.title = state.showAllSteps ? 'Show only the current step' : 'Show all quest steps';
   updateTopBarsStickyState();
 };
@@ -1097,6 +1254,7 @@ bootstrapApp({
   loadUiPreferences,
   initHideCompletedToggle,
   initSequentialStepToggle,
+  initAdvancedSettingsUi,
   setLoading,
   renderTitle,
   updateToggleState,
@@ -1136,6 +1294,7 @@ bootstrapApp({
   renderSteps,
   buildStepsRenderParams,
   saveProgress,
+  onResetQuest: handleResetQuestAction,
   loadQuestList,
   getQuestList,
   showSearchResultsSkeleton,
@@ -1177,6 +1336,54 @@ if (sequentialStepToggle) {
     if (state.currentItems.length > 0 && state.showSteps) {
       renderSteps(buildStepsRenderParams(state.currentItems));
     }
+  });
+}
+
+if (autoTranslateToggle) {
+  autoTranslateToggle.addEventListener('change', () => {
+    state.autoTranslateSteps = !!autoTranslateToggle.checked;
+    if (autoTranslateToggleWrap) {
+      autoTranslateToggleWrap.title = state.autoTranslateSteps
+        ? 'Automatically translates quest steps when opening Steps view'
+        : 'Enable to auto-translate steps when opening Steps view';
+    }
+    saveUiPreferences();
+    showUiToast(state.autoTranslateSteps ? 'Auto-translate enabled' : 'Auto-translate disabled');
+    if (state.autoTranslateSteps && state.showSteps && state.currentItems.length > 0) {
+      const translationState = ensureQuestTranslationState();
+      if (!translationState.isTranslated && !translationState.isLoading) {
+        toggleQuestTranslation();
+      }
+    }
+  });
+}
+
+if (confirmResetToggle) {
+  confirmResetToggle.addEventListener('change', () => {
+    state.confirmResetQuestProgress = !!confirmResetToggle.checked;
+    if (confirmResetToggleWrap) {
+      confirmResetToggleWrap.title = state.confirmResetQuestProgress
+        ? 'Ask confirmation before resetting quest progress'
+        : 'Reset quest progress immediately';
+    }
+    saveUiPreferences();
+    showUiToast(
+      state.confirmResetQuestProgress ? 'Reset confirmation enabled' : 'Reset confirmation disabled'
+    );
+  });
+}
+
+if (stepFontSizeSelect) {
+  stepFontSizeSelect.addEventListener('change', () => {
+    applyStepFontSize(stepFontSizeSelect.value);
+    saveUiPreferences();
+    showUiToast(
+      state.stepFontSize === 'small'
+        ? 'Steps font: small'
+        : state.stepFontSize === 'large'
+          ? 'Steps font: large'
+          : 'Steps font: medium'
+    );
   });
 }
 

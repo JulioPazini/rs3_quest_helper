@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back,arrow_forward,close,description,g_translate,hourglass_top,keyboard_arrow_up,list,my_location,open_in_new,restart_alt,search,settings&display=block"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back,arrow_forward,close,description,g_translate,hourglass_top,keyboard_arrow_up,list,list_alt,my_location,open_in_new,restart_alt,search,settings,visibility,visibility_off&display=block"
     />
 
     <!-- Alt1 API -->
@@ -58,6 +58,30 @@
         >
           <input id="sequentialStepToggle" class="overview-check substep-check" type="checkbox" />
           <span>Sequential step marking</span>
+        </label>
+        <label
+          id="autoTranslateToggleWrap"
+          class="settings-toggle"
+          title="Automatically translate quest steps when opening Steps view"
+        >
+          <input id="autoTranslateToggle" class="overview-check substep-check" type="checkbox" />
+          <span>Auto-translate steps to PT-BR</span>
+        </label>
+        <label
+          id="confirmResetToggleWrap"
+          class="settings-toggle"
+          title="Ask confirmation before resetting quest progress"
+        >
+          <input id="confirmResetToggle" class="overview-check substep-check" type="checkbox" />
+          <span>Confirm before reset</span>
+        </label>
+        <label class="settings-select-row" for="stepFontSizeSelect" title="Choose steps font size">
+          <span>Steps font size</span>
+          <select id="stepFontSizeSelect" class="settings-select">
+            <option value="small">Small</option>
+            <option value="medium" selected>Medium</option>
+            <option value="large">Large</option>
+          </select>
         </label>
       </div>
     </section>
@@ -129,8 +153,9 @@
           type="button"
           title="Show all quest steps"
           aria-pressed="false"
+          aria-label="Show all quest steps"
         >
-          Show all steps
+          <span class="material-symbols-outlined">list_alt</span>
         </button>
         <button
           id="hideCompleted"
@@ -138,8 +163,9 @@
           type="button"
           title="Hide completed steps from the list"
           aria-pressed="false"
+          aria-label="Hide completed steps from the list"
         >
-          Hide completed
+          <span class="material-symbols-outlined">visibility</span>
         </button>
         <button
           id="settingsButtonQuest"
@@ -152,17 +178,17 @@
         >
           <span class="material-symbols-outlined">settings</span>
         </button>
+        <button
+          id="questTranslateButton"
+          class="nav-settings-button nav-translate-button hidden"
+          type="button"
+          title="Translate quest steps to PT-BR"
+          aria-label="Translate quest steps to PT-BR"
+        >
+          <span class="material-symbols-outlined">g_translate</span>
+        </button>
       </div>
     </section>
-    <button
-      id="questTranslateButton"
-      class="quest-translate-btn-global hidden"
-      type="button"
-      title="Translate quest steps to PT-BR"
-      aria-label="Translate quest steps to PT-BR"
-    >
-      <span class="material-symbols-outlined">g_translate</span>
-    </button>
 
     <section id="progressRow">
       <span id="progressIndicator" class="progress-indicator hidden">0 / 0</span>

@@ -438,6 +438,7 @@ export const renderSteps = (params) => {
     formatStepHtml,
     updateProgress,
     resetQuestButton,
+    onResetQuest = null,
     currentItems,
     showSearchControls,
   } = params;
@@ -1388,6 +1389,10 @@ export const renderSteps = (params) => {
       resetWrap.className = 'reset-wrap';
       const resetBtn = resetQuestButton.cloneNode(true);
       resetBtn.onclick = () => {
+        if (typeof onResetQuest === 'function') {
+          onResetQuest();
+          return;
+        }
         if (!currentItems.length) return;
         currentItems.forEach((item) => {
           if (item.type === 'step') item.checked = false;

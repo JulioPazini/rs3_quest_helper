@@ -61,11 +61,17 @@ test('saveUiPreferences/loadUiPreferences roundtrip', () => {
     showAllSteps: false,
     hideCompleted: true,
     sequentialStepChecking: false,
+    autoTranslateSteps: true,
+    stepFontSize: 'large',
+    confirmResetQuestProgress: false,
   });
   const loaded = loadUiPreferences({ storage, key: 'prefs' });
   assert.equal(loaded.showAllSteps, false);
   assert.equal(loaded.hideCompleted, true);
   assert.equal(loaded.sequentialStepChecking, false);
+  assert.equal(loaded.autoTranslateSteps, true);
+  assert.equal(loaded.stepFontSize, 'large');
+  assert.equal(loaded.confirmResetQuestProgress, false);
 });
 
 test('progress service handles null inputs, missing keys and storage/json failures', () => {
@@ -116,6 +122,9 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     showAllSteps: true,
     hideCompleted: false,
     sequentialStepChecking: true,
+    autoTranslateSteps: false,
+    stepFontSize: 'medium',
+    confirmResetQuestProgress: true,
   });
 
   storage.setItem(
@@ -124,12 +133,18 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
       showAllSteps: 'yes',
       hideCompleted: true,
       sequentialStepChecking: false,
+      autoTranslateSteps: 'x',
+      stepFontSize: 'tiny',
+      confirmResetQuestProgress: 'no',
     })
   );
   assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial' }), {
     showAllSteps: true,
     hideCompleted: true,
     sequentialStepChecking: false,
+    autoTranslateSteps: false,
+    stepFontSize: 'medium',
+    confirmResetQuestProgress: true,
   });
 
   storage.setItem(
@@ -138,12 +153,18 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
       showAllSteps: false,
       hideCompleted: 'no',
       sequentialStepChecking: 'no',
+      autoTranslateSteps: true,
+      stepFontSize: 'small',
+      confirmResetQuestProgress: false,
     })
   );
   assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial2' }), {
     showAllSteps: false,
     hideCompleted: false,
     sequentialStepChecking: true,
+    autoTranslateSteps: true,
+    stepFontSize: 'small',
+    confirmResetQuestProgress: false,
   });
 
   const badStorage = {
@@ -156,5 +177,8 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     showAllSteps: true,
     hideCompleted: false,
     sequentialStepChecking: true,
+    autoTranslateSteps: false,
+    stepFontSize: 'medium',
+    confirmResetQuestProgress: true,
   });
 });

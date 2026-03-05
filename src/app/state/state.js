@@ -1,6 +1,9 @@
 export const state = {
   showAllSteps: false,
   sequentialStepChecking: true,
+  autoTranslateSteps: false,
+  stepFontSize: 'medium',
+  confirmResetQuestProgress: true,
   currentItems: [],
   pendingAutoScroll: false,
   focusedStepIndex: null,

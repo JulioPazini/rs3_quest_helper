@@ -4,6 +4,7 @@ export const bootstrapApp = (deps) => {
     loadUiPreferences,
     initHideCompletedToggle,
     initSequentialStepToggle,
+    initAdvancedSettingsUi,
     setLoading,
     renderTitle,
     updateToggleState,
@@ -43,6 +44,7 @@ export const bootstrapApp = (deps) => {
     renderSteps,
     buildStepsRenderParams,
     saveProgress,
+    onResetQuest,
     loadQuestList,
     getQuestList,
     showSearchResultsSkeleton,
@@ -130,6 +132,9 @@ export const bootstrapApp = (deps) => {
   state.showAllSteps = uiPrefs.showAllSteps;
   initHideCompletedToggle(uiPrefs.hideCompleted);
   initSequentialStepToggle(uiPrefs.sequentialStepChecking);
+  if (typeof initAdvancedSettingsUi === 'function') {
+    initAdvancedSettingsUi(uiPrefs);
+  }
   setupInitialUI();
 
   bindSearchEvents({
@@ -179,6 +184,7 @@ export const bootstrapApp = (deps) => {
     renderSteps,
     buildStepsRenderParams,
     saveProgress,
+    onResetQuest,
   });
 
   bindQuestControls({

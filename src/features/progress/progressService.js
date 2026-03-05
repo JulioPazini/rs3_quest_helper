@@ -48,12 +48,23 @@ export const loadProgress = ({ storage = localStorage, questKey }) => {
 };
 
 export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences' }) => {
+  const defaults = {
+    showAllSteps: true,
+    hideCompleted: false,
+    sequentialStepChecking: true,
+    autoTranslateSteps: false,
+    stepFontSize: 'medium',
+    confirmResetQuestProgress: true,
+  };
   try {
     const raw = storage.getItem(key);
     if (!raw) {
-      return { showAllSteps: true, hideCompleted: false, sequentialStepChecking: true };
+      return defaults;
     }
     const parsed = JSON.parse(raw);
+    const parsedStepFontSize = String(parsed?.stepFontSize || '')
+      .trim()
+      .toLowerCase();
     return {
       showAllSteps: parsed && typeof parsed.showAllSteps === 'boolean' ? parsed.showAllSteps : true,
       hideCompleted:
@@ -62,9 +73,21 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
         parsed && typeof parsed.sequentialStepChecking === 'boolean'
           ? parsed.sequentialStepChecking
           : true,
+      autoTranslateSteps:
+        parsed && typeof parsed.autoTranslateSteps === 'boolean'
+          ? parsed.autoTranslateSteps
+          : false,
+      stepFontSize:
+        parsedStepFontSize === 'small' || parsedStepFontSize === 'large'
+          ? parsedStepFontSize
+          : 'medium',
+      confirmResetQuestProgress:
+        parsed && typeof parsed.confirmResetQuestProgress === 'boolean'
+          ? parsed.confirmResetQuestProgress
+          : true,
     };
   } catch (_err) {
-    return { showAllSteps: true, hideCompleted: false, sequentialStepChecking: true };
+    return defaults;
   }
 };
 
@@ -74,7 +97,13 @@ export const saveUiPreferences = ({
   showAllSteps,
   hideCompleted,
   sequentialStepChecking,
+  autoTranslateSteps,
+  stepFontSize,
+  confirmResetQuestProgress,
 }) => {
+  const normalizedStepFontSize = String(stepFontSize || '')
+    .trim()
+    .toLowerCase();
   try {
     storage.setItem(
       key,
@@ -82,6 +111,12 @@ export const saveUiPreferences = ({
         showAllSteps: !!showAllSteps,
         hideCompleted: !!hideCompleted,
         sequentialStepChecking: !!sequentialStepChecking,
+        autoTranslateSteps: !!autoTranslateSteps,
+        stepFontSize:
+          normalizedStepFontSize === 'small' || normalizedStepFontSize === 'large'
+            ? normalizedStepFontSize
+            : 'medium',
+        confirmResetQuestProgress: !!confirmResetQuestProgress,
       })
     );
   } catch (_err) {

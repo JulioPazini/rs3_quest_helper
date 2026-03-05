@@ -68,3 +68,35 @@ test('translateStepHtmlToPtBr keeps per-node fallback for html without links', a
 
   assert.equal(out, '<strong>Entrar</strong> agora');
 });
+
+test('translateStepHtmlToPtBr preserves bold and line breaks with links by using fallback mode', async () => {
+  const dom = new JSDOM('<!doctype html><html><body></body></html>');
+  setDomGlobals(dom);
+
+  const map = new Map([
+    ['Needed:', 'Necessario:'],
+    ['Combat equipment and food', 'Equipamento de combate e comida'],
+    ['Recommended:', 'Recomendado:'],
+    [
+      "Feathers of Ma'at, Beast of Burden familiar or Combat Summoning familiar, emergency teleport",
+      "Feathers of Ma'at, Beast of Burden familiar ou Combat Summoning familiar, teletransporte de emergencia",
+    ],
+  ]);
+  global.fetch = async (url) => {
+    const q = getQueryParam(url, 'q');
+    const translated = map.get(q) || q;
+    return {
+      ok: true,
+      json: async () => [[[translated]]],
+    };
+  };
+
+  const html =
+    '<strong>Needed:</strong> Combat equipment and food<br><strong>Recommended:</strong> ' +
+    "Feathers of Ma'at, Beast of Burden familiar or Combat Summoning familiar, emergency teleport";
+  const out = await translateStepHtmlToPtBr({ html, targetLang: 'pt-BR' });
+
+  assert.match(out, /<strong>Necessario:<\/strong>\s*Equipamento de combate e comida/i);
+  assert.match(out, /<br\s*\/?>/i);
+  assert.match(out, /<strong>Recomendado:<\/strong>/i);
+});

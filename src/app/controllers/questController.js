@@ -12,6 +12,7 @@ export const createQuestController = (deps) => {
     renderSteps,
     buildStepsRenderParams,
     saveProgress,
+    onResetQuest = null,
   } = deps;
 
   const handleHideCompleted = () => {
@@ -27,6 +28,10 @@ export const createQuestController = (deps) => {
   };
 
   const handleReset = () => {
+    if (typeof onResetQuest === 'function') {
+      onResetQuest();
+      return;
+    }
     if (!state.currentItems.length) return;
     state.focusedStepIndex = null;
     state.currentItems.forEach((item) => {
