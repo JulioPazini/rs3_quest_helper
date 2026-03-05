@@ -985,6 +985,23 @@ export const renderSteps = (params) => {
     substeps.length > 0 &&
     substeps.every((substep) => Boolean(substep?.checked));
 
+  const markSubstepsCheckedRecursive = (substeps) => {
+    if (!Array.isArray(substeps) || substeps.length === 0) return;
+    substeps.forEach((substep) => {
+      if (!substep) return;
+      substep.checked = true;
+      if (Array.isArray(substep.substeps) && substep.substeps.length > 0) {
+        markSubstepsCheckedRecursive(substep.substeps);
+      }
+    });
+  };
+
+  const markStepCompleted = (stepItem) => {
+    if (!stepItem || stepItem.type !== 'step') return;
+    stepItem.checked = true;
+    markSubstepsCheckedRecursive(stepItem.substeps);
+  };
+
   const markPreviousStepsAsCompleted = (targetStep) => {
     if (!sequentialStepChecking) return;
     if (!targetStep) return;
@@ -992,7 +1009,7 @@ export const renderSteps = (params) => {
     if (targetIndex <= 0) return;
     for (let i = 0; i < targetIndex; i += 1) {
       if (items[i]?.type === 'step') {
-        items[i].checked = true;
+        markStepCompleted(items[i]);
       }
     }
   };
@@ -1363,6 +1380,9 @@ export const renderSteps = (params) => {
             if (!sequentialStepChecking) {
               const wasChecked = Boolean(sectionItem.checked);
               sectionItem.checked = !sectionItem.checked;
+              if (sectionItem.checked) {
+                markSubstepsCheckedRecursive(sectionItem.substeps);
+              }
               let nextFocusIndex = stepIndex;
               for (let i = stepIndex + 1; i < items.length; i += 1) {
                 if (items[i]?.type === 'step') {
@@ -1375,7 +1395,7 @@ export const renderSteps = (params) => {
               if (markedLastStep) {
                 for (let i = 0; i < items.length; i += 1) {
                   if (items[i]?.type === 'step') {
-                    items[i].checked = true;
+                    markStepCompleted(items[i]);
                   }
                 }
               }
@@ -1384,7 +1404,7 @@ export const renderSteps = (params) => {
               setFocusedStepIndex(null);
               for (let i = currentIndex; i <= stepIndex; i += 1) {
                 if (items[i].type === 'step') {
-                  items[i].checked = true;
+                  markStepCompleted(items[i]);
                 }
               }
             } else if (sectionItem.checked) {
@@ -1396,7 +1416,7 @@ export const renderSteps = (params) => {
               }
             } else {
               setFocusedStepIndex(null);
-              sectionItem.checked = true;
+              markStepCompleted(sectionItem);
             }
             saveProgress();
             setPendingAutoScroll(true);
@@ -1619,6 +1639,9 @@ export const renderSteps = (params) => {
     stepEl.classList.add('clicked');
     setTimeout(() => {
       step.checked = !step.checked;
+      if (step.checked) {
+        markSubstepsCheckedRecursive(step.substeps);
+      }
       saveProgress();
       renderStepsFn(items);
     }, 180);

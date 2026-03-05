@@ -1725,3 +1725,109 @@ test('renderSteps translate button shows fallback status on translation error', 
   assert.match(status.textContent, /Translation failed/);
   assert.match(button.textContent, /g_translate/);
 });
+
+test('renderSteps showAllSteps marks substeps when parent step is completed', async () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    { type: 'title', text: 'S', level: 2, seeAlso: [] },
+    {
+      type: 'step',
+      text: 'Parent',
+      html: 'Parent',
+      checked: false,
+      substeps: [
+        {
+          text: 'Child',
+          html: 'Child',
+          checked: false,
+          substeps: [{ text: 'Grandchild', html: 'Grandchild', checked: false, substeps: [] }],
+        },
+      ],
+    },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const parent = stepsDiv.querySelector('.step-item');
+  parent.click();
+  await wait();
+  assert.equal(items[1].checked, true);
+  assert.equal(items[1].substeps[0].checked, true);
+  assert.equal(items[1].substeps[0].substeps[0].checked, true);
+});
+
+test('renderSteps single-step mode marks substeps when parent step is completed', async () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    { type: 'title', text: 'S', level: 2, seeAlso: [] },
+    {
+      type: 'step',
+      text: 'Parent',
+      html: 'Parent',
+      checked: false,
+      substeps: [
+        {
+          text: 'Child',
+          html: 'Child',
+          checked: false,
+          substeps: [{ text: 'Grandchild', html: 'Grandchild', checked: false, substeps: [] }],
+        },
+      ],
+    },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: false,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const parent = stepsDiv.querySelector('.step-item.current');
+  parent.click();
+  await wait();
+  assert.equal(items[1].checked, true);
+  assert.equal(items[1].substeps[0].checked, true);
+  assert.equal(items[1].substeps[0].substeps[0].checked, true);
+});
