@@ -36,6 +36,7 @@ import {
 
 const {
   settingsButton,
+  settingsButtonQuest,
   settingsPanel,
   sequentialStepToggleWrap,
   sequentialStepToggle,
@@ -70,6 +71,8 @@ const {
 } = getAppElements();
 const filterToggle = document.getElementById('filterToggle') || hideCompletedCheckbox;
 const navLeft = navBar ? navBar.querySelector('.nav-left') : null;
+const settingsCloseButton = document.getElementById('settingsCloseButton');
+let lastSettingsTrigger = null;
 
 const resultsBatchSize = 20;
 const resultsRefs = { observer: null, sentinel: null };
@@ -533,6 +536,45 @@ const showUiToast = (message, options = {}) => {
   toastTimer = setTimeout(() => {
     toast.classList.remove('visible');
   }, 1400);
+};
+
+const openSettingsModal = (triggerEl = null) => {
+  if (!settingsPanel) return;
+  lastSettingsTrigger = triggerEl || lastSettingsTrigger || document.activeElement;
+  settingsPanel.classList.remove('hidden');
+  settingsPanel.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  if (settingsButton) settingsButton.setAttribute('aria-expanded', 'true');
+  if (settingsButtonQuest) settingsButtonQuest.setAttribute('aria-expanded', 'true');
+  if (settingsCloseButton) {
+    settingsCloseButton.focus();
+  } else if (sequentialStepToggle) {
+    sequentialStepToggle.focus();
+  }
+};
+
+const closeSettingsModal = ({ restoreFocus = true } = {}) => {
+  if (!settingsPanel) return;
+  settingsPanel.classList.add('hidden');
+  settingsPanel.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  if (settingsButton) settingsButton.setAttribute('aria-expanded', 'false');
+  if (settingsButtonQuest) settingsButtonQuest.setAttribute('aria-expanded', 'false');
+  if (restoreFocus) {
+    const focusTarget =
+      lastSettingsTrigger instanceof HTMLElement ? lastSettingsTrigger : settingsButton;
+    if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
+  }
+};
+
+const toggleSettingsModal = () => {
+  if (!settingsPanel) return;
+  const willOpen = settingsPanel.classList.contains('hidden');
+  if (willOpen) {
+    openSettingsModal(lastSettingsTrigger);
+    return;
+  }
+  closeSettingsModal({ restoreFocus: false });
 };
 
 const renderTitle = (titleText, iconSrc) => {
@@ -1105,9 +1147,22 @@ bootstrapApp({
 if (settingsButton && settingsPanel) {
   settingsButton.addEventListener('click', (event) => {
     event.stopPropagation();
-    const willOpen = settingsPanel.classList.contains('hidden');
-    settingsPanel.classList.toggle('hidden', !willOpen);
-    settingsButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    lastSettingsTrigger = settingsButton;
+    toggleSettingsModal();
+  });
+}
+
+if (settingsButtonQuest && settingsPanel) {
+  settingsButtonQuest.addEventListener('click', (event) => {
+    event.stopPropagation();
+    lastSettingsTrigger = settingsButtonQuest;
+    toggleSettingsModal();
+  });
+}
+
+if (settingsCloseButton) {
+  settingsCloseButton.addEventListener('click', () => {
+    closeSettingsModal();
   });
 }
 
@@ -1126,17 +1181,19 @@ if (sequentialStepToggle) {
 }
 
 if (settingsPanel) {
-  document.addEventListener('click', (event) => {
-    const target = event.target;
-    if (settingsPanel.classList.contains('hidden')) return;
-    if (settingsPanel.contains(target)) return;
-    if (settingsButton && settingsButton.contains(target)) return;
-    settingsPanel.classList.add('hidden');
-    if (settingsButton) {
-      settingsButton.setAttribute('aria-expanded', 'false');
+  settingsPanel.addEventListener('click', (event) => {
+    if (event.target === settingsPanel) {
+      closeSettingsModal();
     }
   });
 }
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  if (!settingsPanel || settingsPanel.classList.contains('hidden')) return;
+  event.preventDefault();
+  closeSettingsModal();
+});
 
 updateScrollTopButtonVisibility();
 updateQuestTranslateButtonVisibility();

@@ -1,5 +1,6 @@
 export const getAppElements = (doc = document) => ({
   settingsButton: doc.getElementById('settingsButton'),
+  settingsButtonQuest: doc.getElementById('settingsButtonQuest'),
   settingsPanel: doc.getElementById('settingsPanel'),
   sequentialStepToggleWrap: doc.getElementById('sequentialStepToggleWrap'),
   sequentialStepToggle: doc.getElementById('sequentialStepToggle'),

@@ -27,6 +27,10 @@ body {
   color: var(--text);
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
@@ -221,20 +225,73 @@ header.hidden {
   filter: brightness(1.15);
 }
 
-.settings-panel {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  border-bottom: 2px solid var(--border);
-  background: linear-gradient(180deg, #3a311b, #2f2816);
+.settings-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(12, 10, 6, 0.72);
 }
 
-.settings-panel.hidden {
+.settings-modal.hidden {
   display: none;
+}
+
+.settings-modal-card {
+  width: min(420px, calc(100vw - 36px));
+  box-sizing: border-box;
+  padding: 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #3a311b, #2b2415);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.45);
+}
+
+.settings-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.settings-modal-header h3 {
+  margin: 0;
+  font-family: 'IM Fell English SC', 'Source Sans 3', serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #f3ddb1;
+}
+
+.settings-close-button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #4b3d1f, #3a311b);
+  color: #e7d08a;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.settings-close-button:hover {
+  filter: brightness(1.08);
+}
+
+.settings-close-button .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .settings-toggle {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 7px 10px;
   border: 2px solid var(--border);
   border-radius: 8px;
@@ -1027,6 +1084,23 @@ header.hidden {
 .nav-left #backButton {
   position: absolute;
   left: 0;
+}
+
+.nav-settings-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #4b3d1f, #3a311b);
+  color: #e7d08a;
+}
+
+.nav-settings-button .material-symbols-outlined {
+  font-size: 17px;
 }
 
 .wiki-link {
