@@ -78,6 +78,7 @@ test('getQuestOverview extracts requirements split and item sections', () => {
       <tr><th>Items</th><td data-attr-param="itemsDisp"><ul><li>Item A</li></ul></td></tr>
       <tr><th>Recommended</th><td data-attr-param="recommendedDisp"><ul><li>Item B</li></ul></td></tr>
       <tr><th>Combat</th><td data-attr-param="kills"><ul><li>Enemy C</li></ul></td></tr>
+      <tr><th>Start point</th><td><a href="/w/Varrock">Varrock</a> <a href="/w/Map">Show on map</a></td></tr>
     </table>
   `;
 
@@ -90,6 +91,9 @@ test('getQuestOverview extracts requirements split and item sections', () => {
   assert.match(overview.requiredItems, /Item A/);
   assert.match(overview.recommendedItems, /Item B/);
   assert.match(overview.combat, /Enemy C/);
+  assert.match(overview.startPoint, /Varrock/);
+  assert.match(overview.startPoint, /runescape\.wiki\/w\/Varrock/);
+  assert.doesNotMatch(overview.startPoint, /Show on map/i);
 });
 
 test('getQuestOverview supports header fallback and hidden noise stripping', () => {

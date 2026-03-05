@@ -1441,6 +1441,29 @@ header.hidden {
   color: #ffe6a6;
 }
 
+.step-start-point {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-left: 4px solid #b8a14b;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  line-height: 1.4;
+}
+
+.step-start-point-label {
+  color: #f2e7ba;
+}
+
+.step-start-point-value a {
+  color: #f4d97a;
+  text-decoration: none;
+}
+
+.step-start-point-value a:hover {
+  color: #ffe6a6;
+}
+
 .step-item {
   background: var(--panel);
   margin-bottom: 6px;

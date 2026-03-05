@@ -470,6 +470,51 @@ test('renderSteps handles empty items and no-step sections', () => {
   assert.ok(stepsDiv.querySelector('.reward-image'));
 });
 
+test('renderSteps renders start point before first step', () => {
+  const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
+  setDomGlobals(dom);
+
+  const stepsDiv = dom.window.document.getElementById('steps');
+  const items = [
+    { type: 'title', text: 'S', level: 2, seeAlso: [] },
+    { type: 'step', text: 'First step', html: 'First step', checked: false, substeps: [] },
+  ];
+
+  renderSteps({
+    items,
+    stepsDiv,
+    showAllSteps: true,
+    hideCompletedCheckbox: null,
+    filterToggle: null,
+    navBar: null,
+    prevStepButton: null,
+    nextStepButton: null,
+    jumpCurrentButton: null,
+    currentRewardImage: null,
+    overviewStartPointHtml: '<a href="https://runescape.wiki/w/Varrock">Varrock</a>',
+    kartographerLiveData: null,
+    pendingAutoScroll: () => false,
+    setPendingAutoScroll: () => {},
+    saveProgress: () => {},
+    renderStepsFn: () => {},
+    formatStepHtml: (v) => v,
+    updateProgress: () => {},
+    resetQuestButton: null,
+    currentItems: items,
+    showSearchControls: () => {},
+  });
+
+  const startPoint = stepsDiv.querySelector('.step-start-point');
+  const firstStep = stepsDiv.querySelector('.step-item');
+  assert.ok(startPoint);
+  assert.ok(firstStep);
+  assert.match(startPoint.textContent, /Start point:/);
+  assert.ok(startPoint.querySelector('a[href="https://runescape.wiki/w/Varrock"]'));
+  assert.ok(
+    startPoint.compareDocumentPosition(firstStep) & dom.window.Node.DOCUMENT_POSITION_FOLLOWING
+  );
+});
+
 test('renderSteps showAllSteps handles notes, hide completed, and auto-scroll', async () => {
   const dom = new JSDOM('<!doctype html><html><body><div id="steps"></div></body></html>');
   setDomGlobals(dom);

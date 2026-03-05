@@ -427,6 +427,7 @@ export const renderSteps = (params) => {
     nextStepButton,
     jumpCurrentButton,
     currentRewardImage,
+    overviewStartPointHtml = '',
     kartographerLiveData,
     pendingAutoScroll,
     setPendingAutoScroll,
@@ -468,6 +469,22 @@ export const renderSteps = (params) => {
     if (wrap.children.length > 0) {
       stepsDiv.appendChild(wrap);
     }
+  };
+
+  const appendStartPoint = () => {
+    const html = String(overviewStartPointHtml || '').trim();
+    if (!html) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'step-start-point';
+    const label = document.createElement('strong');
+    label.className = 'step-start-point-label';
+    label.textContent = 'Start point: ';
+    const value = document.createElement('span');
+    value.className = 'step-start-point-value';
+    value.innerHTML = html;
+    wrap.appendChild(label);
+    wrap.appendChild(value);
+    stepsDiv.appendChild(wrap);
   };
 
   const toImageKey = (value) => {
@@ -1210,6 +1227,7 @@ export const renderSteps = (params) => {
   };
 
   const totalStepCount = items.filter((item) => item.type === 'step').length;
+  appendStartPoint();
   if (totalStepCount === 0) {
     if (filterToggle) filterToggle.classList.add('hidden');
     if (jumpCurrentButton) jumpCurrentButton.classList.add('hidden');

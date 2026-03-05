@@ -232,6 +232,18 @@ export const getQuestOverview = (html) => {
     stripOverviewNoise(clone);
     normalizeOverviewLinks(clone);
     normalizeOverviewImages(clone);
+    if (String(label || '').toLowerCase() === 'start point') {
+      const showOnMapCandidates = Array.from(clone.querySelectorAll('a, button, span, small'));
+      showOnMapCandidates.forEach((el) => {
+        const text = String(el.textContent || '')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+        if (text === 'show on map') {
+          el.remove();
+        }
+      });
+    }
     return clone.innerHTML.trim();
   };
 
@@ -320,6 +332,7 @@ export const getQuestOverview = (html) => {
     requirementsQuests: requirementsSplit.quests,
     requirementsSkills: requirementsSplit.skills,
     requirementsQuestsIcon: requirementsSplit.questsIcon,
+    startPoint: getHeaderHtml('Start point'),
     requiredItems: getAttrHtml('itemsDisp'),
     recommendedItems: getAttrHtml('recommendedDisp'),
     combat: getAttrHtml('kills'),
