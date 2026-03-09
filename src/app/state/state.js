@@ -4,6 +4,7 @@ export const state = {
   autoTranslateSteps: false,
   stepFontSize: 'medium',
   confirmResetQuestProgress: true,
+  sectionImagesInModal: true,
   currentItems: [],
   pendingAutoScroll: false,
   focusedStepIndex: null,

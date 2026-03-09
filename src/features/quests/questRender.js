@@ -1,5 +1,119 @@
 ﻿let searchItemCounter = 0;
 
+let sectionImagesModalEl = null;
+let sectionImagesModalCloseButton = null;
+let sectionImagesModalTitleEl = null;
+let sectionImagesModalListEl = null;
+let lastSectionImagesTrigger = null;
+
+const hasOpenAppModal = () =>
+  Boolean(
+    document.querySelector(
+      '.settings-modal:not(.hidden), .section-images-modal:not(.hidden), .section-maps-modal:not(.hidden)'
+    )
+  );
+
+const syncBodyModalState = () => {
+  document.body.classList.toggle('modal-open', hasOpenAppModal());
+};
+
+const closeSectionImagesModal = ({ restoreFocus = true } = {}) => {
+  if (!sectionImagesModalEl) return;
+  sectionImagesModalEl.classList.add('hidden');
+  sectionImagesModalEl.setAttribute('aria-hidden', 'true');
+  syncBodyModalState();
+  if (
+    restoreFocus &&
+    lastSectionImagesTrigger &&
+    typeof lastSectionImagesTrigger.focus === 'function'
+  ) {
+    lastSectionImagesTrigger.focus();
+  }
+};
+
+const ensureSectionImagesModal = () => {
+  if (sectionImagesModalEl) return sectionImagesModalEl;
+  sectionImagesModalEl = document.createElement('section');
+  sectionImagesModalEl.id = 'sectionImagesModal';
+  sectionImagesModalEl.className = 'section-images-modal hidden';
+  sectionImagesModalEl.setAttribute('aria-hidden', 'true');
+  sectionImagesModalEl.innerHTML = `
+    <div class="section-images-modal-card" role="dialog" aria-modal="true" aria-labelledby="sectionImagesModalTitle">
+      <div class="section-images-modal-header">
+        <h3 id="sectionImagesModalTitle">Section images</h3>
+        <button
+          id="sectionImagesModalCloseButton"
+          class="section-images-modal-close-button"
+          type="button"
+          title="Close images"
+          aria-label="Close images"
+        >
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div id="sectionImagesModalList" class="section-images-modal-list"></div>
+    </div>
+  `;
+  document.body.appendChild(sectionImagesModalEl);
+
+  sectionImagesModalCloseButton = sectionImagesModalEl.querySelector(
+    '#sectionImagesModalCloseButton'
+  );
+  sectionImagesModalTitleEl = sectionImagesModalEl.querySelector('#sectionImagesModalTitle');
+  sectionImagesModalListEl = sectionImagesModalEl.querySelector('#sectionImagesModalList');
+
+  if (sectionImagesModalCloseButton) {
+    sectionImagesModalCloseButton.addEventListener('click', () => closeSectionImagesModal());
+  }
+  sectionImagesModalEl.addEventListener('click', (event) => {
+    if (event.target === sectionImagesModalEl) {
+      closeSectionImagesModal();
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (!sectionImagesModalEl || sectionImagesModalEl.classList.contains('hidden')) return;
+    event.preventDefault();
+    closeSectionImagesModal();
+  });
+
+  return sectionImagesModalEl;
+};
+
+const openSectionImagesModal = ({ sectionTitle = '', images = [], triggerEl = null } = {}) => {
+  const modal = ensureSectionImagesModal();
+  if (!modal || !sectionImagesModalListEl || !sectionImagesModalTitleEl) return;
+  lastSectionImagesTrigger = triggerEl || document.activeElement;
+  sectionImagesModalTitleEl.textContent = sectionTitle
+    ? `Images: ${sectionTitle}`
+    : 'Section images';
+  sectionImagesModalListEl.innerHTML = '';
+
+  images.forEach((imgData) => {
+    if (!imgData?.src) return;
+    const figure = document.createElement('figure');
+    figure.className = 'section-images-modal-item';
+    const imageEl = document.createElement('img');
+    imageEl.src = imgData.src;
+    imageEl.alt = imgData.alt || '';
+    imageEl.loading = 'lazy';
+    figure.appendChild(imageEl);
+    if (imgData.caption) {
+      const caption = document.createElement('figcaption');
+      caption.textContent = imgData.caption;
+      figure.appendChild(caption);
+    }
+    sectionImagesModalListEl.appendChild(figure);
+  });
+
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden', 'false');
+  syncBodyModalState();
+  if (sectionImagesModalCloseButton) {
+    sectionImagesModalCloseButton.focus();
+  }
+};
+
 const LOCAL_PIN_BLUE =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
@@ -426,6 +540,7 @@ export const renderSteps = (params) => {
     prevStepButton,
     nextStepButton,
     jumpCurrentButton,
+    sectionImagesInModal = true,
     currentRewardImage,
     overviewStartPointHtml = '',
     kartographerLiveData,
@@ -455,7 +570,7 @@ export const renderSteps = (params) => {
     return;
   }
 
-  const appendSectionTexts = (sectionTexts) => {
+  const appendSectionTexts = (sectionTexts, targetEl = stepsDiv) => {
     if (!Array.isArray(sectionTexts) || sectionTexts.length === 0) return;
     const wrap = document.createElement('div');
     wrap.className = 'section-texts';
@@ -467,7 +582,7 @@ export const renderSteps = (params) => {
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
     }
   };
 
@@ -533,7 +648,7 @@ export const renderSteps = (params) => {
     return true;
   };
 
-  const appendSectionImages = (sectionImages, options = {}) => {
+  const appendSectionImages = (sectionImages, options = {}, targetEl = stepsDiv) => {
     if (!Array.isArray(sectionImages) || sectionImages.length === 0) return;
     const omitImageKey = toImageKey(options.omitSrc);
     const seenInBlock = new Set();
@@ -560,11 +675,11 @@ export const renderSteps = (params) => {
       wrap.appendChild(figure);
     });
     if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
     }
   };
 
-  const appendSectionInfoBoxes = (sectionInfoBoxes) => {
+  const appendSectionInfoBoxes = (sectionInfoBoxes, targetEl = stepsDiv) => {
     if (!Array.isArray(sectionInfoBoxes) || sectionInfoBoxes.length === 0) return;
     const wrap = document.createElement('div');
     wrap.className = 'section-infoboxes';
@@ -576,11 +691,11 @@ export const renderSteps = (params) => {
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
     }
   };
 
-  const appendSectionTables = (sectionTables) => {
+  const appendSectionTables = (sectionTables, targetEl = stepsDiv) => {
     if (!Array.isArray(sectionTables) || sectionTables.length === 0) return;
     const wrap = document.createElement('div');
     wrap.className = 'section-tables';
@@ -593,11 +708,11 @@ export const renderSteps = (params) => {
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
     }
   };
 
-  const appendSectionRefLists = (sectionRefLists) => {
+  const appendSectionRefLists = (sectionRefLists, targetEl = stepsDiv) => {
     if (!Array.isArray(sectionRefLists) || sectionRefLists.length === 0) return;
     const wrap = document.createElement('div');
     wrap.className = 'section-reflists';
@@ -609,7 +724,7 @@ export const renderSteps = (params) => {
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
     }
   };
 
@@ -933,7 +1048,7 @@ export const renderSteps = (params) => {
     });
   };
 
-  const appendSectionAdvancedMaps = (sectionAdvancedMaps) => {
+  const appendSectionAdvancedMaps = (sectionAdvancedMaps, targetEl = stepsDiv) => {
     if (!Array.isArray(sectionAdvancedMaps) || sectionAdvancedMaps.length === 0) return;
     const wrap = document.createElement('div');
     wrap.className = 'section-advanced-maps';
@@ -946,14 +1061,102 @@ export const renderSteps = (params) => {
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
     }
   };
 
-  const appendInlineNote = (noteItem) => {
+  const closeSectionMapsModal = ({ restoreFocus = true } = {}) => {
+    const modal = document.getElementById('sectionMapsModal');
+    if (!modal) return;
+    const triggerEl = modal.lastTriggerEl;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    syncBodyModalState();
+    if (restoreFocus && triggerEl && typeof triggerEl.focus === 'function') {
+      triggerEl.focus();
+    }
+  };
+
+  const ensureSectionMapsModal = () => {
+    let modal = document.getElementById('sectionMapsModal');
+    if (modal) return modal;
+    modal = document.createElement('section');
+    modal.id = 'sectionMapsModal';
+    modal.className = 'section-maps-modal hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+      <div class="section-maps-modal-card" role="dialog" aria-modal="true" aria-labelledby="sectionMapsModalTitle">
+        <div class="section-maps-modal-header">
+          <h3 id="sectionMapsModalTitle">Section maps</h3>
+          <button
+            id="sectionMapsModalCloseButton"
+            class="section-maps-modal-close-button"
+            type="button"
+            title="Close maps"
+            aria-label="Close maps"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div id="sectionMapsModalList" class="section-maps-modal-list"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const closeButton = modal.querySelector('#sectionMapsModalCloseButton');
+    if (closeButton) {
+      closeButton.addEventListener('click', () => closeSectionMapsModal());
+    }
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        closeSectionMapsModal();
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      if (!modal || modal.classList.contains('hidden')) return;
+      event.preventDefault();
+      closeSectionMapsModal();
+    });
+
+    return modal;
+  };
+
+  const openSectionMapsModal = ({ sectionTitle = '', mapHtmlList = [], triggerEl = null } = {}) => {
+    const modal = ensureSectionMapsModal();
+    if (!modal) return;
+    modal.lastTriggerEl = triggerEl || document.activeElement;
+    const titleEl = modal.querySelector('#sectionMapsModalTitle');
+    const listEl = modal.querySelector('#sectionMapsModalList');
+    const closeButton = modal.querySelector('#sectionMapsModalCloseButton');
+    if (!titleEl || !listEl) return;
+
+    titleEl.textContent = sectionTitle ? `Maps: ${sectionTitle}` : 'Section maps';
+    listEl.innerHTML = '';
+    mapHtmlList.forEach((mapHtml) => {
+      if (!mapHtml) return;
+      const itemWrap = document.createElement('div');
+      itemWrap.className = 'section-maps-modal-item';
+      const block = document.createElement('div');
+      block.className = 'section-advanced-map';
+      block.innerHTML = mapHtml;
+      ensureAdvancedMapVisible(block);
+      itemWrap.appendChild(block);
+      listEl.appendChild(itemWrap);
+    });
+
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    syncBodyModalState();
+    if (closeButton) {
+      closeButton.focus();
+    }
+  };
+
+  const appendInlineNote = (noteItem, targetEl = stepsDiv, mediaTargetEl = targetEl) => {
     if (!noteItem) return;
     if (noteItem.noteType === 'images') {
-      appendSectionImages(noteItem.images);
+      appendSectionImages(noteItem.images, {}, mediaTargetEl);
       return;
     }
     if (!noteItem.html) return;
@@ -964,7 +1167,7 @@ export const renderSteps = (params) => {
       block.className = 'section-infobox';
       block.innerHTML = noteItem.html;
       wrap.appendChild(block);
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
       return;
     }
     if (noteItem.noteType === 'table') {
@@ -975,7 +1178,7 @@ export const renderSteps = (params) => {
       block.innerHTML = noteItem.html;
       ensureAdvancedMapVisible(block);
       wrap.appendChild(block);
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
       return;
     }
     if (noteItem.noteType === 'reflist') {
@@ -985,7 +1188,7 @@ export const renderSteps = (params) => {
       block.className = 'section-reflist';
       block.innerHTML = noteItem.html;
       wrap.appendChild(block);
-      stepsDiv.appendChild(wrap);
+      targetEl.appendChild(wrap);
       return;
     }
     const wrap = document.createElement('div');
@@ -994,7 +1197,7 @@ export const renderSteps = (params) => {
     block.className = 'section-text-block';
     block.innerHTML = noteItem.html;
     wrap.appendChild(block);
-    stepsDiv.appendChild(wrap);
+    targetEl.appendChild(wrap);
   };
 
   const areAllDirectSubstepsChecked = (substeps) =>
@@ -1092,17 +1295,132 @@ export const renderSteps = (params) => {
     return false;
   };
 
-  const appendTitleHeading = (titleItem) => {
+  const collectSectionImagesForTitle = (titleIndex, titleItem, options = {}) => {
+    if (!titleItem || titleIndex < 0) return [];
+    const omitImageKey = toImageKey(options.omitSrc);
+    const seen = new Set();
+    const collected = [];
+    const pushImage = (imgData) => {
+      if (!imgData || !imgData.src) return;
+      const imageKey = toImageKey(imgData.src);
+      if (!imageKey || seen.has(imageKey)) return;
+      if (omitImageKey && imageKey === omitImageKey) return;
+      seen.add(imageKey);
+      collected.push({
+        src: imgData.src,
+        alt: imgData.alt || '',
+        caption: imgData.caption || '',
+      });
+    };
+
+    if (Array.isArray(titleItem.sectionImages)) {
+      titleItem.sectionImages.forEach(pushImage);
+    }
+
+    for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
+      const sectionItem = items[i];
+      if (sectionItem?.type !== 'note' || sectionItem.noteType !== 'images') continue;
+      if (!Array.isArray(sectionItem.images)) continue;
+      sectionItem.images.forEach(pushImage);
+    }
+    return collected;
+  };
+
+  const collectSectionMapsForTitle = (titleItem) => {
+    if (!titleItem) return [];
+    const seen = new Set();
+    const collected = [];
+    if (!Array.isArray(titleItem.sectionAdvancedMaps)) return collected;
+    titleItem.sectionAdvancedMaps.forEach((mapHtml) => {
+      const normalized = String(mapHtml || '').trim();
+      if (!normalized || seen.has(normalized)) return;
+      seen.add(normalized);
+      collected.push(normalized);
+    });
+    return collected;
+  };
+
+  const appendTitleHeading = (titleItem, titleIndex = -1, targetEl = stepsDiv) => {
     const headingLevel = Number(titleItem?.level) || 2;
     const tagName = headingLevel >= 3 ? 'h4' : 'h3';
+    const headingWrap = document.createElement('div');
+    headingWrap.className = 'step-section-header';
     const heading = document.createElement(tagName);
     heading.textContent = titleItem?.text || '';
     heading.className = headingLevel >= 3 ? 'step-subsection-title' : 'step-section-title';
-    heading.style.marginBottom = '10px';
-    stepsDiv.appendChild(heading);
+    headingWrap.appendChild(heading);
+
+    const controlsWrap = document.createElement('div');
+    controlsWrap.className = 'step-section-controls';
+    let hasControls = false;
+    let sectionMediaContentEl = null;
+
+    const sectionImages = collectSectionImagesForTitle(titleIndex, titleItem, {
+      omitSrc: currentRewardImage,
+    });
+    const sectionMaps = collectSectionMapsForTitle(titleItem);
+    const hasSectionMedia = sectionImages.length > 0 || sectionMaps.length > 0;
+
+    if (sectionImagesInModal && hasSectionMedia) {
+      const mediaToggleButton = document.createElement('button');
+      mediaToggleButton.type = 'button';
+      mediaToggleButton.className = 'section-media-toggle';
+      mediaToggleButton.title = 'Show images and maps';
+      mediaToggleButton.setAttribute('aria-label', 'Show images and maps');
+      mediaToggleButton.setAttribute('aria-expanded', 'false');
+      mediaToggleButton.innerHTML =
+        '<span class="section-media-toggle-label"><em>Images/maps</em></span><span class="material-symbols-outlined section-media-toggle-icon" aria-hidden="true">keyboard_arrow_down</span>';
+      sectionMediaContentEl = document.createElement('div');
+      sectionMediaContentEl.className = 'section-media-collapse hidden';
+      mediaToggleButton.addEventListener('click', () => {
+        const isHidden = sectionMediaContentEl.classList.contains('hidden');
+        sectionMediaContentEl.classList.toggle('hidden', !isHidden);
+        mediaToggleButton.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+      });
+      controlsWrap.appendChild(mediaToggleButton);
+      hasControls = true;
+    }
+
+    if (!sectionImagesInModal && sectionMaps.length > 0) {
+      const mapButton = document.createElement('button');
+      mapButton.type = 'button';
+      mapButton.className = 'section-maps-button';
+      mapButton.title =
+        sectionMaps.length === 1 ? 'Open section map' : `Open ${sectionMaps.length} section maps`;
+      mapButton.setAttribute(
+        'aria-label',
+        sectionMaps.length === 1 ? 'Open section map' : `Open ${sectionMaps.length} section maps`
+      );
+      mapButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">map</span>';
+      mapButton.addEventListener('click', () => {
+        openSectionMapsModal({
+          sectionTitle: String(titleItem?.text || '').trim(),
+          mapHtmlList: sectionMaps,
+          triggerEl: mapButton,
+        });
+      });
+      controlsWrap.appendChild(mapButton);
+      hasControls = true;
+    }
+
+    if (hasControls) {
+      headingWrap.appendChild(controlsWrap);
+    }
+
+    targetEl.appendChild(headingWrap);
+    if (sectionMediaContentEl) {
+      targetEl.appendChild(sectionMediaContentEl);
+    }
+    return { sectionMediaContentEl };
   };
 
   const buildStepContentHtml = (isChecked, html) => `${isChecked ? '\u2714 ' : ''}${html || ''}`;
+  const createSectionBlock = () => {
+    const block = document.createElement('section');
+    block.className = 'step-section-block';
+    stepsDiv.appendChild(block);
+    return block;
+  };
 
   const totalStepCount = items.filter((item) => item.type === 'step').length;
   appendStartPoint();
@@ -1117,17 +1435,19 @@ export const renderSteps = (params) => {
     items.forEach((item, idx) => {
       if (item.type !== 'title') return;
       hasSections = true;
-      appendTitleHeading(item);
+      const sectionBlock = createSectionBlock();
+      const { sectionMediaContentEl } = appendTitleHeading(item, idx, sectionBlock) || {};
+      const sectionMediaTarget = sectionMediaContentEl || sectionBlock;
 
       if (item.seeAlso && item.seeAlso.length > 0) {
         const small = document.createElement('div');
         small.className = 'seealso';
         small.innerHTML = item.seeAlso.join('<br>');
-        stepsDiv.appendChild(small);
+        sectionBlock.appendChild(small);
       }
       const hasInlineNotes = sectionHasAnyInlineNotes(idx);
       if (!hasInlineNotes && !sectionHasInlineNoteType(idx, 'infobox')) {
-        appendSectionInfoBoxes(item.sectionInfoBoxes);
+        appendSectionInfoBoxes(item.sectionInfoBoxes, sectionBlock);
       }
       let hasSectionStepsOrNotes = false;
       for (let probe = idx + 1; probe < items.length && items[probe].type !== 'title'; probe += 1) {
@@ -1138,14 +1458,15 @@ export const renderSteps = (params) => {
       }
       if (hasInlineNotes) {
         for (let i = idx + 1; i < items.length && items[i].type !== 'title'; i += 1) {
-          if (items[i].type === 'note') appendInlineNote(items[i]);
+          if (items[i].type === 'note')
+            appendInlineNote(items[i], sectionBlock, sectionMediaTarget);
         }
       } else if (!hasSectionStepsOrNotes) {
-        appendSectionTexts(item.sectionTexts);
-        appendSectionTables(item.sectionTables);
-        appendSectionRefLists(item.sectionRefLists);
-        appendSectionImages(item.sectionImages);
-        appendSectionAdvancedMaps(item.sectionAdvancedMaps);
+        appendSectionTexts(item.sectionTexts, sectionBlock);
+        appendSectionTables(item.sectionTables, sectionBlock);
+        appendSectionRefLists(item.sectionRefLists, sectionBlock);
+        appendSectionImages(item.sectionImages, {}, sectionMediaTarget);
+        appendSectionAdvancedMaps(item.sectionAdvancedMaps, sectionMediaTarget);
       }
     });
 
@@ -1211,17 +1532,19 @@ export const renderSteps = (params) => {
         continue;
       }
 
-      appendTitleHeading(item);
+      const sectionBlock = createSectionBlock();
+      const { sectionMediaContentEl } = appendTitleHeading(item, idx, sectionBlock) || {};
+      const sectionMediaTarget = sectionMediaContentEl || sectionBlock;
 
       if (item.seeAlso && item.seeAlso.length > 0) {
         const small = document.createElement('div');
         small.className = 'seealso';
         small.innerHTML = item.seeAlso.join('<br>');
-        stepsDiv.appendChild(small);
+        sectionBlock.appendChild(small);
       }
 
       if (!sectionHasInlineNoteType(idx, 'infobox')) {
-        appendSectionInfoBoxes(item.sectionInfoBoxes);
+        appendSectionInfoBoxes(item.sectionInfoBoxes, sectionBlock);
       }
       let hasSectionStepsOrNotes = false;
       for (let probe = idx + 1; probe < items.length && items[probe].type !== 'title'; probe += 1) {
@@ -1231,7 +1554,7 @@ export const renderSteps = (params) => {
         }
       }
       if (!hasSectionStepsOrNotes) {
-        appendSectionTexts(item.sectionTexts);
+        appendSectionTexts(item.sectionTexts, sectionBlock);
       }
 
       let sectionCursor = idx + 1;
@@ -1242,7 +1565,7 @@ export const renderSteps = (params) => {
         const sectionItem = items[sectionCursor];
         const stepIndex = sectionCursor;
         if (sectionItem.type === 'note') {
-          appendInlineNote(sectionItem);
+          appendInlineNote(sectionItem, sectionBlock, sectionMediaTarget);
           sectionCursor += 1;
           continue;
         }
@@ -1319,7 +1642,7 @@ export const renderSteps = (params) => {
 
         const isQuestCompleteStep = /quest complete/i.test(sectionItem.text || '');
         if (isQuestCompleteStep && !renderedSectionAdvancedMaps) {
-          appendSectionAdvancedMaps(item.sectionAdvancedMaps);
+          appendSectionAdvancedMaps(item.sectionAdvancedMaps, sectionMediaTarget);
           renderedSectionAdvancedMaps = true;
         }
         if (
@@ -1327,15 +1650,19 @@ export const renderSteps = (params) => {
           !renderedSectionImages &&
           !sectionHasInlineNoteType(idx, 'images')
         ) {
-          appendSectionImages(item.sectionImages, { omitSrc: currentRewardImage });
+          appendSectionImages(
+            item.sectionImages,
+            { omitSrc: currentRewardImage },
+            sectionMediaTarget
+          );
           renderedSectionImages = true;
         }
-        stepsDiv.appendChild(stepEl);
+        sectionBlock.appendChild(stepEl);
 
         if (sectionItem.substeps && sectionItem.substeps.length > 0) {
           const list = buildSubstepsList(sectionItem.substeps, 'substeps', sectionItem);
           if (list) {
-            stepsDiv.appendChild(list);
+            sectionBlock.appendChild(list);
           }
         }
 
@@ -1347,18 +1674,22 @@ export const renderSteps = (params) => {
 
       if (!renderedSectionImages && !sectionHasInlineNoteType(idx, 'images')) {
         if (!hasSectionStepsOrNotes) {
-          appendSectionTables(item.sectionTables);
-          appendSectionRefLists(item.sectionRefLists);
+          appendSectionTables(item.sectionTables, sectionBlock);
+          appendSectionRefLists(item.sectionRefLists, sectionBlock);
         }
-        appendSectionImages(item.sectionImages, {
-          omitSrc: shouldShowSectionReward ? currentRewardImage : null,
-        });
+        appendSectionImages(
+          item.sectionImages,
+          {
+            omitSrc: shouldShowSectionReward ? currentRewardImage : null,
+          },
+          sectionMediaTarget
+        );
       }
       if (shouldShowSectionReward) {
         didRenderRewardImage = appendRewardImage() || didRenderRewardImage;
       }
       if (!renderedSectionAdvancedMaps) {
-        appendSectionAdvancedMaps(item.sectionAdvancedMaps);
+        appendSectionAdvancedMaps(item.sectionAdvancedMaps, sectionMediaTarget);
       }
       idx = sectionCursor - 1;
     }
@@ -1413,45 +1744,50 @@ export const renderSteps = (params) => {
   }
 
   let currentTitle = null;
+  let currentTitleIndex = -1;
   for (let i = currentStepIndex; i >= 0; i--) {
     if (items[i].type === 'title') {
       currentTitle = items[i].text;
+      currentTitleIndex = i;
       break;
     }
   }
 
+  let currentTitleItem = null;
+  if (currentTitleIndex >= 0) {
+    currentTitleItem = items[currentTitleIndex];
+  }
+  const currentSectionBlock = createSectionBlock();
+  let currentSectionMediaTarget = currentSectionBlock;
+
   if (currentTitle) {
-    const currentTitleLevel =
-      Number(items.find((item) => item.type === 'title' && item.text === currentTitle)?.level) || 2;
-    appendTitleHeading({ text: currentTitle, level: currentTitleLevel });
+    const { sectionMediaContentEl } =
+      appendTitleHeading(
+        currentTitleItem || { text: currentTitle, level: 2 },
+        currentTitleIndex,
+        currentSectionBlock
+      ) || {};
+    currentSectionMediaTarget = sectionMediaContentEl || currentSectionBlock;
   }
 
-  let currentTitleItem = null;
   if (currentTitle) {
-    currentTitleItem = items.find((item) => item.type === 'title' && item.text === currentTitle);
     if (currentTitleItem && currentTitleItem.seeAlso && currentTitleItem.seeAlso.length > 0) {
       const small = document.createElement('div');
       small.className = 'seealso';
       small.innerHTML = currentTitleItem.seeAlso.join('<br>');
-      stepsDiv.appendChild(small);
+      currentSectionBlock.appendChild(small);
     }
     if (
       currentTitleItem &&
       currentTitleItem.sectionInfoBoxes &&
       currentTitleItem.sectionInfoBoxes.length > 0
     ) {
-      const titleIndex = items.findIndex(
-        (item) => item.type === 'title' && item.text === currentTitleItem.text
-      );
-      if (!sectionHasInlineNoteType(titleIndex, 'infobox')) {
-        appendSectionInfoBoxes(currentTitleItem.sectionInfoBoxes);
+      if (!sectionHasInlineNoteType(currentTitleIndex, 'infobox')) {
+        appendSectionInfoBoxes(currentTitleItem.sectionInfoBoxes, currentSectionBlock);
       }
     }
     let hasSectionStepsOrNotes = false;
-    const titleIndex = items.findIndex(
-      (item) => item.type === 'title' && item.text === currentTitleItem.text
-    );
-    for (let i = titleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
+    for (let i = currentTitleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
       if (items[i].type === 'step' || items[i].type === 'note') {
         hasSectionStepsOrNotes = true;
         break;
@@ -1463,7 +1799,7 @@ export const renderSteps = (params) => {
       currentTitleItem.sectionTexts.length > 0
     ) {
       if (!hasSectionStepsOrNotes) {
-        appendSectionTexts(currentTitleItem.sectionTexts);
+        appendSectionTexts(currentTitleItem.sectionTexts, currentSectionBlock);
       }
     }
     if (
@@ -1472,7 +1808,7 @@ export const renderSteps = (params) => {
       currentTitleItem.sectionTables &&
       currentTitleItem.sectionTables.length > 0
     ) {
-      appendSectionTables(currentTitleItem.sectionTables);
+      appendSectionTables(currentTitleItem.sectionTables, currentSectionBlock);
     }
     if (
       !hasSectionStepsOrNotes &&
@@ -1480,19 +1816,16 @@ export const renderSteps = (params) => {
       currentTitleItem.sectionRefLists &&
       currentTitleItem.sectionRefLists.length > 0
     ) {
-      appendSectionRefLists(currentTitleItem.sectionRefLists);
+      appendSectionRefLists(currentTitleItem.sectionRefLists, currentSectionBlock);
     }
   }
 
-  const currentTitleIndex = currentTitle
-    ? items.findIndex((item) => item.type === 'title' && item.text === currentTitle)
-    : -1;
   if (currentTitleIndex >= 0) {
     for (let i = currentTitleIndex + 1; i < items.length && items[i].type !== 'title'; i += 1) {
       if (i >= currentStepIndex) break;
       const sectionItem = items[i];
       if (sectionItem.type === 'note') {
-        appendInlineNote(sectionItem);
+        appendInlineNote(sectionItem, currentSectionBlock, currentSectionMediaTarget);
       }
     }
   }
@@ -1509,7 +1842,7 @@ export const renderSteps = (params) => {
     currentTitleItem.sectionAdvancedMaps &&
     currentTitleItem.sectionAdvancedMaps.length > 0
   ) {
-    appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps);
+    appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps, currentSectionMediaTarget);
   }
   if (
     isCurrentQuestComplete &&
@@ -1518,7 +1851,11 @@ export const renderSteps = (params) => {
     currentTitleItem.sectionImages.length > 0 &&
     !sectionHasInlineNoteType(currentTitleIndex, 'images')
   ) {
-    appendSectionImages(currentTitleItem.sectionImages, { omitSrc: currentRewardImage });
+    appendSectionImages(
+      currentTitleItem.sectionImages,
+      { omitSrc: currentRewardImage },
+      currentSectionMediaTarget
+    );
   }
 
   const stepEl = document.createElement('div');
@@ -1541,12 +1878,12 @@ export const renderSteps = (params) => {
     }, 180);
   };
 
-  stepsDiv.appendChild(stepEl);
+  currentSectionBlock.appendChild(stepEl);
 
   if (step.substeps && step.substeps.length > 0) {
     const list = buildSubstepsList(step.substeps, 'substeps', step);
     if (list) {
-      stepsDiv.appendChild(list);
+      currentSectionBlock.appendChild(list);
     }
   }
 
@@ -1557,7 +1894,7 @@ export const renderSteps = (params) => {
     currentTitleItem.sectionImages.length > 0 &&
     !sectionHasInlineNoteType(currentTitleIndex, 'images')
   ) {
-    appendSectionImages(currentTitleItem.sectionImages);
+    appendSectionImages(currentTitleItem.sectionImages, {}, currentSectionMediaTarget);
   }
 
   if (currentRewardImage && /quest complete/i.test(step.text)) {
@@ -1569,7 +1906,7 @@ export const renderSteps = (params) => {
     currentTitleItem.sectionAdvancedMaps &&
     currentTitleItem.sectionAdvancedMaps.length > 0
   ) {
-    appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps);
+    appendSectionAdvancedMaps(currentTitleItem.sectionAdvancedMaps, currentSectionMediaTarget);
   }
 
   if (navBar) {

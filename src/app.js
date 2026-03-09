@@ -76,6 +76,8 @@ const autoTranslateToggle = document.getElementById('autoTranslateToggle');
 const autoTranslateToggleWrap = document.getElementById('autoTranslateToggleWrap');
 const confirmResetToggle = document.getElementById('confirmResetToggle');
 const confirmResetToggleWrap = document.getElementById('confirmResetToggleWrap');
+const sectionImagesModalToggle = document.getElementById('sectionImagesModalToggle');
+const sectionImagesModalToggleWrap = document.getElementById('sectionImagesModalToggleWrap');
 const stepFontSizeSelect = document.getElementById('stepFontSizeSelect');
 let lastSettingsTrigger = null;
 
@@ -204,6 +206,7 @@ const saveUiPreferences = () => {
     autoTranslateSteps: !!state.autoTranslateSteps,
     stepFontSize: state.stepFontSize || 'medium',
     confirmResetQuestProgress: !!state.confirmResetQuestProgress,
+    sectionImagesInModal: !!state.sectionImagesInModal,
   });
 };
 
@@ -322,6 +325,8 @@ const initAdvancedSettingsUi = (prefs = {}) => {
   state.autoTranslateSteps = Boolean(prefs.autoTranslateSteps);
   state.confirmResetQuestProgress =
     typeof prefs.confirmResetQuestProgress === 'boolean' ? prefs.confirmResetQuestProgress : true;
+  state.sectionImagesInModal =
+    typeof prefs.sectionImagesInModal === 'boolean' ? prefs.sectionImagesInModal : true;
   applyStepFontSize(prefs.stepFontSize || 'medium');
 
   if (autoTranslateToggle) {
@@ -339,6 +344,14 @@ const initAdvancedSettingsUi = (prefs = {}) => {
     confirmResetToggleWrap.title = state.confirmResetQuestProgress
       ? 'Ask confirmation before resetting quest progress'
       : 'Reset quest progress immediately';
+  }
+  if (sectionImagesModalToggle) {
+    sectionImagesModalToggle.checked = state.sectionImagesInModal;
+  }
+  if (sectionImagesModalToggleWrap) {
+    sectionImagesModalToggleWrap.title = state.sectionImagesInModal
+      ? 'Show section images/maps in a collapsible block from the section header'
+      : 'Show section images directly inside the step list';
   }
 };
 
@@ -777,6 +790,7 @@ const buildStepsRenderParams = (items) => ({
   prevStepButton,
   nextStepButton,
   jumpCurrentButton,
+  sectionImagesInModal: state.sectionImagesInModal,
   currentRewardImage: state.currentRewardImage,
   overviewStartPointHtml: state.currentOverview?.startPoint || '',
   kartographerLiveData: state.currentKartographerLiveData,
@@ -1370,6 +1384,24 @@ if (confirmResetToggle) {
     showUiToast(
       state.confirmResetQuestProgress ? 'Reset confirmation enabled' : 'Reset confirmation disabled'
     );
+  });
+}
+
+if (sectionImagesModalToggle) {
+  sectionImagesModalToggle.addEventListener('change', () => {
+    state.sectionImagesInModal = !!sectionImagesModalToggle.checked;
+    if (sectionImagesModalToggleWrap) {
+      sectionImagesModalToggleWrap.title = state.sectionImagesInModal
+        ? 'Show section images/maps in a collapsible block from the section header'
+        : 'Show section images directly inside the step list';
+    }
+    saveUiPreferences();
+    showUiToast(
+      state.sectionImagesInModal ? 'Section images/maps collapse' : 'Section images inline'
+    );
+    if (state.currentItems.length > 0 && state.showSteps) {
+      renderSteps(buildStepsRenderParams(state.currentItems));
+    }
   });
 }
 

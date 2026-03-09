@@ -55,6 +55,7 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
     autoTranslateSteps: false,
     stepFontSize: 'medium',
     confirmResetQuestProgress: true,
+    sectionImagesInModal: true,
   };
   try {
     const raw = storage.getItem(key);
@@ -85,6 +86,10 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
         parsed && typeof parsed.confirmResetQuestProgress === 'boolean'
           ? parsed.confirmResetQuestProgress
           : true,
+      sectionImagesInModal:
+        parsed && typeof parsed.sectionImagesInModal === 'boolean'
+          ? parsed.sectionImagesInModal
+          : true,
     };
   } catch (_err) {
     return defaults;
@@ -100,6 +105,7 @@ export const saveUiPreferences = ({
   autoTranslateSteps,
   stepFontSize,
   confirmResetQuestProgress,
+  sectionImagesInModal,
 }) => {
   const normalizedStepFontSize = String(stepFontSize || '')
     .trim()
@@ -117,6 +123,7 @@ export const saveUiPreferences = ({
             ? normalizedStepFontSize
             : 'medium',
         confirmResetQuestProgress: !!confirmResetQuestProgress,
+        sectionImagesInModal: !!sectionImagesInModal,
       })
     );
   } catch (_err) {
