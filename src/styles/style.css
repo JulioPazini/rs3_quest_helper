@@ -2096,7 +2096,7 @@ header.hidden {
 
 .section-text-block table,
 .section-text-block .wikitable {
-  width: 30%;
+  width: auto;
   border-collapse: collapse;
   border: 1px solid var(--border);
   background: rgba(47, 40, 26, 0.9);
