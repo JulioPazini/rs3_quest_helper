@@ -1742,6 +1742,14 @@ header.hidden {
   text-decoration: none;
 }
 
+.step-item img,
+.substep-text img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 6px auto 0;
+}
+
 .step-item a:hover,
 .substeps a:hover,
 .results-list a:hover {
