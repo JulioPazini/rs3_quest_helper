@@ -2111,6 +2111,85 @@ header.hidden {
   vertical-align: middle;
 }
 
+.pathmap-source-hidden {
+  display: none !important;
+}
+
+.pathmap-grid-fallback {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 6px;
+}
+
+.pathmap-grid-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pathmap-grid-title {
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #d9c88f;
+}
+
+.pathmap-grid-counter {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pathmap-grid-clear {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #4b3d1f, #3a311b);
+  color: #e7d08a;
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.pathmap-grid-clear:hover {
+  filter: brightness(1.08);
+}
+
+.pathmap-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--pathmap-cols, 5), 30px);
+  grid-auto-rows: 30px;
+  gap: 1px;
+  width: fit-content;
+  background: rgba(80, 67, 31, 0.6);
+  border: 1px solid rgba(106, 90, 46, 0.8);
+}
+
+.pathmap-grid-cell {
+  border: none;
+  background: rgba(47, 40, 26, 0.92);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.pathmap-grid-cell:hover {
+  background: rgba(81, 71, 45, 0.95);
+}
+
+.pathmap-grid-cell.selected {
+  background: rgba(184, 161, 75, 0.42);
+}
+
+.pathmap-interactive-cell {
+  cursor: pointer;
+}
+
+.pathmap-interactive-cell.selected {
+  background: rgba(184, 161, 75, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(240, 224, 162, 0.5);
+}
+
 .section-infoboxes {
   margin: 0 0 8px 0;
   display: grid;

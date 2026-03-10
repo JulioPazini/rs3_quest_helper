@@ -570,6 +570,187 @@ export const renderSteps = (params) => {
     return;
   }
 
+  const readPathmapSelection = (key) => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return new Set();
+      return new Set(parsed.map((n) => Number(n)).filter((n) => Number.isInteger(n) && n >= 0));
+    } catch (_err) {
+      return new Set();
+    }
+  };
+
+  const savePathmapSelection = (key, selectedSet) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(Array.from(selectedSet.values())));
+    } catch (_err) {
+      // ignore storage failures
+    }
+  };
+
+  const enhancePathMapTables = (root) => {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    const tables = root.querySelectorAll(
+      'table.lighttable, table.wikitable.lighttable, table[data-tableid]'
+    );
+    tables.forEach((table, tableIndex) => {
+      if (!(table instanceof HTMLElement)) return;
+      if (table.dataset.pathmapEnhanced === 'true') return;
+      table.dataset.pathmapEnhanced = 'true';
+
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+      if (rows.length === 0) return;
+      const rowCells = rows.map((row) => Array.from(row.querySelectorAll('td, th')));
+      const hasAnyCell = rowCells.some((cells) => cells.length > 0);
+      if (!hasAnyCell) return;
+
+      const isBrokenSingleCellRows = rowCells.every((cells) => cells.length === 1);
+      const allCellsEmpty = rowCells.every((cells) =>
+        cells.every((cell) => !String(cell.textContent || '').trim())
+      );
+
+      const tableId = String(table.getAttribute('data-tableid') || '').trim();
+      if (/^Underground Pass-\d+$/i.test(tableId) && !/Underground Pass-1$/i.test(tableId)) {
+        table.classList.add('pathmap-source-hidden');
+        return;
+      }
+      const storageKey = `pathmap:${tableId || `table-${tableIndex}`}`;
+      const selected = readPathmapSelection(storageKey);
+
+      const makeCounterText = (selectedCount, total) => `(${selectedCount}/${total})`;
+
+      if (isBrokenSingleCellRows && allCellsEmpty) {
+        const totalRows = rowCells.length;
+        const totalCols = 5;
+        const totalCells = totalRows * totalCols;
+
+        const fallback = document.createElement('div');
+        fallback.className = 'pathmap-grid-fallback pathmap-interactive-root';
+
+        const top = document.createElement('div');
+        top.className = 'pathmap-grid-top';
+        const title = document.createElement('span');
+        title.className = 'pathmap-grid-title';
+        title.textContent = tableId || 'Grid puzzle';
+        const counter = document.createElement('span');
+        counter.className = 'pathmap-grid-counter';
+        const clear = document.createElement('button');
+        clear.type = 'button';
+        clear.className = 'pathmap-grid-clear';
+        clear.textContent = 'Clear';
+        top.appendChild(title);
+        top.appendChild(counter);
+        top.appendChild(clear);
+
+        const grid = document.createElement('div');
+        grid.className = 'pathmap-grid';
+        grid.style.setProperty('--pathmap-cols', String(totalCols));
+
+        const update = () => {
+          const selectedCount = selected.size;
+          counter.textContent = makeCounterText(selectedCount, totalCells);
+          savePathmapSelection(storageKey, selected);
+        };
+
+        for (let r = 0; r < totalRows; r += 1) {
+          for (let c = 0; c < totalCols; c += 1) {
+            const idx = r * totalCols + c;
+            const cellBtn = document.createElement('button');
+            cellBtn.type = 'button';
+            cellBtn.className = 'pathmap-grid-cell';
+            cellBtn.setAttribute('aria-label', `Grid row ${r + 1}, column ${c + 1}`);
+            if (selected.has(idx)) {
+              cellBtn.classList.add('selected');
+            }
+            cellBtn.addEventListener('click', (event) => {
+              event.preventDefault();
+              if (selected.has(idx)) {
+                selected.delete(idx);
+                cellBtn.classList.remove('selected');
+              } else {
+                selected.add(idx);
+                cellBtn.classList.add('selected');
+              }
+              update();
+            });
+            grid.appendChild(cellBtn);
+          }
+        }
+
+        clear.addEventListener('click', (event) => {
+          event.preventDefault();
+          selected.clear();
+          grid.querySelectorAll('.pathmap-grid-cell.selected').forEach((cell) => {
+            cell.classList.remove('selected');
+          });
+          update();
+        });
+
+        fallback.appendChild(top);
+        fallback.appendChild(grid);
+        table.classList.add('pathmap-source-hidden');
+        table.insertAdjacentElement('afterend', fallback);
+        update();
+        return;
+      }
+
+      const cells = [];
+      rowCells.forEach((row, rIdx) => {
+        row.forEach((cell, cIdx) => {
+          if (!(cell instanceof HTMLElement)) return;
+          const idx = rIdx * 100 + cIdx;
+          cell.classList.add('pathmap-interactive-cell', 'pathmap-interactive-root');
+          cell.tabIndex = 0;
+          if (selected.has(idx)) {
+            cell.classList.add('selected');
+          }
+          const toggle = () => {
+            if (selected.has(idx)) {
+              selected.delete(idx);
+              cell.classList.remove('selected');
+            } else {
+              selected.add(idx);
+              cell.classList.add('selected');
+            }
+            savePathmapSelection(storageKey, selected);
+          };
+          cell.addEventListener('click', (event) => {
+            event.preventDefault();
+            toggle();
+          });
+          cell.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            toggle();
+          });
+          cells.push(cell);
+        });
+      });
+
+      const clearBtn = table.querySelector(
+        '.ht-reset .oo-ui-buttonElement-button, .ht-reset a[role=\"button\"]'
+      );
+      const counterEl = table.querySelector('.ht-reset-counter');
+      const total = cells.length;
+      const updateTableCounter = () => {
+        if (!counterEl) return;
+        counterEl.textContent = makeCounterText(selected.size, total);
+      };
+      if (clearBtn) {
+        clearBtn.addEventListener('click', (event) => {
+          event.preventDefault();
+          selected.clear();
+          cells.forEach((cell) => cell.classList.remove('selected'));
+          savePathmapSelection(storageKey, selected);
+          updateTableCounter();
+        });
+      }
+      updateTableCounter();
+    });
+  };
+
   const appendSectionTexts = (sectionTexts, targetEl = stepsDiv) => {
     if (!Array.isArray(sectionTexts) || sectionTexts.length === 0) return;
     const wrap = document.createElement('div');
@@ -579,6 +760,7 @@ export const renderSteps = (params) => {
       const block = document.createElement('div');
       block.className = 'section-text-block';
       block.innerHTML = textHtml;
+      enhancePathMapTables(block);
       wrap.appendChild(block);
     });
     if (wrap.children.length > 0) {
@@ -704,6 +886,7 @@ export const renderSteps = (params) => {
       const block = document.createElement('div');
       block.className = 'section-table-card';
       block.innerHTML = tableHtml;
+      enhancePathMapTables(block);
       ensureAdvancedMapVisible(block);
       wrap.appendChild(block);
     });
@@ -1176,6 +1359,7 @@ export const renderSteps = (params) => {
       const block = document.createElement('div');
       block.className = 'section-table-card';
       block.innerHTML = noteItem.html;
+      enhancePathMapTables(block);
       ensureAdvancedMapVisible(block);
       wrap.appendChild(block);
       targetEl.appendChild(wrap);
@@ -1267,6 +1451,7 @@ export const renderSteps = (params) => {
       const textWrap = document.createElement('span');
       textWrap.className = 'substep-text';
       textWrap.innerHTML = substep.html || substep.text || '';
+      enhancePathMapTables(textWrap);
       li.appendChild(textWrap);
 
       const nestedList = buildSubstepsList(substep.substeps, 'substeps-nested', parentStep);
@@ -1564,9 +1749,18 @@ export const renderSteps = (params) => {
           'step-item' + (sectionItem.checked ? ' completed' : '') + (isCurrent ? ' current' : '');
         const displayHtml = formatStepHtml(sectionItem.html || sectionItem.text, sectionItem.text);
         stepEl.innerHTML = buildStepContentHtml(Boolean(sectionItem.checked), displayHtml);
+        enhancePathMapTables(stepEl);
 
         stepEl.onclick = (event) => {
           if (event && event.target && event.target.closest && event.target.closest('a')) {
+            return;
+          }
+          if (
+            event &&
+            event.target &&
+            event.target.closest &&
+            event.target.closest('.pathmap-interactive-root')
+          ) {
             return;
           }
           stepEl.classList.add('clicked');
@@ -1840,9 +2034,18 @@ export const renderSteps = (params) => {
   stepEl.className = 'step-item current';
   const currentHtml = formatStepHtml(step.html || step.text, step.text);
   stepEl.innerHTML = buildStepContentHtml(Boolean(step.checked), currentHtml);
+  enhancePathMapTables(stepEl);
 
   stepEl.onclick = (event) => {
     if (event && event.target && event.target.closest && event.target.closest('a')) {
+      return;
+    }
+    if (
+      event &&
+      event.target &&
+      event.target.closest &&
+      event.target.closest('.pathmap-interactive-root')
+    ) {
       return;
     }
     stepEl.classList.add('clicked');
