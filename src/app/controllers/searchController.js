@@ -23,6 +23,7 @@ export const createSearchController = (deps) => {
     showMessage,
     loadQuestFromName,
     returnHome,
+    saveUiPreferences,
   } = deps;
 
   let searchTimer = null;
@@ -60,6 +61,9 @@ export const createSearchController = (deps) => {
     state.selectedSeries = allowed.has(value) ? value : 'alphabetical';
     if (backButton && !backButton.classList.contains('hidden')) {
       showSearchOnlyView(titleDiv, navBar, stepsDiv, overviewDiv);
+    }
+    if (typeof saveUiPreferences === 'function') {
+      saveUiPreferences();
     }
     renderSearchResults(buildSearchRenderParams(true));
   };

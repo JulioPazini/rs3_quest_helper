@@ -204,6 +204,7 @@ const saveUiPreferences = () => {
     hideCompleted: !!(hideCompletedCheckbox && hideCompletedCheckbox.checked),
     sequentialStepChecking: !!state.sequentialStepChecking,
     autoTranslateSteps: !!state.autoTranslateSteps,
+    selectedSeries: state.selectedSeries || 'alphabetical',
     stepFontSize: state.stepFontSize || 'medium',
     confirmResetQuestProgress: !!state.confirmResetQuestProgress,
     sectionImagesInModal: !!state.sectionImagesInModal,
@@ -1207,6 +1208,7 @@ const {
   clearSearchResults,
   resetSearchInput,
   showMessage,
+  saveUiPreferences,
   loadQuestFromName: (questName) => loadQuest(questName, buildQuestContext()),
   returnHome: async () => {
     await returnToHome(buildHomeContext());

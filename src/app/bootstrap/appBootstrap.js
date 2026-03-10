@@ -130,6 +130,7 @@ export const bootstrapApp = (deps) => {
 
   const uiPrefs = loadUiPreferences();
   state.showAllSteps = uiPrefs.showAllSteps;
+  state.selectedSeries = uiPrefs.selectedSeries || 'alphabetical';
   initHideCompletedToggle(uiPrefs.hideCompleted);
   initSequentialStepToggle(uiPrefs.sequentialStepChecking);
   if (typeof initAdvancedSettingsUi === 'function') {

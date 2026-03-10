@@ -1381,28 +1381,6 @@ export const renderSteps = (params) => {
       hasControls = true;
     }
 
-    if (!sectionImagesInModal && sectionMaps.length > 0) {
-      const mapButton = document.createElement('button');
-      mapButton.type = 'button';
-      mapButton.className = 'section-maps-button';
-      mapButton.title =
-        sectionMaps.length === 1 ? 'Open section map' : `Open ${sectionMaps.length} section maps`;
-      mapButton.setAttribute(
-        'aria-label',
-        sectionMaps.length === 1 ? 'Open section map' : `Open ${sectionMaps.length} section maps`
-      );
-      mapButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">map</span>';
-      mapButton.addEventListener('click', () => {
-        openSectionMapsModal({
-          sectionTitle: String(titleItem?.text || '').trim(),
-          mapHtmlList: sectionMaps,
-          triggerEl: mapButton,
-        });
-      });
-      controlsWrap.appendChild(mapButton);
-      hasControls = true;
-    }
-
     if (hasControls) {
       headingWrap.appendChild(controlsWrap);
     }

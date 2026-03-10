@@ -53,6 +53,7 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
     hideCompleted: false,
     sequentialStepChecking: true,
     autoTranslateSteps: false,
+    selectedSeries: 'alphabetical',
     stepFontSize: 'medium',
     confirmResetQuestProgress: true,
     sectionImagesInModal: true,
@@ -66,6 +67,17 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
     const parsedStepFontSize = String(parsed?.stepFontSize || '')
       .trim()
       .toLowerCase();
+    const parsedSelectedSeries = String(parsed?.selectedSeries || '')
+      .trim()
+      .toLowerCase();
+    const allowedSelectedSeries = new Set([
+      'alphabetical',
+      'series',
+      'length',
+      'combat',
+      'membership',
+      'progress',
+    ]);
     return {
       showAllSteps: parsed && typeof parsed.showAllSteps === 'boolean' ? parsed.showAllSteps : true,
       hideCompleted:
@@ -78,6 +90,9 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
         parsed && typeof parsed.autoTranslateSteps === 'boolean'
           ? parsed.autoTranslateSteps
           : false,
+      selectedSeries: allowedSelectedSeries.has(parsedSelectedSeries)
+        ? parsedSelectedSeries
+        : 'alphabetical',
       stepFontSize:
         parsedStepFontSize === 'small' || parsedStepFontSize === 'large'
           ? parsedStepFontSize
@@ -103,10 +118,22 @@ export const saveUiPreferences = ({
   hideCompleted,
   sequentialStepChecking,
   autoTranslateSteps,
+  selectedSeries,
   stepFontSize,
   confirmResetQuestProgress,
   sectionImagesInModal,
 }) => {
+  const normalizedSelectedSeries = String(selectedSeries || '')
+    .trim()
+    .toLowerCase();
+  const allowedSelectedSeries = new Set([
+    'alphabetical',
+    'series',
+    'length',
+    'combat',
+    'membership',
+    'progress',
+  ]);
   const normalizedStepFontSize = String(stepFontSize || '')
     .trim()
     .toLowerCase();
@@ -118,6 +145,9 @@ export const saveUiPreferences = ({
         hideCompleted: !!hideCompleted,
         sequentialStepChecking: !!sequentialStepChecking,
         autoTranslateSteps: !!autoTranslateSteps,
+        selectedSeries: allowedSelectedSeries.has(normalizedSelectedSeries)
+          ? normalizedSelectedSeries
+          : 'alphabetical',
         stepFontSize:
           normalizedStepFontSize === 'small' || normalizedStepFontSize === 'large'
             ? normalizedStepFontSize
