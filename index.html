@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back,arrow_forward,close,description,g_translate,hourglass_top,image_search,keyboard_arrow_down,keyboard_arrow_up,list,list_alt,map,my_location,open_in_new,restart_alt,search,settings,visibility,visibility_off&display=block"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=arrow_back,arrow_forward,close,description,g_translate,hourglass_top,image_search,keyboard_arrow_down,keyboard_arrow_up,list,list_alt,map,my_location,open_in_new,person,restart_alt,search,settings,visibility,visibility_off&display=block"
     />
 
     <!-- Alt1 API -->
@@ -116,35 +116,41 @@
         <option value="progress">Progress</option>
         <option value="series">Series</option>
       </select>
-      <input type="text" id="questInput" class="search-input" placeholder="Type the quest name" />
-      <button
-        id="searchToggle"
-        class="search-toggle"
-        type="button"
-        title="Search another quest"
-        aria-label="Search another quest"
-      >
-        <span class="material-symbols-outlined">search</span>
-      </button>
+      <div class="quest-search-field">
+        <span class="material-symbols-outlined quest-search-icon" aria-hidden="true">search</span>
+        <input type="text" id="questInput" class="search-input" placeholder="Type the quest name" />
+        <button
+          id="searchToggle"
+          class="search-toggle"
+          type="button"
+          title="Search another quest"
+          aria-label="Search another quest"
+        >
+          Search
+        </button>
+      </div>
     </section>
 
     <section class="player-bar">
-      <input
-        type="text"
-        id="playerInput"
-        class="player-input"
-        placeholder="Display name"
-        aria-label="Search quests by player name"
-      />
-      <button
-        id="playerLookup"
-        class="player-lookup-btn"
-        type="button"
-        title="Look up player quests"
-        aria-label="Look up player quests"
-      >
-        Look up
-      </button>
+      <div class="player-lookup-field">
+        <span class="material-symbols-outlined player-lookup-icon" aria-hidden="true">person</span>
+        <input
+          type="text"
+          id="playerInput"
+          class="player-input"
+          placeholder="Display name"
+          aria-label="Search quests by player name"
+        />
+        <button
+          id="playerLookup"
+          class="player-lookup-btn"
+          type="button"
+          title="Search player quests"
+          aria-label="Search player quests"
+        >
+          Search
+        </button>
+      </div>
     </section>
 
     <section id="questTitle"></section>

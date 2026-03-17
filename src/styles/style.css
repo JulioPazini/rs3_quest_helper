@@ -808,20 +808,24 @@ header.hidden {
 }
 
 .search-toggle {
-  width: 28px;
-  height: 28px;
+  width: auto;
+  height: 30px;
+  padding: 0 0 0 8px;
   background: transparent;
   border: none;
   border-radius: 0;
   cursor: pointer;
   font-size: 16px;
+  font-weight: 600;
   line-height: 1;
-  color: var(--icon);
+  color: var(--accent);
   box-shadow: none;
+  font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
 }
 
 .search-toggle:hover {
-  filter: brightness(1.15);
+  color: var(--link-hover);
+  filter: none;
 }
 
 .material-symbols-outlined {
@@ -1117,13 +1121,34 @@ header.hidden {
   border-bottom: 2px solid var(--border);
   background: linear-gradient(180deg, var(--bar-surface-start), var(--bar-surface-end));
   display: flex;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
 }
 
 .player-bar.hidden {
   display: none;
+}
+
+.player-lookup-field {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.player-lookup-field:focus-within {
+  box-shadow: 0 0 0 2px var(--focus-ring-glow);
+}
+
+.player-lookup-icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
 }
 
 .toggle-bar.hidden {
@@ -1133,80 +1158,95 @@ header.hidden {
 .search-input {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 6px 8px;
-  background: var(--panel-strong);
+  padding: 9px 0;
+  background: transparent;
   color: var(--text);
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   outline: none;
-  box-shadow: inset 0 0 0 1px var(--input-inset-shadow);
+  box-shadow: none;
+  font-size: 14px;
   transition:
     width 200ms ease,
     opacity 200ms ease,
     margin 200ms ease;
+}
+
+.quest-search-field {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.quest-search-field:focus-within {
+  box-shadow: 0 0 0 2px var(--focus-ring-glow);
+}
+
+.quest-search-icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--muted);
 }
 
 .player-input {
-  flex: 0 0 150px;
-  min-width: 120px;
-  padding: 6px 8px;
-  background: var(--panel-strong);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 9px 0;
+  background: transparent;
   color: var(--text);
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   outline: none;
-  box-shadow: inset 0 0 0 1px var(--input-inset-shadow);
-  transition:
-    width 200ms ease,
-    opacity 200ms ease,
-    margin 200ms ease;
+  box-shadow: none;
+  transition: none;
+  font-size: 14px;
 }
 
 .player-lookup-btn {
+  position: relative;
   flex: 0 0 auto;
-  padding: 6px 10px;
-  background: linear-gradient(180deg, var(--surface-button-start), var(--surface-button-end));
-  color: var(--text);
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  padding: 0 0 0 8px;
+  height: 30px;
+  background: transparent;
+  color: var(--accent);
+  border: none;
+  border-radius: 0;
   cursor: pointer;
-  font-size: 13px;
-  letter-spacing: 0.4px;
-  font-family: 'IM Fell English SC', 'Source Sans 3', serif;
-  text-transform: uppercase;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
 }
 
 .player-lookup-btn:hover {
-  filter: brightness(1.08);
+  color: var(--link-hover);
+  filter: none;
 }
 
 .player-lookup-btn.loading {
-  position: relative;
   cursor: wait;
-  background: linear-gradient(
-    180deg,
-    var(--button-surface-muted-start),
-    var(--button-surface-muted-end)
-  );
-  border-color: var(--button-muted-border);
   color: var(--button-muted-text);
-  filter: saturate(0.85) brightness(0.9);
+  padding-right: 18px;
 }
 
 .player-lookup-btn.loading::before {
   content: '';
   position: absolute;
-  left: 50%;
+  right: 0;
   top: 50%;
+  margin-top: -6px;
   width: 12px;
   height: 12px;
-  margin-left: -6px;
-  margin-top: -6px;
   border: 2px solid var(--button-loader-ring);
   border-top-color: var(--button-loader-ring-top);
   border-radius: 50%;
   animation: player-lookup-spin 0.8s linear infinite;
-  z-index: 1;
 }
 
 @keyframes player-lookup-spin {
@@ -1217,19 +1257,32 @@ header.hidden {
 
 .quest-Filter {
   flex: 0 0 132px;
-  min-width: 110px;
-  padding: 6px 8px;
-  background: var(--panel-strong);
+  height: 37px;
+  padding: 0 28px 0 10px;
+  background: var(--panel);
   color: var(--text);
   border: 2px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
   outline: none;
-  box-shadow: inset 0 0 0 1px var(--input-inset-shadow);
+  box-shadow: none;
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 13px,
+    calc(100% - 9px) 13px;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
 }
 
 .quest-Filter:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--focus-ring-glow);
 }
 
 .toggle-bar.search-closed .search-input {
@@ -1239,6 +1292,18 @@ header.hidden {
   padding: 0;
   border-width: 0;
   pointer-events: none;
+}
+
+.toggle-bar.search-closed .quest-search-field {
+  width: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.toggle-bar.search-closed .quest-search-icon {
+  display: none;
 }
 
 .toggle-bar.search-closed .quest-Filter {
