@@ -86,9 +86,11 @@
   --substeps-done: rgba(217, 205, 164, 0.6);
   --substeps-marker: #e0c874;
   --substeps-border: rgba(184, 161, 75, 0.45);
+  --step-section-border: rgba(184, 161, 75, 0.45);
   --step-start-bg: rgba(255, 255, 255, 0.04);
   --step-start-label: #f2e7ba;
   --step-start-border-left: #b8a14b;
+  --steps-h4-color: #cbbb90;
   --section-image-bg-start: #2f281a;
   --section-image-bg-end: #241f14;
   --section-map-bg-start: #2f281a;
@@ -106,6 +108,22 @@
   --pathmap-cell-hover-bg: rgba(81, 71, 45, 0.95);
   --pathmap-cell-selected-bg: rgba(184, 161, 75, 0.42);
   --pathmap-cell-selected-ring: rgba(240, 224, 162, 0.5);
+  --table-bg: rgba(47, 40, 26, 0.9);
+  --table-cell-border: rgba(106, 90, 46, 0.65);
+  --messagebox-warn-border: #8c3b33;
+  --messagebox-warn-bg: rgba(72, 28, 24, 0.92);
+  --messagebox-warn-cell-border: rgba(140, 59, 51, 0.75);
+  --messagebox-safe-border: #3f7f44;
+  --messagebox-safe-bg: rgba(31, 60, 33, 0.92);
+  --messagebox-safe-cell-border: rgba(63, 127, 68, 0.75);
+  --toast-bg: rgba(24, 20, 12, 0.96);
+  --toast-text: #f0e6c8;
+  --toast-success-border: #2f7d44;
+  --toast-success-bg: rgba(20, 52, 28, 0.96);
+  --toast-success-text: #d9f7e1;
+  --toast-error-border: #9b3737;
+  --toast-error-bg: rgba(65, 24, 24, 0.96);
+  --toast-error-text: #ffdede;
   --skeleton-bg: #3a3120;
   --skeleton-surface-bg: #2f281a;
   --skeleton-border: #5a4b27;
@@ -175,6 +193,14 @@ body[data-theme='midnight'] {
   --button-muted-border: #354869;
   --button-loader-ring: rgba(214, 228, 255, 0.35);
   --button-loader-ring-top: #e4ebfb;
+  --link: #9eb3dd;
+  --link-hover: #c4d3f0;
+  --substeps-color: #c9d6f2;
+  --substeps-done: rgba(201, 214, 242, 0.58);
+  --substeps-marker: #9eb3dd;
+  --substeps-border: rgba(111, 143, 200, 0.42);
+  --step-section-border: rgba(111, 143, 200, 0.42);
+  --steps-h4-color: #c9d6f2;
   --checkbox-border: #5e79a9;
   --checkbox-bg-start: #273850;
   --checkbox-bg-end: #1c2a3e;
@@ -195,6 +221,22 @@ body[data-theme='midnight'] {
   --pathmap-cell-hover-bg: rgba(43, 60, 89, 0.96);
   --pathmap-cell-selected-bg: rgba(111, 143, 200, 0.42);
   --pathmap-cell-selected-ring: rgba(169, 192, 240, 0.5);
+  --table-bg: rgba(30, 43, 64, 0.9);
+  --table-cell-border: rgba(84, 108, 151, 0.62);
+  --messagebox-warn-border: #93566a;
+  --messagebox-warn-bg: rgba(64, 34, 50, 0.92);
+  --messagebox-warn-cell-border: rgba(147, 86, 106, 0.7);
+  --messagebox-safe-border: #4f8f80;
+  --messagebox-safe-bg: rgba(31, 58, 53, 0.92);
+  --messagebox-safe-cell-border: rgba(79, 143, 128, 0.72);
+  --toast-bg: rgba(22, 32, 49, 0.96);
+  --toast-text: #e4ebfb;
+  --toast-success-border: #4f8f80;
+  --toast-success-bg: rgba(31, 58, 53, 0.96);
+  --toast-success-text: #d7f3eb;
+  --toast-error-border: #93566a;
+  --toast-error-bg: rgba(64, 34, 50, 0.96);
+  --toast-error-text: #ffdce7;
 }
 
 body[data-theme='classic-light'] {
@@ -275,6 +317,8 @@ body[data-theme='classic-light'] {
   --substeps-done: rgba(92, 83, 72, 0.58);
   --substeps-marker: #8a6b2c;
   --substeps-border: rgba(153, 111, 30, 0.35);
+  --step-section-border: rgba(153, 111, 30, 0.35);
+  --steps-h4-color: #6b5f52;
   --step-start-bg: rgba(153, 111, 30, 0.08);
   --step-start-label: #4a423a;
   --step-start-border-left: #996f1e;
@@ -289,12 +333,32 @@ body[data-theme='classic-light'] {
   --checkbox-bg-end: #ddd3c4;
   --checkbox-tick: #996f1e;
   --checkbox-tick-glow: rgba(153, 111, 30, 0.35);
+  --skeleton-bg: #e1d7c8;
+  --skeleton-surface-bg: #e9dfd1;
+  --skeleton-border: #c4b8a6;
+  --skeleton-shimmer: rgba(255, 255, 255, 0.52);
   --pathmap-grid-bg: rgba(196, 184, 166, 0.75);
   --pathmap-grid-border: rgba(153, 111, 30, 0.45);
   --pathmap-cell-bg: rgba(233, 223, 209, 0.96);
   --pathmap-cell-hover-bg: rgba(221, 211, 196, 0.98);
   --pathmap-cell-selected-bg: rgba(153, 111, 30, 0.25);
   --pathmap-cell-selected-ring: rgba(153, 111, 30, 0.45);
+  --table-bg: rgba(233, 223, 209, 0.94);
+  --table-cell-border: rgba(153, 111, 30, 0.35);
+  --messagebox-warn-border: #b67c72;
+  --messagebox-warn-bg: rgba(227, 208, 203, 0.95);
+  --messagebox-warn-cell-border: rgba(182, 124, 114, 0.55);
+  --messagebox-safe-border: #7d9a63;
+  --messagebox-safe-bg: rgba(212, 223, 202, 0.95);
+  --messagebox-safe-cell-border: rgba(125, 154, 99, 0.55);
+  --toast-bg: rgba(228, 219, 206, 0.97);
+  --toast-text: #2a2520;
+  --toast-success-border: #7d9a63;
+  --toast-success-bg: rgba(212, 223, 202, 0.97);
+  --toast-success-text: #2f5d3b;
+  --toast-error-border: #b67c72;
+  --toast-error-bg: rgba(227, 208, 203, 0.97);
+  --toast-error-text: #6f2f2f;
 }
 
 body[data-theme='ocean'] {
@@ -360,6 +424,14 @@ body[data-theme='ocean'] {
   --button-muted-border: #2f6664;
   --button-loader-ring: rgba(209, 241, 234, 0.35);
   --button-loader-ring-top: #e1f3ee;
+  --link: #83d2c7;
+  --link-hover: #b4e9df;
+  --substeps-color: #bfe5de;
+  --substeps-done: rgba(191, 229, 222, 0.58);
+  --substeps-marker: #83d2c7;
+  --substeps-border: rgba(78, 166, 161, 0.4);
+  --step-section-border: rgba(78, 166, 161, 0.4);
+  --steps-h4-color: #bfe5de;
   --checkbox-border: #4b9692;
   --checkbox-bg-start: #265053;
   --checkbox-bg-end: #1a393c;
@@ -380,6 +452,22 @@ body[data-theme='ocean'] {
   --pathmap-cell-hover-bg: rgba(35, 73, 75, 0.96);
   --pathmap-cell-selected-bg: rgba(78, 166, 161, 0.4);
   --pathmap-cell-selected-ring: rgba(136, 228, 211, 0.45);
+  --table-bg: rgba(28, 58, 61, 0.9);
+  --table-cell-border: rgba(62, 123, 121, 0.62);
+  --messagebox-warn-border: #9d6271;
+  --messagebox-warn-bg: rgba(58, 41, 48, 0.92);
+  --messagebox-warn-cell-border: rgba(157, 98, 113, 0.68);
+  --messagebox-safe-border: #4d9689;
+  --messagebox-safe-bg: rgba(30, 65, 58, 0.92);
+  --messagebox-safe-cell-border: rgba(77, 150, 137, 0.7);
+  --toast-bg: rgba(26, 52, 54, 0.96);
+  --toast-text: #e1f3ee;
+  --toast-success-border: #4d9689;
+  --toast-success-bg: rgba(30, 65, 58, 0.96);
+  --toast-success-text: #d9f5ed;
+  --toast-error-border: #9d6271;
+  --toast-error-bg: rgba(58, 41, 48, 0.96);
+  --toast-error-text: #ffe1e8;
 }
 
 body {
@@ -411,8 +499,8 @@ input:focus-visible {
   padding: 8px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(24, 20, 12, 0.96);
-  color: var(--text);
+  background: var(--toast-bg);
+  color: var(--toast-text);
   font-size: 12px;
   line-height: 1.3;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
@@ -439,15 +527,15 @@ input:focus-visible {
 }
 
 .ui-toast.success {
-  border-color: #2f7d44;
-  background: rgba(20, 52, 28, 0.96);
-  color: #d9f7e1;
+  border-color: var(--toast-success-border);
+  background: var(--toast-success-bg);
+  color: var(--toast-success-text);
 }
 
 .ui-toast.error {
-  border-color: #9b3737;
-  background: rgba(65, 24, 24, 0.96);
-  color: #ffdede;
+  border-color: var(--toast-error-border);
+  background: var(--toast-error-bg);
+  color: var(--toast-error-text);
 }
 
 .app-confirm {
@@ -2000,7 +2088,7 @@ header.hidden {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  color: #cbbb90;
+  color: var(--steps-h4-color);
 }
 
 #steps h4:first-child {
@@ -2014,7 +2102,7 @@ header.hidden {
 .step-section-block {
   margin: 22px 0 24px 0;
   padding-left: 10px;
-  border-left: 3px solid rgba(184, 161, 75, 0.45);
+  border-left: 3px solid var(--step-section-border);
 }
 
 #steps > .step-section-block:first-of-type {
@@ -2546,14 +2634,14 @@ header.hidden {
   width: auto;
   border-collapse: collapse;
   border: 1px solid var(--border);
-  background: rgba(47, 40, 26, 0.9);
+  background: var(--table-bg);
 }
 
 .section-text-block table th,
 .section-text-block table td,
 .section-text-block .wikitable th,
 .section-text-block .wikitable td {
-  border: 1px solid rgba(106, 90, 46, 0.65);
+  border: 1px solid var(--table-cell-border);
   padding: 6px 8px;
   vertical-align: middle;
 }
@@ -2647,34 +2735,34 @@ header.hidden {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--border);
-  background: rgba(47, 40, 26, 0.9);
+  background: var(--table-bg);
   color: var(--text);
   font-size: 13px;
 }
 
 .section-infobox .messagebox.warn {
-  border-color: #8c3b33;
-  background: rgba(72, 28, 24, 0.92);
+  border-color: var(--messagebox-warn-border);
+  background: var(--messagebox-warn-bg);
 }
 
 .section-infobox .messagebox.warn td,
 .section-infobox .messagebox.warn th {
-  border-color: rgba(140, 59, 51, 0.75);
+  border-color: var(--messagebox-warn-cell-border);
 }
 
 .section-infobox .messagebox.safe {
-  border-color: #3f7f44;
-  background: rgba(31, 60, 33, 0.92);
+  border-color: var(--messagebox-safe-border);
+  background: var(--messagebox-safe-bg);
 }
 
 .section-infobox .messagebox.safe td,
 .section-infobox .messagebox.safe th {
-  border-color: rgba(63, 127, 68, 0.75);
+  border-color: var(--messagebox-safe-cell-border);
 }
 
 .section-infobox .messagebox td,
 .section-infobox .messagebox th {
-  border: 1px solid rgba(106, 90, 46, 0.6);
+  border: 1px solid var(--table-cell-border);
   padding: 6px 8px;
   vertical-align: top;
 }
@@ -2702,14 +2790,14 @@ header.hidden {
   width: 100%;
   border-collapse: collapse;
   border: 1px solid var(--border);
-  background: rgba(47, 40, 26, 0.9);
+  background: var(--table-bg);
   color: var(--text);
   font-size: 13px;
 }
 
 .section-table-card th,
 .section-table-card td {
-  border: 1px solid rgba(106, 90, 46, 0.65);
+  border: 1px solid var(--table-cell-border);
   padding: 6px 8px;
   vertical-align: top;
 }
