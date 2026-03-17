@@ -902,7 +902,7 @@ header.hidden {
   border: none;
   border-radius: 0;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1;
   color: var(--accent);
@@ -1201,6 +1201,7 @@ header.hidden {
   justify-content: flex-start;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .player-bar {
@@ -1210,6 +1211,7 @@ header.hidden {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-width: 0;
 }
 
 .player-bar.hidden {
@@ -1217,7 +1219,9 @@ header.hidden {
 }
 
 .player-lookup-field {
-  width: 100%;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1260,7 +1264,9 @@ header.hidden {
 }
 
 .quest-search-field {
-  width: 100%;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1297,7 +1303,7 @@ header.hidden {
 
 .player-lookup-btn {
   position: relative;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   padding: 0 0 0 8px;
   height: 30px;
   background: transparent;
@@ -1305,10 +1311,11 @@ header.hidden {
   border: none;
   border-radius: 0;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1;
   font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+  white-space: nowrap;
 }
 
 .player-lookup-btn:hover {
@@ -1343,7 +1350,8 @@ header.hidden {
 }
 
 .quest-Filter {
-  flex: 0 0 132px;
+  flex: 0 1 132px;
+  min-width: 96px;
   height: 37px;
   padding: 0 28px 0 10px;
   background: var(--panel);
@@ -2044,6 +2052,30 @@ header.hidden {
 }
 
 @media (max-width: 480px) {
+  .player-bar {
+    padding: 7px 8px;
+  }
+
+  .player-lookup-field {
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .player-lookup-btn {
+    font-size: 14px;
+    padding-left: 6px;
+  }
+
+  .toggle-bar {
+    gap: 6px;
+    padding: 7px 8px;
+  }
+
+  .quest-Filter {
+    flex-basis: 110px;
+    min-width: 88px;
+  }
+
   .nav-bar {
     padding: 7px 8px;
   }

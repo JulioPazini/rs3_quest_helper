@@ -15,15 +15,17 @@ export const getLengthRank = (length) => {
     .replace(/[-\u2013]/g, ' to ')
     .replace(/\s+/g, ' ');
   const order = {
-    short: 0,
-    'short to medium': 1,
-    medium: 2,
-    'medium to long': 3,
-    long: 4,
-    'long to very long': 5,
-    'very long': 6,
-    'very, very long': 7,
-    'very very long': 7,
+    'very short': 0,
+    'very to short': 0,
+    short: 1,
+    'short to medium': 2,
+    medium: 3,
+    'medium to long': 4,
+    long: 5,
+    'long to very long': 6,
+    'very long': 7,
+    'very, very long': 8,
+    'very very long': 8,
   };
   return Object.prototype.hasOwnProperty.call(order, key) ? order[key] : 999;
 };

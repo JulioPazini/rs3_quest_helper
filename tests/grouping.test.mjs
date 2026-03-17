@@ -17,8 +17,9 @@ test('normalizeSeriesKey provides fallback label', () => {
 });
 
 test('getLengthRank orders known labels', () => {
+  assert.ok(getLengthRank('Very Short') < getLengthRank('Short'));
   assert.ok(getLengthRank('Short') < getLengthRank('Long'));
-  assert.equal(getLengthRank('Very, Very Long'), 7);
+  assert.equal(getLengthRank('Very, Very Long'), 8);
 });
 
 test('getCombatRank handles key buckets', () => {
@@ -42,8 +43,8 @@ test('normalize keys provide expected fallbacks', () => {
 });
 
 test('getLengthRank handles formatting variants and unknowns', () => {
-  assert.equal(getLengthRank('Short-Medium'), 1);
-  assert.equal(getLengthRank('Very very long'), 7);
+  assert.equal(getLengthRank('Short-Medium'), 2);
+  assert.equal(getLengthRank('Very very long'), 8);
   assert.equal(getLengthRank('Something else'), 999);
 });
 
