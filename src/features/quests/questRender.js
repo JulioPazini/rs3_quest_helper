@@ -730,7 +730,7 @@ export const renderSteps = (params) => {
       });
 
       const clearBtn = table.querySelector(
-        '.ht-reset .oo-ui-buttonElement-button, .ht-reset a[role=\"button\"]'
+        '.ht-reset .oo-ui-buttonElement-button, .ht-reset a[role="button"]'
       );
       const counterEl = table.querySelector('.ht-reset-counter');
       const total = cells.length;
