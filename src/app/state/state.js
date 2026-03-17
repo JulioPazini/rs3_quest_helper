@@ -2,6 +2,7 @@ export const state = {
   showAllSteps: false,
   sequentialStepChecking: true,
   autoTranslateSteps: false,
+  theme: 'classic',
   stepFontSize: 'medium',
   confirmResetQuestProgress: true,
   sectionImagesInModal: true,

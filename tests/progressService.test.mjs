@@ -62,16 +62,20 @@ test('saveUiPreferences/loadUiPreferences roundtrip', () => {
     hideCompleted: true,
     sequentialStepChecking: false,
     autoTranslateSteps: true,
+    theme: 'midnight',
     stepFontSize: 'large',
     confirmResetQuestProgress: false,
+    sectionImagesInModal: false,
   });
   const loaded = loadUiPreferences({ storage, key: 'prefs' });
   assert.equal(loaded.showAllSteps, false);
   assert.equal(loaded.hideCompleted, true);
   assert.equal(loaded.sequentialStepChecking, false);
   assert.equal(loaded.autoTranslateSteps, true);
+  assert.equal(loaded.theme, 'midnight');
   assert.equal(loaded.stepFontSize, 'large');
   assert.equal(loaded.confirmResetQuestProgress, false);
+  assert.equal(loaded.sectionImagesInModal, false);
 });
 
 test('progress service handles null inputs, missing keys and storage/json failures', () => {
@@ -123,8 +127,11 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     hideCompleted: false,
     sequentialStepChecking: true,
     autoTranslateSteps: false,
+    selectedSeries: 'alphabetical',
+    theme: 'classic',
     stepFontSize: 'medium',
     confirmResetQuestProgress: true,
+    sectionImagesInModal: true,
   });
 
   storage.setItem(
@@ -134,8 +141,11 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
       hideCompleted: true,
       sequentialStepChecking: false,
       autoTranslateSteps: 'x',
+      selectedSeries: 'unknown',
+      theme: 'pink',
       stepFontSize: 'tiny',
       confirmResetQuestProgress: 'no',
+      sectionImagesInModal: 'no',
     })
   );
   assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial' }), {
@@ -143,8 +153,11 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     hideCompleted: true,
     sequentialStepChecking: false,
     autoTranslateSteps: false,
+    selectedSeries: 'alphabetical',
+    theme: 'classic',
     stepFontSize: 'medium',
     confirmResetQuestProgress: true,
+    sectionImagesInModal: true,
   });
 
   storage.setItem(
@@ -154,8 +167,11 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
       hideCompleted: 'no',
       sequentialStepChecking: 'no',
       autoTranslateSteps: true,
+      selectedSeries: 'length',
+      theme: 'ocean',
       stepFontSize: 'small',
       confirmResetQuestProgress: false,
+      sectionImagesInModal: false,
     })
   );
   assert.deepEqual(loadUiPreferences({ storage, key: 'prefsPartial2' }), {
@@ -163,8 +179,11 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     hideCompleted: false,
     sequentialStepChecking: true,
     autoTranslateSteps: true,
+    selectedSeries: 'length',
+    theme: 'ocean',
     stepFontSize: 'small',
     confirmResetQuestProgress: false,
+    sectionImagesInModal: false,
   });
 
   const badStorage = {
@@ -178,7 +197,10 @@ test('loadUiPreferences applies defaults for missing/invalid values', () => {
     hideCompleted: false,
     sequentialStepChecking: true,
     autoTranslateSteps: false,
+    selectedSeries: 'alphabetical',
+    theme: 'classic',
     stepFontSize: 'medium',
     confirmResetQuestProgress: true,
+    sectionImagesInModal: true,
   });
 });

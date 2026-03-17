@@ -79,6 +79,7 @@ const confirmResetToggleWrap = document.getElementById('confirmResetToggleWrap')
 const sectionImagesModalToggle = document.getElementById('sectionImagesModalToggle');
 const sectionImagesModalToggleWrap = document.getElementById('sectionImagesModalToggleWrap');
 const stepFontSizeSelect = document.getElementById('stepFontSizeSelect');
+const themeSelect = document.getElementById('themeSelect');
 let lastSettingsTrigger = null;
 
 const resultsBatchSize = 20;
@@ -205,6 +206,7 @@ const saveUiPreferences = () => {
     sequentialStepChecking: !!state.sequentialStepChecking,
     autoTranslateSteps: !!state.autoTranslateSteps,
     selectedSeries: state.selectedSeries || 'alphabetical',
+    theme: state.theme || 'classic',
     stepFontSize: state.stepFontSize || 'medium',
     confirmResetQuestProgress: !!state.confirmResetQuestProgress,
     sectionImagesInModal: !!state.sectionImagesInModal,
@@ -311,6 +313,27 @@ const normalizeStepFontSize = (value) => {
   return 'medium';
 };
 
+const normalizeTheme = (value) => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'classic-light' || normalized === 'midnight' || normalized === 'ocean') {
+    return normalized;
+  }
+  return 'classic';
+};
+
+const applyTheme = (value) => {
+  const nextValue = normalizeTheme(value);
+  state.theme = nextValue;
+  if (themeSelect) {
+    themeSelect.value = nextValue;
+  }
+  if (document?.body) {
+    document.body.dataset.theme = nextValue;
+  }
+};
+
 const applyStepFontSize = (value) => {
   const nextValue = normalizeStepFontSize(value);
   state.stepFontSize = nextValue;
@@ -328,6 +351,7 @@ const initAdvancedSettingsUi = (prefs = {}) => {
     typeof prefs.confirmResetQuestProgress === 'boolean' ? prefs.confirmResetQuestProgress : true;
   state.sectionImagesInModal =
     typeof prefs.sectionImagesInModal === 'boolean' ? prefs.sectionImagesInModal : true;
+  applyTheme(prefs.theme || 'classic');
   applyStepFontSize(prefs.stepFontSize || 'medium');
 
   if (autoTranslateToggle) {
@@ -1417,6 +1441,22 @@ if (stepFontSizeSelect) {
         : state.stepFontSize === 'large'
           ? 'Steps font: large'
           : 'Steps font: medium'
+    );
+  });
+}
+
+if (themeSelect) {
+  themeSelect.addEventListener('change', () => {
+    applyTheme(themeSelect.value);
+    saveUiPreferences();
+    showUiToast(
+      state.theme === 'classic-light'
+        ? 'Theme: Classic Light'
+        : state.theme === 'midnight'
+          ? 'Theme: Midnight'
+          : state.theme === 'ocean'
+            ? 'Theme: Ocean'
+            : 'Theme: Classic'
     );
   });
 }

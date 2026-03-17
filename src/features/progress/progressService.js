@@ -48,12 +48,14 @@ export const loadProgress = ({ storage = localStorage, questKey }) => {
 };
 
 export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences' }) => {
+  const allowedThemes = new Set(['classic', 'classic-light', 'midnight', 'ocean']);
   const defaults = {
     showAllSteps: true,
     hideCompleted: false,
     sequentialStepChecking: true,
     autoTranslateSteps: false,
     selectedSeries: 'alphabetical',
+    theme: 'classic',
     stepFontSize: 'medium',
     confirmResetQuestProgress: true,
     sectionImagesInModal: true,
@@ -68,6 +70,9 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
       .trim()
       .toLowerCase();
     const parsedSelectedSeries = String(parsed?.selectedSeries || '')
+      .trim()
+      .toLowerCase();
+    const parsedTheme = String(parsed?.theme || '')
       .trim()
       .toLowerCase();
     const allowedSelectedSeries = new Set([
@@ -93,6 +98,7 @@ export const loadUiPreferences = ({ storage = localStorage, key = 'uiPreferences
       selectedSeries: allowedSelectedSeries.has(parsedSelectedSeries)
         ? parsedSelectedSeries
         : 'alphabetical',
+      theme: allowedThemes.has(parsedTheme) ? parsedTheme : 'classic',
       stepFontSize:
         parsedStepFontSize === 'small' || parsedStepFontSize === 'large'
           ? parsedStepFontSize
@@ -119,6 +125,7 @@ export const saveUiPreferences = ({
   sequentialStepChecking,
   autoTranslateSteps,
   selectedSeries,
+  theme,
   stepFontSize,
   confirmResetQuestProgress,
   sectionImagesInModal,
@@ -137,6 +144,10 @@ export const saveUiPreferences = ({
   const normalizedStepFontSize = String(stepFontSize || '')
     .trim()
     .toLowerCase();
+  const normalizedTheme = String(theme || '')
+    .trim()
+    .toLowerCase();
+  const allowedThemes = new Set(['classic', 'classic-light', 'midnight', 'ocean']);
   try {
     storage.setItem(
       key,
@@ -148,6 +159,7 @@ export const saveUiPreferences = ({
         selectedSeries: allowedSelectedSeries.has(normalizedSelectedSeries)
           ? normalizedSelectedSeries
           : 'alphabetical',
+        theme: allowedThemes.has(normalizedTheme) ? normalizedTheme : 'classic',
         stepFontSize:
           normalizedStepFontSize === 'small' || normalizedStepFontSize === 'large'
             ? normalizedStepFontSize
