@@ -349,8 +349,16 @@ test('renderSteps appends section map block at the end of section content', () =
     showSearchControls: () => {},
   });
 
+  const sectionBlock = stepsDiv.lastElementChild;
   assert.equal(
-    stepsDiv.lastElementChild?.className,
+    sectionBlock?.className,
+    'step-section-block',
+    'expected section wrapper as final root block'
+  );
+  const sectionContent =
+    sectionBlock?.querySelector('.section-media-collapse') || sectionBlock;
+  assert.equal(
+    sectionContent?.lastElementChild?.className,
     'section-advanced-maps',
     'expected map wrapper as final section block'
   );
