@@ -355,8 +355,7 @@ test('renderSteps appends section map block at the end of section content', () =
     'step-section-block',
     'expected section wrapper as final root block'
   );
-  const sectionContent =
-    sectionBlock?.querySelector('.section-media-collapse') || sectionBlock;
+  const sectionContent = sectionBlock?.querySelector('.section-media-collapse') || sectionBlock;
   assert.equal(
     sectionContent?.lastElementChild?.className,
     'section-advanced-maps',
