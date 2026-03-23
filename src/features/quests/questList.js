@@ -294,21 +294,60 @@ const buildFallbackQuestLikeList = (titles) =>
   }));
 
 const fetchCategoryTitles = async (categoryTitle) => {
-  const catUrl =
-    'https://runescape.wiki/api.php' +
-    '?action=query' +
-    '&format=json' +
-    '&origin=*' +
-    '&list=categorymembers' +
-    `&cmtitle=${encodeURIComponent(categoryTitle)}` +
-    '&cmlimit=500';
-  const data = await fetchJsonWithTimeoutRetry(catUrl, {
-    timeoutMs: 6000,
-    retries: 1,
-    retryDelayMs: 250,
+  const out = [];
+  let cmcontinue = '';
+  do {
+    const catUrl =
+      'https://runescape.wiki/api.php' +
+      '?action=query' +
+      '&format=json' +
+      '&origin=*' +
+      '&list=categorymembers' +
+      '&cmtype=page' +
+      `&cmtitle=${encodeURIComponent(categoryTitle)}` +
+      '&cmlimit=500' +
+      (cmcontinue ? `&cmcontinue=${encodeURIComponent(cmcontinue)}` : '');
+    const data = await fetchJsonWithTimeoutRetry(catUrl, {
+      timeoutMs: 6000,
+      retries: 1,
+      retryDelayMs: 250,
+    });
+    const members = data?.query?.categorymembers || [];
+    members.forEach((m) => {
+      if (m && m.title) out.push(String(m.title));
+    });
+    cmcontinue = data?.continue?.cmcontinue || '';
+  } while (cmcontinue);
+  return out.filter(Boolean);
+};
+
+const countUniqueNormalizedTitles = (titles) => {
+  const seen = new Set();
+  (titles || []).forEach((title) => {
+    const key = normalizeListTitleKey(title);
+    if (!key) return;
+    seen.add(key);
   });
-  const members = data?.query?.categorymembers || [];
-  return members.map((m) => (m && m.title ? String(m.title) : '')).filter(Boolean);
+  return seen.size;
+};
+
+const fetchQuestLikeCountQuick = async () => {
+  const [questTitles, miniquestTitles] = await Promise.all([
+    fetchCategoryTitles('Category:Quests'),
+    fetchCategoryTitles('Category:Miniquests'),
+  ]);
+  return countUniqueNormalizedTitles([...(questTitles || []), ...(miniquestTitles || [])]);
+};
+
+const fetchQuestLikeCategoryFallbackList = async () => {
+  const [questTitles, miniquestTitles] = await Promise.all([
+    fetchCategoryTitles('Category:Quests'),
+    fetchCategoryTitles('Category:Miniquests'),
+  ]);
+  return mergeQuestLikeLists(
+    buildFallbackQuestLikeList(questTitles),
+    buildFallbackQuestLikeList(miniquestTitles)
+  );
 };
 
 export const loadQuestList = async () => {
@@ -326,14 +365,23 @@ export const loadQuestList = async () => {
     if (cacheRaw) {
       const cached = JSON.parse(cacheRaw);
       if (cached && Array.isArray(cached.list) && cached.ts) {
-        const ageMs = Date.now() - cached.ts;
-        if (ageMs < 24 * 60 * 60 * 1000) {
-          const valid = cached.list.every(
-            (item) => item && typeof item.title === 'string' && item.title.trim()
-          );
-          if (valid) {
+        const valid = cached.list.every(
+          (item) => item && typeof item.title === 'string' && item.title.trim()
+        );
+        if (valid) {
+          const cachedCount = countUniqueNormalizedTitles(cached.list.map((item) => item.title));
+          const remoteCount = await fetchQuestLikeCountQuick().catch(() => null);
+          if (Number.isFinite(remoteCount) && remoteCount === cachedCount) {
             questList = cached.list;
             return;
+          }
+          // Fallback behavior when quick count check is unavailable.
+          if (!Number.isFinite(remoteCount)) {
+            const ageMs = Date.now() - cached.ts;
+            if (ageMs < 24 * 60 * 60 * 1000) {
+              questList = cached.list;
+              return;
+            }
           }
         }
       }
@@ -364,7 +412,12 @@ export const loadQuestList = async () => {
           const miniquestTableInfo = findMiniquestTableInDocument(miniquestDoc);
           miniquestEntries = parseQuestLikeRowsFromTable(miniquestTableInfo);
         }
-        const mergedList = mergeQuestLikeLists(combinedList, miniquestEntries);
+        const categoryFallbackList = await fetchQuestLikeCategoryFallbackList().catch(() => []);
+        const mergedList = mergeQuestLikeLists(
+          combinedList,
+          miniquestEntries,
+          categoryFallbackList
+        );
         questList = mergedList;
         localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), list: mergedList }));
         return;
@@ -398,7 +451,8 @@ export const loadQuestList = async () => {
       miniquestEntries = parseQuestLikeRowsFromTable(miniquestTableInfo);
     }
 
-    const list = mergeQuestLikeLists(questEntries, miniquestEntries);
+    const categoryFallbackList = await fetchQuestLikeCategoryFallbackList().catch(() => []);
+    const list = mergeQuestLikeLists(questEntries, miniquestEntries, categoryFallbackList);
     questList = list;
     localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), list }));
   })()
