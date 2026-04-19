@@ -239,7 +239,7 @@ const updateProgress = () => {
     progressIndicator.appendChild(labelEl);
   }
   labelEl.textContent = `${done} / ${total}`;
-  fillEl.style.width = `${percent}%`;
+  fillEl.style.transform = `scaleX(${percent / 100})`;
   const wasComplete = progressIndicator.classList.contains('complete');
   const isComplete = done === total;
   progressIndicator.classList.toggle('complete', isComplete);
@@ -317,7 +317,12 @@ const normalizeTheme = (value) => {
   const normalized = String(value || '')
     .trim()
     .toLowerCase();
-  if (normalized === 'classic-light' || normalized === 'midnight' || normalized === 'ocean') {
+  if (
+    normalized === 'classic-light' ||
+    normalized === 'classic-modern' ||
+    normalized === 'midnight' ||
+    normalized === 'ocean'
+  ) {
     return normalized;
   }
   return 'classic';
@@ -1452,11 +1457,13 @@ if (themeSelect) {
     showUiToast(
       state.theme === 'classic-light'
         ? 'Theme: Classic Light'
-        : state.theme === 'midnight'
-          ? 'Theme: Midnight'
-          : state.theme === 'ocean'
-            ? 'Theme: Ocean'
-            : 'Theme: Classic'
+        : state.theme === 'classic-modern'
+          ? 'Theme: Classic (modern)'
+          : state.theme === 'midnight'
+            ? 'Theme: Midnight'
+            : state.theme === 'ocean'
+              ? 'Theme: Ocean'
+              : 'Theme: Classic'
     );
   });
 }

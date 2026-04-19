@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(python3 \"C:/Users/Julio Pasinelli/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"fantasy RPG game tool quest tracker dark medieval\" --design-system -p \"RS3 Quest Helper\" -f markdown)",
+      "Bash(python3 \"C:/Users/Julio Pasinelli/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"fantasy medieval dark gold ornate\" --domain style -n 5)",
+      "Bash(python3 \"C:/Users/Julio Pasinelli/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"fantasy RPG parchment gold medieval serif\" --domain typography -n 4)",
+      "Bash(python3 \"C:/Users/Julio Pasinelli/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"RPG gaming dark gold medieval\" --domain color -n 4)",
+      "Bash(wait)"
+    ]
+  }
+}
