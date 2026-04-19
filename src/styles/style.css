@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Source+Sans+3:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,500;0,700;1,300;1,500&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
 
 @font-face {
   font-family: 'KingthingsPetrock';
@@ -128,6 +129,172 @@
   --skeleton-surface-bg: #2f281a;
   --skeleton-border: #5a4b27;
   --skeleton-shimmer: rgba(255, 255, 255, 0.16);
+  /* Confirm dialog — danger action (semantic red, same across all themes) */
+  --confirm-danger-border: #9b3737;
+  --confirm-danger-text: #ffdede;
+  --confirm-danger-bg-start: #5a2222;
+  --confirm-danger-bg-end: #451a1a;
+}
+
+body[data-theme='classic-modern'] {
+  --bg-page: #0f0c0a;
+  --bg-1: #141008;
+  --bg-2: #0a0806;
+  --panel: #1c1714;
+  --panel-strong: #251e19;
+  --accent: #c9a962;
+  --accent-2: #e0c87a;
+  --text: #e8dfd4;
+  --text-strong: #f2ead8;
+  --muted: #9c8b7a;
+  --border: #4a3f35;
+  --focus-ring: #c9a962;
+  --focus-ring-glow: rgba(201, 169, 98, 0.22);
+  --icon: #d4ba7e;
+  --overlay: rgba(8, 6, 4, 0.82);
+  --surface-top-start: #251e19;
+  --surface-top-end: #1c1714;
+  --surface-card-start: #1c1714;
+  --surface-card-end: #15100d;
+  --surface-button-start: #2a221c;
+  --surface-button-end: #1c1714;
+  --nav-surface-start: #1c1714;
+  --nav-surface-end: #15100d;
+  --select-bg: #0a0806;
+  --scrollbar-track: #0a0806;
+  --scrollbar-thumb: #6b4e28;
+  --scrollbar-corner: #070504;
+  --scroll-track-border: #2a221c;
+  --scroll-track-hover: #141008;
+  --scroll-thumb-start: #7d5c30;
+  --scroll-thumb-end: #4a3520;
+  --scroll-thumb-hover-start: #9a7240;
+  --scroll-thumb-hover-end: #5c4428;
+  --scroll-thumb-border: #3a2a18;
+  --progress-track: #0a0806;
+  --progress-fill: #c9a962;
+  --result-item-bg: #1c1714;
+  --result-item-complete-bg: #141f0e;
+  --result-item-complete-border: #2d5a20;
+  --result-item-pending-bg: #20100e;
+  --result-item-pending-border: #6b2828;
+  --result-item-started-bg: #1e1608;
+  --result-item-started-border: #7a5818;
+  --result-item-open-ring: rgba(201, 169, 98, 0.2);
+  --result-item-header-hover: rgba(232, 223, 212, 0.06);
+  --result-item-panel-bg: #15100d;
+  --result-item-panel-border: rgba(74, 63, 53, 0.65);
+  --result-item-status-complete: #62d476;
+  --result-item-status-incomplete: #f2746e;
+  --result-item-status-started: #e8b84d;
+  --result-item-complete-opacity: 0.88;
+  --overview-surface: rgba(201, 169, 98, 0.06);
+  --bar-surface-start: #1c1714;
+  --bar-surface-end: #15100d;
+  --sticky-surface-start: #15100d;
+  --sticky-surface-end: #100d0a;
+  --button-surface-muted-start: #1c1714;
+  --button-surface-muted-end: #15100d;
+  --button-text: #e8dfd4;
+  --button-muted-text: rgba(232, 223, 212, 0.72);
+  --button-muted-border: #3a2f28;
+  --button-loader-ring: rgba(232, 223, 212, 0.35);
+  --button-loader-ring-top: #e8dfd4;
+  --button-active-bg: #15803d;
+  --button-active-border: #22a854;
+  --button-active-text: #d9ffe2;
+  --button-active-glow: rgba(34, 168, 84, 0.35);
+  --button-danger: #f2b3b3;
+  --button-danger-hover: #ffd1d1;
+  --button-danger-glow: rgba(242, 179, 179, 0.4);
+  --input-inset-shadow: rgba(0, 0, 0, 0.3);
+  --link: #c9a962;
+  --link-hover: #e0c87a;
+  --substeps-color: #d4c4a8;
+  --substeps-done: rgba(212, 196, 168, 0.55);
+  --substeps-marker: #c9a962;
+  --substeps-border: rgba(201, 169, 98, 0.38);
+  --step-section-border: rgba(201, 169, 98, 0.38);
+  --steps-h4-color: #b8a880;
+  --step-start-bg: rgba(201, 169, 98, 0.06);
+  --step-start-label: #e8dfd4;
+  --step-start-border-left: #c9a962;
+  --section-image-bg-start: #1c1714;
+  --section-image-bg-end: #15100d;
+  --section-map-bg-start: #1c1714;
+  --section-map-bg-end: #15100d;
+  --section-map-canvas-bg: #0a0806;
+  --wiki-bg: rgba(201, 169, 98, 0.1);
+  --checkbox-border: #6b4e28;
+  --checkbox-bg-start: #1c1714;
+  --checkbox-bg-end: #15100d;
+  --checkbox-tick: #c9a962;
+  --checkbox-tick-glow: rgba(201, 169, 98, 0.55);
+  --pathmap-grid-bg: rgba(74, 63, 53, 0.6);
+  --pathmap-grid-border: rgba(106, 90, 60, 0.8);
+  --pathmap-cell-bg: rgba(21, 16, 13, 0.92);
+  --pathmap-cell-hover-bg: rgba(37, 30, 25, 0.95);
+  --pathmap-cell-selected-bg: rgba(201, 169, 98, 0.35);
+  --pathmap-cell-selected-ring: rgba(224, 200, 122, 0.5);
+  --table-bg: rgba(28, 23, 20, 0.9);
+  --table-cell-border: rgba(74, 63, 53, 0.65);
+  --messagebox-warn-border: #8b3a30;
+  --messagebox-warn-bg: rgba(60, 24, 20, 0.92);
+  --messagebox-warn-cell-border: rgba(139, 58, 48, 0.72);
+  --messagebox-safe-border: #3a6a30;
+  --messagebox-safe-bg: rgba(20, 48, 20, 0.92);
+  --messagebox-safe-cell-border: rgba(58, 106, 48, 0.72);
+  --toast-bg: rgba(12, 9, 7, 0.96);
+  --toast-text: #e8dfd4;
+  --toast-success-border: #2a6030;
+  --toast-success-bg: rgba(16, 40, 20, 0.96);
+  --toast-success-text: #d9ffe2;
+  --toast-error-border: #8b3a3a;
+  --toast-error-bg: rgba(55, 20, 20, 0.96);
+  --toast-error-text: #ffdede;
+  --skeleton-bg: #251e19;
+  --skeleton-surface-bg: #1c1714;
+  --skeleton-border: #3a2f28;
+  --skeleton-shimmer: rgba(255, 255, 255, 0.1);
+  --confirm-danger-border: #9b3737;
+  --confirm-danger-text: #ffdede;
+  --confirm-danger-bg-start: #5a2222;
+  --confirm-danger-bg-end: #451a1a;
+}
+
+body[data-theme='classic-modern'] {
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 17px;
+}
+
+body[data-theme='classic-modern'] h1,
+body[data-theme='classic-modern'] h2,
+body[data-theme='classic-modern'] h3 {
+  font-family: 'Cormorant Garamond', 'IM Fell English SC', serif;
+  font-weight: 500;
+}
+
+body[data-theme='classic-modern'] h4,
+body[data-theme='classic-modern'] h5,
+body[data-theme='classic-modern'] h6 {
+  font-family: 'Cinzel', 'IM Fell English SC', serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+body[data-theme='classic-modern'] .result-item-title,
+body[data-theme='classic-modern'] .quest-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 500;
+  font-size: 1.15em;
+}
+
+body[data-theme='classic-modern'] .settings-select,
+body[data-theme='classic-modern'] .filter-btn,
+body[data-theme='classic-modern'] .group-btn,
+body[data-theme='classic-modern'] button {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.03em;
 }
 
 body[data-theme='midnight'] {
@@ -558,7 +725,7 @@ a:focus-visible {
   padding: 12px;
   border: 2px solid var(--border);
   border-radius: 10px;
-  background: linear-gradient(180deg, #3a311b, #2b2415);
+  background: linear-gradient(180deg, var(--surface-card-start), var(--surface-card-end));
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.45);
 }
 
@@ -567,7 +734,7 @@ a:focus-visible {
   font-family: 'IM Fell English SC', 'Source Sans 3', serif;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: #f3ddb1;
+  color: var(--text-strong);
 }
 
 .app-confirm-card p {
@@ -585,8 +752,8 @@ a:focus-visible {
 .app-confirm-btn {
   border: 1px solid var(--border);
   border-radius: 6px;
-  background: linear-gradient(180deg, #4b3d1f, #3a311b);
-  color: #e7d08a;
+  background: linear-gradient(180deg, var(--surface-button-start), var(--surface-button-end));
+  color: var(--button-text);
   font-size: 12px;
   padding: 5px 10px;
   cursor: pointer;
@@ -597,9 +764,9 @@ a:focus-visible {
 }
 
 .app-confirm-btn-danger {
-  border-color: #9b3737;
-  color: #ffdede;
-  background: linear-gradient(180deg, #5a2222, #451a1a);
+  border-color: var(--confirm-danger-border);
+  color: var(--confirm-danger-text);
+  background: linear-gradient(180deg, var(--confirm-danger-bg-start), var(--confirm-danger-bg-end));
 }
 
 .loading-skeleton {
@@ -1148,15 +1315,15 @@ header.hidden {
 }
 
 .quest-status-marker.complete {
-  color: #63d07a;
+  color: var(--result-item-status-complete);
 }
 
 .quest-status-marker.incomplete {
-  color: #e26c6c;
+  color: var(--result-item-status-incomplete);
 }
 
 .quest-status-marker.started {
-  color: #f0c34d;
+  color: var(--result-item-status-started);
 }
 
 #questTitle .title-text {
@@ -1756,7 +1923,7 @@ header.hidden {
 
 .progress-fill {
   display: block;
-  width: 0;
+  width: 100%;
   height: 100%;
   background-color: var(--progress-fill);
   background-image: linear-gradient(
@@ -1770,7 +1937,9 @@ header.hidden {
     transparent
   );
   background-size: 14px 14px;
-  transition: width 140ms ease;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 140ms ease;
 }
 
 .progress-label {
@@ -2698,7 +2867,7 @@ header.hidden {
   font-size: 11px;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  color: #d9c88f;
+  color: var(--text-strong);
 }
 
 .pathmap-grid-counter {
@@ -3046,4 +3215,363 @@ header.hidden {
 .substeps > li,
 .substeps-nested > li {
   margin: 2px 0;
+}
+
+/* ============================================================
+   FRONTEND DESIGN IMPROVEMENTS
+   ============================================================ */
+
+/* 1. Noise texture overlay for background depth */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* 2. Backdrop blur on modal overlays */
+.settings-modal,
+.app-confirm,
+.section-images-modal,
+.section-maps-modal {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* 3. Staggered entrance animation for search results */
+@keyframes search-item-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.results-list .search-item {
+  animation: search-item-reveal 180ms ease both;
+}
+
+.results-list .search-item:nth-child(1) {
+  animation-delay: 0ms;
+}
+.results-list .search-item:nth-child(2) {
+  animation-delay: 30ms;
+}
+.results-list .search-item:nth-child(3) {
+  animation-delay: 60ms;
+}
+.results-list .search-item:nth-child(4) {
+  animation-delay: 90ms;
+}
+.results-list .search-item:nth-child(5) {
+  animation-delay: 120ms;
+}
+.results-list .search-item:nth-child(n + 6) {
+  animation-delay: 150ms;
+}
+
+/* 4. Button press micro-interactions */
+.sticky-bar .sticky-action-btn:active,
+.filter-toggle:active,
+.nav-settings-button:active,
+.settings-close-button:active,
+.section-images-button:active,
+.section-maps-button:active,
+.search-item-action:active,
+.app-confirm-btn:active {
+  transform: scale(0.93);
+  transition: transform 70ms ease;
+}
+
+/* 5. Step completion pulse glow */
+@keyframes step-complete-pulse {
+  0% {
+    box-shadow: 2px 2px 0 0 rgba(74, 222, 128, 0.5);
+  }
+  60% {
+    box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+.step-item.completed {
+  animation: step-complete-pulse 500ms ease forwards;
+}
+
+/* ============================================================
+   Global component enhancements — all themes
+   Uses CSS variables so each theme adapts automatically
+   ============================================================ */
+
+/* 1. Header — ornamental accent divider */
+header::after {
+  content: '';
+  display: block;
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent) 30%,
+    var(--accent-2) 50%,
+    var(--accent) 70%,
+    transparent
+  );
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 2. Quest cards — status left-border stripe */
+.results-list .search-item {
+  border-left: 4px solid var(--border);
+}
+
+.results-list .search-item.search-item-completed {
+  border-left-color: var(--result-item-status-complete);
+}
+
+.results-list .search-item.search-item-started {
+  border-left-color: var(--result-item-status-started);
+}
+
+.results-list .search-item.search-item-pending {
+  border-left-color: var(--result-item-status-incomplete);
+}
+
+.results-list .search-item.open {
+  box-shadow:
+    0 0 0 2px var(--result-item-open-ring),
+    2px 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* 3. Group headers — ornamental separator lines */
+.results-list .results-group-title {
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 8px 0;
+}
+
+.results-list .results-group-title::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border));
+}
+
+.results-list .results-group-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent);
+}
+
+/* 4. Expanded card — meta info refinement */
+.results-list .search-item-meta {
+  gap: 4px 12px;
+  margin-bottom: 12px;
+}
+
+.results-list .search-item-meta-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.results-list .search-item-meta-row strong {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 1px;
+}
+
+/* 5. "VIEW QUEST PAGE" button */
+.results-list .search-item-action {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: transparent;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.results-list .search-item-action:hover {
+  background: var(--focus-ring-glow);
+  color: var(--accent-2);
+  box-shadow: 0 0 8px var(--focus-ring-glow);
+  filter: none;
+}
+
+/* 6. Search & player inputs — accent focus glow */
+.quest-search-field:focus-within,
+.player-lookup-field:focus-within {
+  border-color: var(--focus-ring);
+  box-shadow:
+    0 0 0 2px var(--focus-ring-glow),
+    inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.quest-Filter:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring-glow);
+  border-color: var(--focus-ring);
+}
+
+/* 7. Toasts — left accent border */
+.ui-toast {
+  border-left: 4px solid var(--accent);
+  border-radius: 4px;
+}
+
+.ui-toast.success {
+  border-left-color: var(--result-item-status-complete);
+}
+
+.ui-toast.error {
+  border-left-color: var(--result-item-status-incomplete);
+}
+
+/* 8. Settings modal — accent border & hover polish */
+.settings-modal-card {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--focus-ring-glow),
+    0 20px 40px rgba(0, 0, 0, 0.7);
+}
+
+.settings-modal-header h3 {
+  color: var(--accent);
+}
+
+.settings-modal-card .settings-toggle,
+.settings-modal-card .settings-select-row {
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.settings-modal-card .settings-toggle:hover,
+.settings-modal-card .settings-select-row:hover {
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+/* Divider before select group */
+.settings-modal-card .settings-select-row:first-of-type {
+  margin-top: 14px;
+  border-top-color: var(--border);
+}
+
+/* 9. Progress bar — shimmer animation */
+.progress-fill {
+  background-color: var(--progress-fill);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: progress-shimmer 2s ease infinite;
+}
+
+@keyframes progress-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.progress-indicator {
+  border-radius: 0 0 2px 2px;
+}
+
+/* 10. Disabled buttons */
+button:disabled,
+button[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+/* 11. Scrollbar refinement */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-2);
+}
+
+/* ============================================================
+   Classic (modern) — font overrides only
+   ============================================================ */
+
+body[data-theme='classic-modern'] .results-list .results-group-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+body[data-theme='classic-modern'] .results-list .search-item-meta-row strong {
+  font-family: 'Cinzel', serif;
+}
+
+body[data-theme='classic-modern'] .results-list .search-item-action {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+body[data-theme='classic-modern'] .settings-modal-header h3 {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.1em;
+}
+
+body[data-theme='classic-modern'] .settings-modal-card .settings-toggle,
+body[data-theme='classic-modern'] .settings-modal-card .settings-select-row {
+  font-family: 'Crimson Pro', serif;
+  font-size: 15px;
+}
+
+body[data-theme='classic-modern'] .ui-toast {
+  font-family: 'Crimson Pro', serif;
+  font-size: 14px;
+}
+
+/* ============================================================ */
+
+/* 6. prefers-reduced-motion — always last, overrides everything */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
