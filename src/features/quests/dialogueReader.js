@@ -2,10 +2,12 @@
  * dialogueReader.js
  *
  * Alt1 Toolkit service that polls the RS3 screen while a step with NPC dialogue
- * is active, detects when the "SELECT AN OPTION" box is open, and draws a gold
- * outline overlay on the correct option row.
+ * is active, detects when the "SELECT AN OPTION" / "CHOOSE AN OPTION" box is
+ * open, and draws a gold outline overlay on the correct option row.
  *
- * Calibrated for: Resizable client, Interface Scaling 100%.
+ * Detection strategy: luminance-based (dark header strip → bright parchment body).
+ * This avoids hard-coding exact RGB values that vary by monitor/GPU/settings.
+ *
  * The entire module is a no-op when running outside Alt1.
  */
 
@@ -13,27 +15,24 @@ console.log('[dialogueReader] module loaded ✓');
 
 const OVERLAY_GROUP = 'dialogue-helper';
 
-// ─── RS3 dialogue box pixel constants ────────────────────────────────────────
+// ─── Layout constants ─────────────────────────────────────────────────────────
 //
-// Covers both "SELECT AN OPTION" and "CHOOSE AN OPTION" box types.
-// Measurements: Resizable client, Interface Scaling 100%.
-//   Header ≈ 22px — very dark brown RGB(48, 34, 17) ± 40
-//   Body   ≈ parchment  RGB(200, 178, 138) ± 40
-//   Min width: 150px (boxes range from ~230px to ~310px)
-//   Option 1 top edge: 32px below box top
-//   Option line height: 16px
+// Resizable client, Interface Scaling 100%.
+//   Header   ≈ 22 px dark strip
+//   Body     ≈ bright parchment below header
+//   Options start 32 px below box top, each row 16 px tall
 
-const HEADER_BG = { r: 48, g: 34, b: 17 };
-const HEADER_TOLERANCE = 40; // wider tolerance to handle both box types
-
-const BODY_BG = { r: 200, g: 178, b: 138 };
-const BODY_TOLERANCE = 40;
-
-const MIN_DIALOGUE_WIDTH = 150; // minimum run to avoid false positives
+const MIN_DIALOGUE_WIDTH = 100; // minimum header run length (px)
+const MAX_DIALOGUE_WIDTH = 600; // cap — wider runs are not dialogue boxes
 const HEADER_HEIGHT = 22; // px — dark header strip height
 const OPTION_OFFSET_TOP = 32; // px — from box top to first option's TOP edge
 const OPTION_LINE_HEIGHT = 16; // px — height of each option row
 const OPTION_X_OFFSET = 25; // px — from box left to option text start
+
+// Luminance thresholds (0-255).
+// Header must be dark; body must be notably brighter.
+const HEADER_MAX_LUM = 80; // pixels darker than this qualify as "header"
+const BODY_MIN_LUM = 120; // pixels brighter than this qualify as "body"
 
 // Overlay colours (ARGB)
 const COLOR_HIGHLIGHT = 0xffe8a020; // orange-gold outline — visible on parchment
@@ -47,6 +46,7 @@ const OVERLAY_DURATION_MS = 900;
 let _intervalId = null;
 let _dialogueOptions = null; // [{option, text}]
 let _requiredOptions = []; // ['1', '✓', '~', '2', ...]
+let _debugLogged = false; // one-shot pixel dump flag
 
 // ─── Alt1 guard ──────────────────────────────────────────────────────────────
 
@@ -59,35 +59,37 @@ export function isAlt1Available() {
 
 /**
  * Read a pixel from a raw BGRA ArrayBuffer.
- * alt1.getRegion() returns pixels in BGRA order.
+ * alt1.getRegion() returns pixels in BGRA order on Windows.
  */
-function readBGRA(buf, width, x, y) {
+function readPixel(buf, width, x, y) {
   const i = (y * width + x) * 4;
   return { b: buf[i], g: buf[i + 1], r: buf[i + 2], a: buf[i + 3] };
 }
 
-function colorMatch(px, target, tol) {
-  return (
-    Math.abs(px.r - target.r) <= tol &&
-    Math.abs(px.g - target.g) <= tol &&
-    Math.abs(px.b - target.b) <= tol
-  );
+/**
+ * Perceptual luminance (0-255). Works correctly even if BGRA/RGBA byte order
+ * is ambiguous for near-neutral colours (header is very dark, body is warm
+ * but not saturated, so luminance is reliable either way).
+ */
+function lum(px) {
+  return 0.299 * px.r + 0.587 * px.g + 0.114 * px.b;
 }
 
 // ─── Dialogue box detection ──────────────────────────────────────────────────
 
 /**
- * Scan the pixel buffer for the RS3 "SELECT AN OPTION" dialogue box.
+ * Scan the pixel buffer for the RS3 "SELECT / CHOOSE AN OPTION" dialogue box.
  *
  * Strategy:
- *   1. Walk the buffer in 3-pixel steps looking for the dark header colour.
- *   2. When a sufficiently long horizontal run is found, verify that ~22px
- *      below it there is the warm parchment body colour.
- *   3. Return the box bounding box in game-window coordinates.
+ *   1. Walk the buffer in 3-pixel steps looking for a dark-luminance pixel.
+ *   2. When found, measure the horizontal run of dark pixels.
+ *   3. If the run is [MIN_DIALOGUE_WIDTH, MAX_DIALOGUE_WIDTH] pixels wide,
+ *      sample 3 points below the header to verify bright parchment body.
+ *   4. Return the box bounding box in buffer-local coordinates.
  *
- * @param {Uint8ClampedArray} buf    BGRA pixel buffer from alt1.getRegion()
- * @param {number} width             Buffer width in pixels
- * @param {number} height            Buffer height in pixels
+ * @param {Uint8ClampedArray} buf
+ * @param {number} width
+ * @param {number} height
  * @returns {{ x:number, y:number, w:number, h:number } | null}
  */
 function findDialogueBox(buf, width, height) {
@@ -95,27 +97,27 @@ function findDialogueBox(buf, width, height) {
 
   for (let y = 10; y < height - HEADER_HEIGHT - 30; y += STEP) {
     for (let x = 10; x < width - MIN_DIALOGUE_WIDTH; x += STEP) {
-      const px = readBGRA(buf, width, x, y);
-      if (!colorMatch(px, HEADER_BG, HEADER_TOLERANCE)) continue;
+      if (lum(readPixel(buf, width, x, y)) > HEADER_MAX_LUM) continue;
 
-      // Measure the run length of the dark header colour
+      // Measure horizontal run of dark pixels
       let runLen = 0;
       for (let dx = 1; x + dx < width; dx++) {
-        if (colorMatch(readBGRA(buf, width, x + dx, y), HEADER_BG, HEADER_TOLERANCE)) {
+        if (lum(readPixel(buf, width, x + dx, y)) <= HEADER_MAX_LUM) {
           runLen++;
         } else {
           break;
         }
       }
-      if (runLen < MIN_DIALOGUE_WIDTH) continue;
+      if (runLen < MIN_DIALOGUE_WIDTH || runLen > MAX_DIALOGUE_WIDTH) continue;
 
-      // Verify parchment body exists below the header strip
-      const midX = x + Math.floor(runLen / 2);
+      // Verify bright parchment body at 3 points below the header strip
       const bodyCheckY = y + HEADER_HEIGHT + 4;
       if (bodyCheckY >= height) continue;
 
-      const bodyPx = readBGRA(buf, width, midX, bodyCheckY);
-      if (!colorMatch(bodyPx, BODY_BG, BODY_TOLERANCE)) continue;
+      const q1 = lum(readPixel(buf, width, x + Math.floor(runLen * 0.25), bodyCheckY));
+      const q2 = lum(readPixel(buf, width, x + Math.floor(runLen * 0.5), bodyCheckY));
+      const q3 = lum(readPixel(buf, width, x + Math.floor(runLen * 0.75), bodyCheckY));
+      if (q1 < BODY_MIN_LUM || q2 < BODY_MIN_LUM || q3 < BODY_MIN_LUM) continue;
 
       // Estimate box height based on number of options
       const optionCount = _dialogueOptions ? _dialogueOptions.length : 3;
@@ -147,7 +149,7 @@ function clearOverlay() {
 
 /**
  * Draw the highlight around `optionNumber` (1-based) in the detected box.
- * @param {{ x:number, y:number, w:number, h:number }} box
+ * @param {{ x:number, y:number, w:number, h:number }} box   absolute screen coords
  * @param {number} optionNumber
  */
 function drawHighlight(box, optionNumber) {
@@ -213,8 +215,7 @@ function poll() {
   try {
     rawBuf = alt1.getRegion(0, scanY, scanW, scanH);
   } catch (e) {
-    console.warn('[dialogueReader] getRegion failed (no pixel permission?):', e);
-    stopDialoguePolling();
+    console.warn('[dialogueReader] getRegion failed:', e);
     return;
   }
 
@@ -225,6 +226,33 @@ function poll() {
   }
 
   const buf = new Uint8ClampedArray(rawBuf);
+
+  // One-time diagnostic: log pixel samples from the top, middle, and bottom
+  // of the scanned area to confirm the buffer is capturing the right region.
+  if (!_debugLogged) {
+    _debugLogged = true;
+    const rows = [
+      Math.floor(scanH * 0.1),
+      Math.floor(scanH * 0.3),
+      Math.floor(scanH * 0.5),
+      Math.floor(scanH * 0.7),
+    ];
+    const xMid = Math.floor(scanW / 2);
+    const samples = rows.map((ry) => {
+      const px = readPixel(buf, scanW, xMid, ry);
+      return {
+        screenY: ry + scanY,
+        localY: ry,
+        r: px.r,
+        g: px.g,
+        b: px.b,
+        lum: Math.round(lum(px)),
+      };
+    });
+    console.log('[dialogueReader] pixel samples (x=mid, screen coords):', samples);
+    console.log('[dialogueReader] scan region: y=', scanY, '..', scanY + scanH, 'w=', scanW);
+  }
+
   const localBox = findDialogueBox(buf, scanW, scanH);
 
   if (!localBox) {
@@ -232,10 +260,10 @@ function poll() {
     return;
   }
 
-  // Translate local box coordinates back to absolute screen coordinates
+  // Translate local box coordinates back to absolute RS3 window coordinates
   const box = { ...localBox, y: localBox.y + scanY };
 
-  console.log('[dialogueReader] box found:', box, 'highlighting option', optionNumber);
+  console.log('[dialogueReader] box found:', box, '— highlighting option', optionNumber);
   drawHighlight(box, optionNumber);
 }
 
@@ -255,13 +283,9 @@ export function startDialoguePolling(dialogueOptions, requiredOptions) {
 
   _dialogueOptions = dialogueOptions;
   _requiredOptions = requiredOptions;
+  _debugLogged = false; // reset so next polling session logs one sample
 
-  console.log(
-    '[dialogueReader] polling started — options:',
-    dialogueOptions,
-    'required:',
-    requiredOptions
-  );
+  console.log('[dialogueReader] polling started — required:', requiredOptions);
   poll(); // immediate first check
   _intervalId = setInterval(poll, 600);
 }
