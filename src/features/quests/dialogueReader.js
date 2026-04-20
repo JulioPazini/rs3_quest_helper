@@ -11,22 +11,23 @@
 
 const OVERLAY_GROUP = 'dialogue-helper';
 
-// ─── RS3 "SELECT AN OPTION" dialogue box pixel constants ────────────────────
+// ─── RS3 dialogue box pixel constants ────────────────────────────────────────
 //
-// Measurements taken from screenshot (Resizable, 100% scaling):
-//   Box width  ≈ 300px
-//   Header     ≈ 22px tall  — very dark brown  RGB(48, 34, 17)
-//   Body       ≈ 58px       — warm parchment   RGB(200, 178, 138)
+// Covers both "SELECT AN OPTION" and "CHOOSE AN OPTION" box types.
+// Measurements: Resizable client, Interface Scaling 100%.
+//   Header ≈ 22px — very dark brown RGB(48, 34, 17) ± 40
+//   Body   ≈ parchment  RGB(200, 178, 138) ± 40
+//   Min width: 150px (boxes range from ~230px to ~310px)
 //   Option 1 top edge: 32px below box top
 //   Option line height: 16px
 
 const HEADER_BG = { r: 48, g: 34, b: 17 };
-const HEADER_TOLERANCE = 30;
+const HEADER_TOLERANCE = 40; // wider tolerance to handle both box types
 
 const BODY_BG = { r: 200, g: 178, b: 138 };
-const BODY_TOLERANCE = 35;
+const BODY_TOLERANCE = 40;
 
-const MIN_DIALOGUE_WIDTH = 180; // minimum run length to accept as a dialogue header
+const MIN_DIALOGUE_WIDTH = 150; // minimum run to avoid false positives
 const HEADER_HEIGHT = 22; // px — dark header strip height
 const OPTION_OFFSET_TOP = 32; // px — from box top to first option's TOP edge
 const OPTION_LINE_HEIGHT = 16; // px — height of each option row
@@ -195,17 +196,18 @@ function poll() {
   try {
     rawBuf = alt1.getRegion(0, 0, scanW, scanH);
   } catch (e) {
-    // Pixel permission not granted — stop polling
-    console.warn('[dialogueReader] getRegion failed:', e);
+    console.warn('[dialogueReader] getRegion failed (no pixel permission?):', e);
     stopDialoguePolling();
     return;
   }
 
   if (!rawBuf) {
-    console.warn('[dialogueReader] getRegion returned null');
+    console.warn('[dialogueReader] getRegion returned null — pixel permission may be off');
     clearOverlay();
     return;
   }
+
+  console.log('[dialogueReader] scan ok, size:', scanW, 'x', scanH, 'buf bytes:', rawBuf.byteLength);
 
   const buf = new Uint8ClampedArray(rawBuf);
   const box = findDialogueBox(buf, scanW, scanH);
