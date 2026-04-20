@@ -189,14 +189,6 @@ function poll() {
   if (!isAlt1Available()) return;
   if (!_dialogueOptions?.length || !_requiredOptions?.length) return;
 
-  // Guard: confirm pixel permission is actually granted
-  if (!alt1.permissionPixel) {
-    console.warn(
-      '[dialogueReader] permissionPixel=false — reinstall the app so Alt1 can grant Pixel access'
-    );
-    return;
-  }
-
   const target = _requiredOptions.find((r) => /^\d+$/.test(r));
   if (!target) {
     clearOverlay();
@@ -208,13 +200,20 @@ function poll() {
     return;
   }
 
-  // Scan from y=0 (top of RS3 window).
-  // Alt1 limits getRegion to 2 500 000 pixels; at 2560 wide that is 937 rows —
-  // enough to cover y=0-936 which includes any dialogue box.
+  // Alt1 requires captureHoldFullRs() BEFORE getRegion() — the latter reads
+  // from an internal hold buffer that must be populated each frame.
+  // getRegion is then capped at 2 500 000 pixels per call, so we limit scanH.
   const MAX_PIXELS = 2_400_000;
   const scanW = alt1.rsWidth || 1920;
   const rsH = alt1.rsHeight || 1080;
   const scanH = Math.min(rsH, Math.floor(MAX_PIXELS / scanW));
+
+  try {
+    alt1.captureHoldFullRs();
+  } catch (e) {
+    console.warn('[dialogueReader] captureHoldFullRs failed:', e);
+    return;
+  }
 
   let rawBuf;
   try {
@@ -224,7 +223,7 @@ function poll() {
     return;
   }
   if (!rawBuf) {
-    console.warn('[dialogueReader] getRegion returned null');
+    console.warn('[dialogueReader] getRegion returned null — check Alt1 screen permission');
     clearOverlay();
     return;
   }
