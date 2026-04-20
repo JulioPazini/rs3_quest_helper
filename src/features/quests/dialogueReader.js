@@ -189,6 +189,14 @@ function poll() {
   if (!isAlt1Available()) return;
   if (!_dialogueOptions?.length || !_requiredOptions?.length) return;
 
+  // Guard: confirm pixel permission is actually granted
+  if (!alt1.permissionPixel) {
+    console.warn(
+      '[dialogueReader] permissionPixel=false — reinstall the app so Alt1 can grant Pixel access'
+    );
+    return;
+  }
+
   const target = _requiredOptions.find((r) => /^\d+$/.test(r));
   if (!target) {
     clearOverlay();
