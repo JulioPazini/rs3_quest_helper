@@ -1,4 +1,6 @@
-﻿let searchItemCounter = 0;
+﻿import { startDialoguePolling, stopDialoguePolling, isAlt1Available } from './dialogueReader.js';
+
+let searchItemCounter = 0;
 
 let sectionImagesModalEl = null;
 let sectionImagesModalCloseButton = null;
@@ -559,6 +561,7 @@ export const renderSteps = (params) => {
   } = params;
 
   stepsDiv.innerHTML = '';
+  stopDialoguePolling();
 
   if (!items || items.length === 0) {
     stepsDiv.textContent = 'No steps found.';
@@ -1750,6 +1753,10 @@ export const renderSteps = (params) => {
         const displayHtml = formatStepHtml(sectionItem.html || sectionItem.text, sectionItem.text);
         stepEl.innerHTML = buildStepContentHtml(Boolean(sectionItem.checked), displayHtml);
         enhancePathMapTables(stepEl);
+
+        if (isCurrent && sectionItem.dialogueOptions?.length && isAlt1Available()) {
+          startDialoguePolling(sectionItem.dialogueOptions, sectionItem.requiredOptions ?? []);
+        }
 
         stepEl.onclick = (event) => {
           if (event && event.target && event.target.closest && event.target.closest('a')) {
