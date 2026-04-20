@@ -200,20 +200,63 @@ function poll() {
     return;
   }
 
-  // Alt1 requires captureHoldFullRs() BEFORE getRegion() — the latter reads
-  // from an internal hold buffer that must be populated each frame.
-  // getRegion is then capped at 2 500 000 pixels per call, so we limit scanH.
   const MAX_PIXELS = 2_400_000;
   const scanW = alt1.rsWidth || 1920;
   const rsH = alt1.rsHeight || 1080;
   const scanH = Math.min(rsH, Math.floor(MAX_PIXELS / scanW));
 
-  try {
-    alt1.captureHoldFullRs();
-  } catch (e) {
-    console.warn('[dialogueReader] captureHoldFullRs failed:', e);
-    return;
+  // ── One-shot permission + API diagnostics ──────────────────────────────────
+  if (!_debugLogged) {
+    _debugLogged = true;
+    console.log(
+      '[dialogueReader] permissionPixel:',
+      alt1.permissionPixel,
+      '| permissionOverlay:',
+      alt1.permissionOverlay,
+      '| rsW:',
+      scanW,
+      'rsH:',
+      rsH,
+      'scanH:',
+      scanH
+    );
+
+    // Try captureHold (region-specific), then log exactly what getRegion returns
+    try {
+      alt1.captureHold(0, 0, scanW, scanH);
+      console.log('[dialogueReader] captureHold OK');
+    } catch (e) {
+      console.warn('[dialogueReader] captureHold threw:', e?.message ?? e);
+    }
+
+    try {
+      alt1.captureHoldFullRs();
+      console.log('[dialogueReader] captureHoldFullRs OK');
+    } catch (e) {
+      console.warn('[dialogueReader] captureHoldFullRs threw:', e?.message ?? e);
+    }
+
+    let probe;
+    try {
+      probe = alt1.getRegion(0, 0, scanW, scanH);
+    } catch (e) {
+      probe = e;
+    }
+    console.log(
+      '[dialogueReader] getRegion probe:',
+      'typeof=' + typeof probe,
+      'constructor=' + (probe?.constructor?.name ?? 'n/a'),
+      'byteLen=' + (probe?.byteLength ?? 'n/a'),
+      'isArrayBuffer=' + (probe instanceof ArrayBuffer),
+      'isPromise=' + (typeof probe?.then === 'function')
+    );
   }
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // Attempt capture
+  try {
+    alt1.captureHold(0, 0, scanW, scanH);
+  } catch (_) {}
 
   let rawBuf;
   try {
@@ -222,8 +265,7 @@ function poll() {
     console.warn('[dialogueReader] getRegion failed:', e);
     return;
   }
-  if (!rawBuf) {
-    console.warn('[dialogueReader] getRegion returned null — check Alt1 screen permission');
+  if (!rawBuf || !(rawBuf instanceof ArrayBuffer) || rawBuf.byteLength === 0) {
     clearOverlay();
     return;
   }
