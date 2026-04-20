@@ -356,30 +356,6 @@ export function extractQuickGuide(html) {
 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, null);
 
-  const extractDialogueOptions = (chatSpan) => {
-    const rows = chatSpan.querySelectorAll('table tr');
-    if (!rows.length) return null;
-    const options = Array.from(rows)
-      .map((row) => {
-        const cells = row.querySelectorAll('td');
-        return {
-          option: cells[0]?.textContent.trim() ?? '',
-          text: cells[1]?.textContent.trim() ?? '',
-        };
-      })
-      .filter((o) => o.option);
-    return options.length ? options : null;
-  };
-
-  const parseRequiredOptions = (text) => {
-    const match = /\(\s*\u{1F5E8}\uFE0F\s*([^)]*)\)/u.exec(text);
-    if (!match) return [];
-    return match[1]
-      .split(/[\u2022\u00B7\u2219]/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  };
-
   const stripTooltipContent = (rootEl, options = {}) => {
     const { preserveAdvancedMaps = false } = options;
     const tooltipSelectors = [
@@ -396,16 +372,6 @@ export function extractQuickGuide(html) {
       "img[alt='Chat'], img[alt='Quick chat'], img[alt='Quick Chat'], .chat-options img"
     );
     chatIcons.forEach((el) => el.remove());
-
-    // Save dialogue options to dataset before removing the tables
-    const chatOptionSpans = rootEl.querySelectorAll('.chat-options, .chat-options-dialogue');
-    chatOptionSpans.forEach((span) => {
-      const parsed = extractDialogueOptions(span);
-      if (parsed) {
-        span.dataset.dialogueParsed = JSON.stringify(parsed);
-      }
-    });
-
     const chatTables = rootEl.querySelectorAll(
       '.chat-options table, .chat-options-dialogue table, .js-tooltip-click table, [data-tooltip-name] table'
     );
@@ -722,20 +688,6 @@ export function extractQuickGuide(html) {
     });
     const textOut = clone.textContent.replace(/\s+/g, ' ').trim();
     return formatStepHtml(clone.innerHTML.replace(/\s+/g, ' ').trim(), textOut);
-  };
-
-  const getListItemDialogueData = (li) => {
-    const clone = li.cloneNode(true);
-    stripTooltipContent(clone);
-    const span = clone.querySelector(
-      '.chat-options[data-dialogue-parsed], .chat-options-dialogue[data-dialogue-parsed]'
-    );
-    if (!span) return null;
-    try {
-      return JSON.parse(span.dataset.dialogueParsed);
-    } catch {
-      return null;
-    }
   };
 
   const getSectionAdvancedMapData = (el) => {
@@ -1084,7 +1036,6 @@ export function extractQuickGuide(html) {
         if (!text) continue;
 
         const substeps = getNestedSubsteps(li);
-        const dialogueOptions = getListItemDialogueData(li);
 
         result.push({
           type: 'step',
@@ -1092,8 +1043,6 @@ export function extractQuickGuide(html) {
           html: htmlOut,
           checked: false,
           substeps,
-          dialogueOptions: dialogueOptions ?? null,
-          requiredOptions: dialogueOptions ? parseRequiredOptions(text) : [],
         });
 
         if (isQuestCompleteTerminalStep(text)) {
