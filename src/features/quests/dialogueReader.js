@@ -27,14 +27,14 @@ const BODY_BG = { r: 200, g: 178, b: 138 };
 const BODY_TOLERANCE = 35;
 
 const MIN_DIALOGUE_WIDTH = 180; // minimum run length to accept as a dialogue header
-const HEADER_HEIGHT = 22;       // px — dark header strip height
-const OPTION_OFFSET_TOP = 32;   // px — from box top to first option's TOP edge
-const OPTION_LINE_HEIGHT = 16;  // px — height of each option row
-const OPTION_X_OFFSET = 25;     // px — from box left to option text start
+const HEADER_HEIGHT = 22; // px — dark header strip height
+const OPTION_OFFSET_TOP = 32; // px — from box top to first option's TOP edge
+const OPTION_LINE_HEIGHT = 16; // px — height of each option row
+const OPTION_X_OFFSET = 25; // px — from box left to option text start
 
 // Overlay colours (ARGB)
 const COLOR_HIGHLIGHT = 0xffe8a020; // orange-gold outline — visible on parchment
-const COLOR_ARROW = 0xffffcc00;     // bright yellow for the ◄ text
+const COLOR_ARROW = 0xffffcc00; // bright yellow for the ◄ text
 
 // Duration to keep the overlay alive per frame (must exceed poll interval)
 const OVERLAY_DURATION_MS = 900;
@@ -42,8 +42,8 @@ const OVERLAY_DURATION_MS = 900;
 // ─── Internal state ──────────────────────────────────────────────────────────
 
 let _intervalId = null;
-let _dialogueOptions = null;   // [{option, text}]
-let _requiredOptions = [];     // ['1', '✓', '~', '2', ...]
+let _dialogueOptions = null; // [{option, text}]
+let _requiredOptions = []; // ['1', '✓', '~', '2', ...]
 
 // ─── Alt1 guard ──────────────────────────────────────────────────────────────
 
@@ -159,7 +159,15 @@ function drawHighlight(box, optionNumber, optionText) {
     alt1.overLayClearGroup(OVERLAY_GROUP);
 
     // Thick gold outline around the correct option row
-    alt1.overLayRect(COLOR_HIGHLIGHT, optX - 2, optTop - 1, rectW, OPTION_LINE_HEIGHT + 2, OVERLAY_DURATION_MS, 2);
+    alt1.overLayRect(
+      COLOR_HIGHLIGHT,
+      optX - 2,
+      optTop - 1,
+      rectW,
+      OPTION_LINE_HEIGHT + 2,
+      OVERLAY_DURATION_MS,
+      2
+    );
 
     // Arrow ◄ to the left of the option
     alt1.overLayText('◄', COLOR_ARROW, 11, optX - 18, optTop + 1, OVERLAY_DURATION_MS);

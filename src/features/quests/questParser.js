@@ -727,7 +727,9 @@ export function extractQuickGuide(html) {
   const getListItemDialogueData = (li) => {
     const clone = li.cloneNode(true);
     stripTooltipContent(clone);
-    const span = clone.querySelector('.chat-options[data-dialogue-parsed], .chat-options-dialogue[data-dialogue-parsed]');
+    const span = clone.querySelector(
+      '.chat-options[data-dialogue-parsed], .chat-options-dialogue[data-dialogue-parsed]'
+    );
     if (!span) return null;
     try {
       return JSON.parse(span.dataset.dialogueParsed);
