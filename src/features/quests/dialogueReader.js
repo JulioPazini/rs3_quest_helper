@@ -194,13 +194,15 @@ function poll() {
   let rawBuf;
   try {
     rawBuf = alt1.getRegion(0, 0, scanW, scanH);
-  } catch (_) {
+  } catch (e) {
     // Pixel permission not granted — stop polling
+    console.warn('[dialogueReader] getRegion failed:', e);
     stopDialoguePolling();
     return;
   }
 
   if (!rawBuf) {
+    console.warn('[dialogueReader] getRegion returned null');
     clearOverlay();
     return;
   }
@@ -213,6 +215,7 @@ function poll() {
     return;
   }
 
+  console.log('[dialogueReader] box found:', box, 'highlighting option', optionNumber);
   drawHighlight(box, optionNumber);
 }
 
@@ -233,6 +236,7 @@ export function startDialoguePolling(dialogueOptions, requiredOptions) {
   _dialogueOptions = dialogueOptions;
   _requiredOptions = requiredOptions;
 
+  console.log('[dialogueReader] polling started — options:', dialogueOptions, 'required:', requiredOptions);
   poll(); // immediate first check
   _intervalId = setInterval(poll, 600);
 }
