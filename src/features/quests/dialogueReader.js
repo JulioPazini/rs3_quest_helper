@@ -9,6 +9,8 @@
  * The entire module is a no-op when running outside Alt1.
  */
 
+console.log('[dialogueReader] module loaded ✓');
+
 const OVERLAY_GROUP = 'dialogue-helper';
 
 // ─── RS3 dialogue box pixel constants ────────────────────────────────────────
@@ -159,7 +161,15 @@ function drawHighlight(box, optionNumber) {
     alt1.overLayClearGroup(OVERLAY_GROUP);
 
     // Thick gold outline around the correct option row
-    alt1.overLayRect(COLOR_HIGHLIGHT, optX - 2, optTop - 1, rectW, OPTION_LINE_HEIGHT + 2, OVERLAY_DURATION_MS, 2);
+    alt1.overLayRect(
+      COLOR_HIGHLIGHT,
+      optX - 2,
+      optTop - 1,
+      rectW,
+      OPTION_LINE_HEIGHT + 2,
+      OVERLAY_DURATION_MS,
+      2
+    );
 
     // Arrow ◄ to the left of the option
     alt1.overLayText('◄', COLOR_ARROW, 11, optX - 18, optTop + 1, OVERLAY_DURATION_MS);
@@ -207,7 +217,14 @@ function poll() {
     return;
   }
 
-  console.log('[dialogueReader] scan ok, size:', scanW, 'x', scanH, 'buf bytes:', rawBuf.byteLength);
+  console.log(
+    '[dialogueReader] scan ok, size:',
+    scanW,
+    'x',
+    scanH,
+    'buf bytes:',
+    rawBuf.byteLength
+  );
 
   const buf = new Uint8ClampedArray(rawBuf);
   const box = findDialogueBox(buf, scanW, scanH);
@@ -238,7 +255,12 @@ export function startDialoguePolling(dialogueOptions, requiredOptions) {
   _dialogueOptions = dialogueOptions;
   _requiredOptions = requiredOptions;
 
-  console.log('[dialogueReader] polling started — options:', dialogueOptions, 'required:', requiredOptions);
+  console.log(
+    '[dialogueReader] polling started — options:',
+    dialogueOptions,
+    'required:',
+    requiredOptions
+  );
   poll(); // immediate first check
   _intervalId = setInterval(poll, 600);
 }

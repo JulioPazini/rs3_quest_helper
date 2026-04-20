@@ -1754,6 +1754,16 @@ export const renderSteps = (params) => {
         stepEl.innerHTML = buildStepContentHtml(Boolean(sectionItem.checked), displayHtml);
         enhancePathMapTables(stepEl);
 
+        if (isCurrent) {
+          console.log(
+            '[render] current step:',
+            sectionItem.text?.slice(0, 60),
+            '| dialogueOptions:',
+            sectionItem.dialogueOptions,
+            '| alt1:',
+            isAlt1Available()
+          );
+        }
         if (isCurrent && sectionItem.dialogueOptions?.length && isAlt1Available()) {
           startDialoguePolling(sectionItem.dialogueOptions, sectionItem.requiredOptions ?? []);
         }
