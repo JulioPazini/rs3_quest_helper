@@ -397,11 +397,25 @@ export function extractQuickGuide(html) {
     );
     chatIcons.forEach((el) => el.remove());
 
-    // Save dialogue options to dataset before removing the tables
-    const chatOptionSpans = rootEl.querySelectorAll('.chat-options, .chat-options-dialogue');
-    chatOptionSpans.forEach((span) => {
-      const parsed = extractDialogueOptions(span);
-      if (parsed) span.dataset.dialogueParsed = JSON.stringify(parsed);
+    // Save dialogue options to dataset before removing tooltip wrappers.
+    // The actual dialogue table lives inside .js-tooltip-wrapper[data-tooltip-for],
+    // keyed by the data-tooltip-name on the .chat-options-dialogue sibling span.
+    const chatDialogueSpans = rootEl.querySelectorAll('.chat-options-dialogue[data-tooltip-name]');
+    chatDialogueSpans.forEach((span) => {
+      const tooltipName = span.getAttribute('data-tooltip-name');
+      if (!tooltipName) return;
+      const wrapper = rootEl.querySelector(
+        `.js-tooltip-wrapper[data-tooltip-for="${tooltipName}"]`
+      );
+      if (!wrapper) return;
+      const parsed = extractDialogueOptions(wrapper);
+      if (!parsed) return;
+      // Attach parsed data to the visible .chat-options span so it survives cleanup
+      const parent = span.parentElement;
+      const chatOptionsSpan = parent?.querySelector('.chat-options');
+      if (chatOptionsSpan) {
+        chatOptionsSpan.dataset.dialogueParsed = JSON.stringify(parsed);
+      }
     });
 
     const chatTables = rootEl.querySelectorAll(
