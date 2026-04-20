@@ -198,13 +198,20 @@ function poll() {
     return;
   }
 
-  // Capture the game screen
+  // Capture the game screen.
+  // Alt1 caps getRegion at 2 500 000 pixels total.
+  // RS3 dialogue boxes appear in the lower portion of the screen, so when the
+  // full resolution exceeds the cap we scan from the bottom and offset results.
+  const MAX_PIXELS = 2_400_000; // leave a small safety margin
   const scanW = alt1.rsWidth || 1920;
-  const scanH = alt1.rsHeight || 1080;
+  const rsH = alt1.rsHeight || 1080;
+  const maxScanH = Math.floor(MAX_PIXELS / scanW);
+  const scanH = Math.min(rsH, maxScanH);
+  const scanY = Math.max(0, rsH - scanH); // start from bottom if cropped
 
   let rawBuf;
   try {
-    rawBuf = alt1.getRegion(0, 0, scanW, scanH);
+    rawBuf = alt1.getRegion(0, scanY, scanW, scanH);
   } catch (e) {
     console.warn('[dialogueReader] getRegion failed (no pixel permission?):', e);
     stopDialoguePolling();
@@ -217,22 +224,16 @@ function poll() {
     return;
   }
 
-  console.log(
-    '[dialogueReader] scan ok, size:',
-    scanW,
-    'x',
-    scanH,
-    'buf bytes:',
-    rawBuf.byteLength
-  );
-
   const buf = new Uint8ClampedArray(rawBuf);
-  const box = findDialogueBox(buf, scanW, scanH);
+  const localBox = findDialogueBox(buf, scanW, scanH);
 
-  if (!box) {
+  if (!localBox) {
     clearOverlay();
     return;
   }
+
+  // Translate local box coordinates back to absolute screen coordinates
+  const box = { ...localBox, y: localBox.y + scanY };
 
   console.log('[dialogueReader] box found:', box, 'highlighting option', optionNumber);
   drawHighlight(box, optionNumber);
