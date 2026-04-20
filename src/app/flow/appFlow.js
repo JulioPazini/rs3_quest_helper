@@ -1,6 +1,7 @@
 ﻿import { loadQuestList } from '../../features/quests/questList.js';
 import { renderSearchResults } from '../../features/quests/questRender.js';
 import { showSearchControls, showToggleBar, showMessage } from '../../shared/ui/uiControls.js';
+import { stopDialoguePolling } from '../../features/quests/dialogueReader.js';
 
 export const returnToHome = async (ctx) => {
   const {
@@ -27,6 +28,7 @@ export const returnToHome = async (ctx) => {
     stickyBar,
   } = ctx;
 
+  stopDialoguePolling();
   state.currentItems = [];
   state.currentQuestKey = null;
   state.currentRewardImage = null;

@@ -8,6 +8,9 @@ module.exports = {
   parserOptions: {
     sourceType: 'module',
   },
+  globals: {
+    alt1: 'readonly',
+  },
   extends: ['eslint:recommended'],
   rules: {
     'no-unused-vars': 'off',
