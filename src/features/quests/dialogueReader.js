@@ -205,7 +205,33 @@ function poll() {
   const rsH = alt1.rsHeight || 1080;
   const scanH = Math.min(rsH, Math.floor(MAX_PIXELS / scanW));
 
-  // ── One-shot permission + API diagnostics ──────────────────────────────────
+  let raw;
+  try {
+    raw = alt1.getRegion(0, 0, scanW, scanH);
+  } catch (e) {
+    console.warn('[dialogueReader] getRegion failed:', e);
+    return;
+  }
+
+  // alt1.getRegion returns a binary string in this Alt1 version (each char = one byte, BGRA order)
+  let buf;
+  if (typeof raw === 'string') {
+    if (raw.length === 0) {
+      clearOverlay();
+      return;
+    }
+    buf = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) {
+      buf[i] = raw.charCodeAt(i) & 0xff;
+    }
+  } else if (raw instanceof ArrayBuffer && raw.byteLength > 0) {
+    buf = new Uint8ClampedArray(raw);
+  } else {
+    clearOverlay();
+    return;
+  }
+
+  // ── One-shot diagnostics — confirm pixel data is real ─────────────────────
   if (!_debugLogged) {
     _debugLogged = true;
     console.log(
@@ -218,64 +244,13 @@ function poll() {
       'rsH:',
       rsH,
       'scanH:',
-      scanH
+      scanH,
+      '| bufLen:',
+      buf.length
     );
-
-    // Try captureHold (region-specific), then log exactly what getRegion returns
-    try {
-      alt1.captureHold(0, 0, scanW, scanH);
-      console.log('[dialogueReader] captureHold OK');
-    } catch (e) {
-      console.warn('[dialogueReader] captureHold threw:', e?.message ?? e);
-    }
-
-    try {
-      alt1.captureHoldFullRs();
-      console.log('[dialogueReader] captureHoldFullRs OK');
-    } catch (e) {
-      console.warn('[dialogueReader] captureHoldFullRs threw:', e?.message ?? e);
-    }
-
-    let probe;
-    try {
-      probe = alt1.getRegion(0, 0, scanW, scanH);
-    } catch (e) {
-      probe = e;
-    }
-    console.log(
-      '[dialogueReader] getRegion probe:',
-      'typeof=' + typeof probe,
-      'constructor=' + (probe?.constructor?.name ?? 'n/a'),
-      'byteLen=' + (probe?.byteLength ?? 'n/a'),
-      'isArrayBuffer=' + (probe instanceof ArrayBuffer),
-      'isPromise=' + (typeof probe?.then === 'function')
-    );
-  }
-  // ───────────────────────────────────────────────────────────────────────────
-
-  // Attempt capture
-  try {
-    alt1.captureHold(0, 0, scanW, scanH);
-  } catch (_) {}
-
-  let rawBuf;
-  try {
-    rawBuf = alt1.getRegion(0, 0, scanW, scanH);
-  } catch (e) {
-    console.warn('[dialogueReader] getRegion failed:', e);
-    return;
-  }
-  if (!rawBuf || !(rawBuf instanceof ArrayBuffer) || rawBuf.byteLength === 0) {
-    clearOverlay();
-    return;
-  }
-
-  const buf = new Uint8ClampedArray(rawBuf);
-
-  if (!_debugLogged) {
-    _debugLogged = true;
     logDiagnostic(buf, scanW, scanH);
   }
+  // ───────────────────────────────────────────────────────────────────────────
 
   const box = findDialogueBox(buf, scanW, scanH);
 
