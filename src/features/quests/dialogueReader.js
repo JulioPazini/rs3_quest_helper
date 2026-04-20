@@ -16,42 +16,33 @@ console.log('[dialogueReader] module loaded ✓');
 const OVERLAY_GROUP = 'dialogue-helper';
 
 // ─── Layout constants ─────────────────────────────────────────────────────────
-//
-// Resizable client, Interface Scaling 100%.
-//   Header   ≈ 22 px dark strip at the top
-//   Body     ≈ bright parchment, starts ~26 px below box top
-//   Options start 32 px below box top, each row 16 px tall
 
-const MIN_BOX_WIDTH = 100; // minimum valid dialogue box width (px)
-const MAX_BOX_WIDTH = 500; // maximum valid dialogue box width (px)
-const HEADER_HEIGHT = 22; // px — dark header strip height
-// Centre of the body section relative to the header top:
-const BODY_CENTER_OFFSET = HEADER_HEIGHT + 10; // ≈ 32 px below header top
-const OPTION_OFFSET_TOP = 32; // px — from box top to first option's TOP edge
-const OPTION_LINE_HEIGHT = 16; // px — height of each option row
-const OPTION_X_OFFSET = 25; // px — from box left to option text start
+const MIN_BOX_WIDTH = 100;
+const MAX_BOX_WIDTH = 500;
+const HEADER_HEIGHT = 22;
+const BODY_CENTER_OFFSET = HEADER_HEIGHT + 10; // body center is ~32 px below header top
+const OPTION_OFFSET_TOP = 32;
+const OPTION_LINE_HEIGHT = 16;
+const OPTION_X_OFFSET = 25;
 
-// Luminance thresholds (0-255, perceptual).
-const HEADER_MAX_LUM = 80; // dialogue header must be DARKER than this
-const BODY_MIN_LUM = 130; // dialogue body (parchment) must be BRIGHTER than this
+// Luminance thresholds (0-255)
+const HEADER_MAX_LUM = 80;
+const BODY_MIN_LUM = 120; // lowered from 130 to catch slightly darker parchment
 
 // Overlay colours (ARGB)
-const COLOR_HIGHLIGHT = 0xffe8a020; // orange-gold outline — visible on parchment
-const COLOR_ARROW = 0xffffcc00; // bright yellow for the ◄ text
-
-// Duration to keep the overlay alive per frame (must exceed poll interval)
+const COLOR_HIGHLIGHT = 0xffe8a020;
+const COLOR_ARROW = 0xffffcc00;
 const OVERLAY_DURATION_MS = 900;
 
 // ─── Internal state ──────────────────────────────────────────────────────────
 
 let _intervalId = null;
-let _dialogueOptions = null; // [{option, text}]
-let _requiredOptions = []; // ['1', '✓', '~', '2', ...]
-let _debugLogged = false; // one-shot diagnostic flag
+let _dialogueOptions = null;
+let _requiredOptions = [];
+let _debugLogged = false;
 
 // ─── Alt1 guard ──────────────────────────────────────────────────────────────
 
-/** @returns {boolean} */
 export function isAlt1Available() {
   return typeof window !== 'undefined' && typeof window.alt1 !== 'undefined';
 }
@@ -63,41 +54,67 @@ function readPixel(buf, width, x, y) {
   return { b: buf[i], g: buf[i + 1], r: buf[i + 2], a: buf[i + 3] };
 }
 
-/** Perceptual luminance (0-255). Reliable even with BGRA/RGBA ambiguity for neutral hues. */
 function lum(px) {
   return 0.299 * px.r + 0.587 * px.g + 0.114 * px.b;
 }
 
-// ─── Dialogue box detection ──────────────────────────────────────────────────
+// ─── Diagnostic ──────────────────────────────────────────────────────────────
 
 /**
- * Scan for the RS3 "SELECT / CHOOSE AN OPTION" dialogue box.
- *
- * Strategy (body-first):
- *   1. Walk the buffer looking for a bright-parchment horizontal run
- *      in the range [MIN_BOX_WIDTH, MAX_BOX_WIDTH] pixels.
- *   2. Verify that a dark header strip exists ABOVE the bright run.
- *   3. Return bounding box in buffer-local coordinates.
- *
- * Scanning body first avoids the problem of dark game-world pixels
- * adjacent to (and merging with) the dialogue box header.
- *
- * @param {Uint8ClampedArray} buf
- * @param {number} width
- * @param {number} height
- * @returns {{ x:number, y:number, w:number, h:number } | null}
+ * One-shot scan. Logs:
+ *   • buffer byte length (sanity check)
+ *   • raw pixel BGRA + luminance at the centre-x for several screen-y values
+ *     so we can see exactly what getRegion captured and where the bright/dark
+ *     bands really are
  */
+function logDiagnostic(buf, scanW, scanH) {
+  const expected = scanW * scanH * 4;
+  console.log(
+    `[dialogueReader] buf byteLen=${buf.byteLength} expected=${expected} match=${buf.byteLength === expected}`
+  );
+  console.log(`[dialogueReader] scanning from y=0 to y=${scanH}, w=${scanW}`);
+
+  // Sample pixels at the centre x across y positions where dialogue boxes appear
+  const cx = Math.floor(scanW / 2);
+  const probeYs = [350, 400, 450, 500, 530, 560, 600, 650, 700, 750];
+
+  probeYs.forEach((y) => {
+    if (y >= scanH) return;
+    const px = readPixel(buf, scanW, cx, y);
+    const l = Math.round(lum(px));
+
+    // Count a run of dark pixels starting from centre
+    let darkLen = 0;
+    for (let x = cx; x < scanW; x++) {
+      if (lum(readPixel(buf, scanW, x, y)) <= HEADER_MAX_LUM) darkLen++;
+      else break;
+    }
+
+    // Count a run of bright pixels starting from centre
+    let brightLen = 0;
+    for (let x = cx; x < scanW; x++) {
+      if (lum(readPixel(buf, scanW, x, y)) >= BODY_MIN_LUM) brightLen++;
+      else break;
+    }
+
+    console.log(
+      `[dialogueReader]  y=${y}: rgb(${px.r},${px.g},${px.b}) lum=${l}` +
+        ` | dark_run_from_cx=${darkLen} bright_run_from_cx=${brightLen}`
+    );
+  });
+}
+
+// ─── Dialogue box detection ──────────────────────────────────────────────────
+
 function findDialogueBox(buf, width, height) {
   const STEP = 3;
-
-  // Scan starts below where the header would be
   const yStart = BODY_CENTER_OFFSET + 10;
 
   for (let y = yStart; y < height - 20; y += STEP) {
     for (let x = 10; x < width - MIN_BOX_WIDTH; x += STEP) {
       if (lum(readPixel(buf, width, x, y)) < BODY_MIN_LUM) continue;
 
-      // Measure the horizontal run of bright (parchment) pixels
+      // Measure bright run
       let runLen = 0;
       for (let dx = 1; x + dx < width; dx++) {
         if (lum(readPixel(buf, width, x + dx, y)) >= BODY_MIN_LUM) {
@@ -108,7 +125,7 @@ function findDialogueBox(buf, width, height) {
       }
       if (runLen < MIN_BOX_WIDTH || runLen > MAX_BOX_WIDTH) continue;
 
-      // Verify dark header strip ABOVE the bright body area
+      // Verify dark header above
       const headerY = y - BODY_CENTER_OFFSET;
       if (headerY < 0) continue;
 
@@ -117,7 +134,6 @@ function findDialogueBox(buf, width, height) {
       const h3 = lum(readPixel(buf, width, x + Math.floor(runLen * 0.75), headerY));
       if (h1 > HEADER_MAX_LUM || h2 > HEADER_MAX_LUM || h3 > HEADER_MAX_LUM) continue;
 
-      // Found! Box top aligns with the header start
       const boxTop = Math.max(0, headerY - 2);
       const optionCount = _dialogueOptions ? _dialogueOptions.length : 3;
       const estimatedH = HEADER_HEIGHT + OPTION_OFFSET_TOP + optionCount * OPTION_LINE_HEIGHT + 14;
@@ -133,63 +149,6 @@ function findDialogueBox(buf, width, height) {
   return null;
 }
 
-// ─── Diagnostic ──────────────────────────────────────────────────────────────
-
-/**
- * One-shot scan that logs bright and dark horizontal runs at two y slices
- * near the top of the scanned region, where the dialogue box header / body
- * would appear. Helps calibrate HEADER_MAX_LUM and BODY_MIN_LUM.
- */
-function logDiagnostic(buf, scanW, scanH, scanY) {
-  // Scan every 4 pixels along two horizontal lines
-  const probeYs = [
-    Math.floor(scanH * 0.08), // ~header zone
-    Math.floor(scanH * 0.12), // ~body zone
-    Math.floor(scanH * 0.18), // a bit lower
-  ];
-
-  probeYs.forEach((localY) => {
-    const screenY = localY + scanY;
-    const darkRuns = [];
-    const brightRuns = [];
-    let dStart = -1;
-    let bStart = -1;
-
-    for (let x = 0; x <= scanW; x += 4) {
-      const l = x < scanW ? lum(readPixel(buf, scanW, x, localY)) : NaN;
-
-      // Track dark runs (potential headers)
-      if (!isNaN(l) && l <= HEADER_MAX_LUM) {
-        if (dStart < 0) dStart = x;
-      } else {
-        if (dStart >= 0) {
-          const len = x - dStart;
-          if (len >= 40) darkRuns.push(`x${dStart}+${len}`);
-          dStart = -1;
-        }
-      }
-
-      // Track bright runs (potential bodies)
-      if (!isNaN(l) && l >= BODY_MIN_LUM) {
-        if (bStart < 0) bStart = x;
-      } else {
-        if (bStart >= 0) {
-          const len = x - bStart;
-          if (len >= 40) brightRuns.push(`x${bStart}+${len}`);
-          bStart = -1;
-        }
-      }
-    }
-
-    console.log(
-      `[dialogueReader] screenY=${screenY} | dark(lum≤${HEADER_MAX_LUM}):`,
-      darkRuns.join(' ') || 'none',
-      `| bright(lum≥${BODY_MIN_LUM}):`,
-      brightRuns.join(' ') || 'none'
-    );
-  });
-}
-
 // ─── Overlay drawing ─────────────────────────────────────────────────────────
 
 function clearOverlay() {
@@ -201,11 +160,6 @@ function clearOverlay() {
   } catch (_) {}
 }
 
-/**
- * Draw the highlight around `optionNumber` (1-based) in the detected box.
- * @param {{ x:number, y:number, w:number, h:number }} box  absolute RS3 window coords
- * @param {number} optionNumber
- */
 function drawHighlight(box, optionNumber) {
   if (!isAlt1Available()) return;
   try {
@@ -215,7 +169,6 @@ function drawHighlight(box, optionNumber) {
 
     alt1.overLaySetGroup(OVERLAY_GROUP);
     alt1.overLayClearGroup(OVERLAY_GROUP);
-
     alt1.overLayRect(
       COLOR_HIGHLIGHT,
       optX - 2,
@@ -247,18 +200,17 @@ function poll() {
     return;
   }
 
-  // Alt1 caps getRegion at 2 500 000 pixels.
-  // Scan the bottom portion of the screen (dialogue boxes always appear there).
+  // Scan from y=0 (top of RS3 window).
+  // Alt1 limits getRegion to 2 500 000 pixels; at 2560 wide that is 937 rows —
+  // enough to cover y=0-936 which includes any dialogue box.
   const MAX_PIXELS = 2_400_000;
   const scanW = alt1.rsWidth || 1920;
   const rsH = alt1.rsHeight || 1080;
-  const maxScanH = Math.floor(MAX_PIXELS / scanW);
-  const scanH = Math.min(rsH, maxScanH);
-  const scanY = Math.max(0, rsH - scanH);
+  const scanH = Math.min(rsH, Math.floor(MAX_PIXELS / scanW));
 
   let rawBuf;
   try {
-    rawBuf = alt1.getRegion(0, scanY, scanW, scanH);
+    rawBuf = alt1.getRegion(0, 0, scanW, scanH);
   } catch (e) {
     console.warn('[dialogueReader] getRegion failed:', e);
     return;
@@ -271,35 +223,25 @@ function poll() {
 
   const buf = new Uint8ClampedArray(rawBuf);
 
-  // One-shot diagnostic to help calibrate the detector
   if (!_debugLogged) {
     _debugLogged = true;
-    console.log(
-      `[dialogueReader] scan region: y=${scanY}..${scanY + scanH}, w=${scanW}, h=${scanH}`
-    );
-    logDiagnostic(buf, scanW, scanH, scanY);
+    logDiagnostic(buf, scanW, scanH);
   }
 
-  const localBox = findDialogueBox(buf, scanW, scanH);
+  const box = findDialogueBox(buf, scanW, scanH);
 
-  if (!localBox) {
+  if (!box) {
     clearOverlay();
     return;
   }
 
-  // Translate local y back to absolute RS3 window coordinates
-  const box = { ...localBox, y: localBox.y + scanY };
+  // scanY = 0, so box coordinates are already absolute RS3 window coordinates
   console.log('[dialogueReader] box found:', box, '— option', optionNumber);
   drawHighlight(box, optionNumber);
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/**
- * Start polling RS3 for the "SELECT AN OPTION" box.
- * @param {Array<{option:string, text:string}>} dialogueOptions
- * @param {string[]} requiredOptions  e.g. ['1', '✓', '~', '2']
- */
 export function startDialoguePolling(dialogueOptions, requiredOptions) {
   if (!isAlt1Available()) return;
 
@@ -314,9 +256,6 @@ export function startDialoguePolling(dialogueOptions, requiredOptions) {
   _intervalId = setInterval(poll, 600);
 }
 
-/**
- * Stop polling and clear the overlay.
- */
 export function stopDialoguePolling() {
   if (_intervalId !== null) {
     clearInterval(_intervalId);
