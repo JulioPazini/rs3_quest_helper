@@ -1181,6 +1181,7 @@ const loadPlayerQuests = async (playerName) => {
   showSearchResultsSkeleton();
   if (result.kind === 'success') {
     state.playerName = result.username;
+    if (playerInput) playerInput.value = result.username;
     state.playerQuestFilter = result.questFilter;
     state.playerQuestMeta = result.questMeta;
     state.playerSkills = result.skills;

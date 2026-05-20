@@ -8,6 +8,16 @@ export const normalizeTitleKey = (title) =>
     .trim()
     .toLowerCase();
 
+const normalizePlayerDisplayName = (name) =>
+  String(name || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
 const SKILL_INDEX_TO_NAME = [
   'attack',
   'defence',
@@ -157,7 +167,10 @@ export const createPlayerService = (config = {}) => {
   };
 
   const loadPlayerData = async (playerName) => {
-    const username = String(playerName || '').trim();
+    const username = String(playerName || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const usernameDisplay = normalizePlayerDisplayName(username);
     const usernameKey = username.toLowerCase();
 
     if (!username) {
@@ -169,7 +182,7 @@ export const createPlayerService = (config = {}) => {
       return {
         kind: 'success',
         fromCache: true,
-        username,
+        username: usernameDisplay,
         ts: cached.ts || now(),
         questFilter: new Set(cached.questFilter || []),
         questMeta: cached.questMeta || {},
@@ -200,14 +213,14 @@ export const createPlayerService = (config = {}) => {
       if (questApiError) {
         return {
           kind: 'error',
-          username,
+          username: usernameDisplay,
           code: questApiError,
         };
       }
       if (profileApiError && profileApiError !== 'PROFILE_PRIVATE') {
         return {
           kind: 'error',
-          username,
+          username: usernameDisplay,
           code: profileApiError,
         };
       }
@@ -215,9 +228,9 @@ export const createPlayerService = (config = {}) => {
       const rows = Array.isArray(questPayload) ? questPayload : questPayload?.quests;
       if (!Array.isArray(rows)) {
         if (questPayload && questPayload.error) {
-          return { kind: 'error', username, code: 'GENERIC_API_ERROR' };
+          return { kind: 'error', username: usernameDisplay, code: 'GENERIC_API_ERROR' };
         }
-        return { kind: 'error', username, code: 'GENERIC_API_ERROR' };
+        return { kind: 'error', username: usernameDisplay, code: 'GENERIC_API_ERROR' };
       }
 
       const nextFilter = new Set();
@@ -236,7 +249,7 @@ export const createPlayerService = (config = {}) => {
       const result = {
         kind: 'success',
         fromCache: false,
-        username,
+        username: usernameDisplay,
         ts: now(),
         questFilter: nextFilter,
         questMeta: nextMeta,
@@ -251,7 +264,7 @@ export const createPlayerService = (config = {}) => {
 
       return result;
     } catch (_err) {
-      return { kind: 'error', username, code: 'NETWORK_ERROR' };
+      return { kind: 'error', username: usernameDisplay, code: 'NETWORK_ERROR' };
     }
   };
 
