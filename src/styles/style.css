@@ -3280,13 +3280,22 @@ body::before {
 /* 4. Button press micro-interactions */
 .sticky-bar .sticky-action-btn:active,
 .filter-toggle:active,
-.nav-settings-button:active,
 .settings-close-button:active,
 .section-images-button:active,
 .section-maps-button:active,
 .search-item-action:active,
 .app-confirm-btn:active {
   transform: scale(0.93);
+  transition: transform 70ms ease;
+}
+
+.nav-settings-button:active {
+  transform: translateY(-50%) scale(0.93);
+  transition: transform 70ms ease;
+}
+
+.sticky-bar .jump-current-btn:active {
+  transform: translateY(-50%) scale(0.93);
   transition: transform 70ms ease;
 }
 
