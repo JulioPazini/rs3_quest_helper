@@ -573,6 +573,17 @@ export const renderSteps = (params) => {
     return;
   }
 
+  const isLunarDiplomacyContext = Array.isArray(items)
+    ? items.some((item) => {
+        const text = String(item?.text || item?.html || '')
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+        return text.includes('lunar diplomacy');
+      })
+    : false;
+
   const readPathmapSelection = (key) => {
     try {
       const raw = localStorage.getItem(key);
@@ -591,6 +602,32 @@ export const renderSteps = (params) => {
     } catch (_err) {
       // ignore storage failures
     }
+  };
+
+  const renderedPathmapFallbacks = new Set();
+  const getFallbackGridCols = (table, tableId, totalRows) => {
+    // Most broken grid fragments from wiki that arrive as 8 single-cell rows
+    // are the 4x8 puzzle layout (32 cells).
+    if (totalRows === 8) return 4;
+
+    if (isLunarDiplomacyContext && totalRows === 8) return 4;
+
+    const normalizedId = String(tableId || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    if (normalizedId.includes('lunar diplomacy')) return 4;
+
+    // Fallback: some wiki fragments may not carry a stable tableId.
+    const hostText = String(
+      table?.closest?.('.section-table-card, .section-text-block')?.textContent || ''
+    )
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    if (hostText.includes('lunar diplomacy') && totalRows === 8) return 4;
+
+    return 5;
   };
 
   const enhancePathMapTables = (root) => {
@@ -625,8 +662,14 @@ export const renderSteps = (params) => {
       const makeCounterText = (selectedCount, total) => `(${selectedCount}/${total})`;
 
       if (isBrokenSingleCellRows && allCellsEmpty) {
+        if (renderedPathmapFallbacks.has(storageKey)) {
+          table.classList.add('pathmap-source-hidden');
+          return;
+        }
+        renderedPathmapFallbacks.add(storageKey);
+
         const totalRows = rowCells.length;
-        const totalCols = 5;
+        const totalCols = getFallbackGridCols(table, tableId, totalRows);
         const totalCells = totalRows * totalCols;
 
         const fallback = document.createElement('div');
