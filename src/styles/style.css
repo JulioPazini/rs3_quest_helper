@@ -1843,9 +1843,12 @@ header.hidden {
   flex-wrap: nowrap;
 }
 
+.nav-left #homeButton {
+  position: static;
+}
+
 .nav-left #backButton {
-  position: absolute;
-  left: 0;
+  position: static;
 }
 
 .nav-settings-button {
@@ -2161,9 +2164,17 @@ header.hidden {
   align-items: center;
 }
 
-.view-mode-toggle #backButton {
+.view-mode-toggle .quest-nav-buttons {
   grid-column: 1;
   justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-mode-toggle #homeButton,
+.view-mode-toggle #backButton {
+  margin: 0;
 }
 
 .view-mode-toggle.sticky-top {

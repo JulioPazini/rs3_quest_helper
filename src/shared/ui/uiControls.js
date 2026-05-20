@@ -42,6 +42,7 @@ export const bindSearchEvents = (params) => {
     playerLookupButton,
     seriesFilter,
     searchToggleButton,
+    homeButton,
     backButton,
     toggleBar,
     resultsDiv,
@@ -82,6 +83,7 @@ export const bindSearchEvents = (params) => {
       target === seriesFilter ||
       (seriesFilter && seriesFilter.contains && seriesFilter.contains(target)) ||
       (searchToggleButton && searchToggleButton.contains(target)) ||
+      (homeButton && homeButton.contains(target)) ||
       (backButton && backButton.contains(target))
     ) {
       return;

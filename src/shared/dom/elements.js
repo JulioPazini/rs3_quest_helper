@@ -10,6 +10,7 @@ export const getAppElements = (doc = document) => ({
   seriesFilter: doc.getElementById('questFilter'),
   toggleButton: doc.getElementById('toggleAll'),
   searchToggleButton: doc.getElementById('searchToggle'),
+  homeButton: doc.getElementById('homeButton'),
   backButton: doc.getElementById('backButton'),
   stepsDiv: doc.getElementById('steps'),
   titleDiv: doc.getElementById('questTitle'),

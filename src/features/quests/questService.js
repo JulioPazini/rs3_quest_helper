@@ -197,6 +197,7 @@ export async function loadQuest(questName, ctx) {
     loadProgress,
     buildStepsRenderParams,
     state,
+    homeButton,
     backButton,
     saveProgress,
     updateProgress,
@@ -236,6 +237,7 @@ export async function loadQuest(questName, ctx) {
     if (!resolved) {
       stepsDiv.innerHTML = 'Quest not found.';
       stepsDiv.classList.remove('hidden');
+      if (homeButton) homeButton.classList.remove('hidden');
       if (backButton) backButton.classList.remove('hidden');
       state.currentItems = [];
       resetQuestTranslationState();
@@ -263,6 +265,7 @@ export async function loadQuest(questName, ctx) {
     if (!data.parse || !data.parse.text) {
       stepsDiv.innerHTML = 'Guide not available for this quest.';
       stepsDiv.classList.remove('hidden');
+      if (homeButton) homeButton.classList.remove('hidden');
       if (backButton) backButton.classList.remove('hidden');
       if (overviewDiv) {
         overviewDiv.innerHTML = '';
@@ -357,6 +360,7 @@ export async function loadQuest(questName, ctx) {
       setQuestViewMode(false);
     }
     toggleButton.classList.remove('hidden');
+    if (homeButton) homeButton.classList.remove('hidden');
     if (backButton) backButton.classList.remove('hidden');
     updateProgress();
     ctx.input.value = '';

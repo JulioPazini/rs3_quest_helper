@@ -22,6 +22,7 @@ export const returnToHome = async (ctx) => {
     progressIndicator,
     prevStepButton,
     nextStepButton,
+    homeButton,
     backButton,
     stepsDiv,
     viewModeToggle,
@@ -38,6 +39,7 @@ export const returnToHome = async (ctx) => {
   if (headerEl) headerEl.classList.remove('hidden');
   renderTitle('', null);
   if (renderOverview) renderOverview(null, overviewDiv);
+  if (homeButton) homeButton.classList.add('hidden');
   if (backButton) backButton.classList.add('hidden');
   if (overviewDiv) {
     overviewDiv.innerHTML = '';

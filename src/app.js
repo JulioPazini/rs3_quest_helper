@@ -46,6 +46,7 @@ const {
   seriesFilter,
   toggleButton,
   searchToggleButton,
+  homeButton,
   backButton,
   stepsDiv,
   titleDiv,
@@ -89,6 +90,7 @@ let progressFlashTimer = null;
 let confirmResolver = null;
 const uiPrefsKey = 'uiPreferences';
 const playerService = createPlayerService();
+const questNavigationHistory = [];
 
 const normalizeQuestLookupKey = (title) =>
   String(title || '')
@@ -411,17 +413,71 @@ const isNavCurrentlyStuck = () => {
 };
 
 const updateBackButtonPlacement = () => {
-  if (!backButton || !viewModeToggle) return;
-  const shouldPlaceInNav = Boolean(
-    navLeft &&
-    state.showSteps &&
-    state.showAllSteps &&
-    !backButton.classList.contains('hidden') &&
-    isNavCurrentlyStuck()
-  );
-  const target = shouldPlaceInNav && navLeft ? navLeft : viewModeToggle;
-  if (!target || backButton.parentElement === target) return;
-  target.insertBefore(backButton, target.firstChild);
+  if ((!backButton && !homeButton) || !viewModeToggle) return;
+  const target = document.getElementById('questNavButtons') || viewModeToggle;
+  if (homeButton && homeButton.parentElement !== target) {
+    target.insertBefore(homeButton, target.firstChild);
+  }
+  if (backButton && backButton.parentElement !== target) {
+    if (homeButton && homeButton.parentElement === target) {
+      target.insertBefore(backButton, homeButton.nextSibling);
+    } else {
+      target.insertBefore(backButton, target.firstChild);
+    }
+  }
+};
+
+const normalizeQuestNavKey = (value) =>
+  String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+const getCurrentQuestDisplayTitle = () => {
+  const heading = titleDiv ? titleDiv.querySelector('h2') : null;
+  const raw = heading ? heading.textContent : titleDiv?.textContent;
+  return String(raw || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+const pushQuestToHistory = (questTitle) => {
+  const normalized = normalizeQuestNavKey(questTitle);
+  if (!normalized) return;
+  const last = questNavigationHistory[questNavigationHistory.length - 1] || '';
+  if (normalizeQuestNavKey(last) === normalized) return;
+  questNavigationHistory.push(questTitle);
+};
+
+const clearQuestNavigationHistory = () => {
+  questNavigationHistory.length = 0;
+};
+
+const navigateToQuest = (questName, { recordHistory = true } = {}) => {
+  if (recordHistory) {
+    const currentQuest = getCurrentQuestDisplayTitle();
+    const isInsideQuest = backButton && !backButton.classList.contains('hidden');
+    if (isInsideQuest && normalizeQuestNavKey(currentQuest) !== normalizeQuestNavKey(questName)) {
+      pushQuestToHistory(currentQuest);
+    }
+  }
+  return loadQuest(questName, buildQuestContext());
+};
+
+const navigateHome = async () => {
+  clearQuestNavigationHistory();
+  await returnToHome(buildHomeContext());
+  updateScrollTopButtonVisibility();
+};
+
+const navigateBackInQuestHistory = async () => {
+  while (questNavigationHistory.length > 0) {
+    const previousQuest = questNavigationHistory.pop();
+    if (!previousQuest) continue;
+    await navigateToQuest(previousQuest, { recordHistory: false });
+    return;
+  }
+  await navigateHome();
 };
 
 const createEmptyQuestTranslationState = () => ({
@@ -790,7 +846,7 @@ const buildSearchRenderParams = (reset) => {
       resultsDiv,
       input,
       clearSearchResults,
-      loadQuest: (name) => loadQuest(name, buildQuestContext()),
+      loadQuest: (name) => navigateToQuest(name),
     },
     groupMode: state.selectedSeries,
     ensureSentinel: () => {
@@ -856,7 +912,7 @@ const renderOverviewWithCurrentState = (overview, target) =>
         });
         return;
       }
-      loadQuest(appQuestTitle, buildQuestContext());
+      navigateToQuest(appQuestTitle);
     },
     onToggle: (key, checked) => {
       state.overviewChecks = {
@@ -1049,6 +1105,7 @@ const buildQuestContext = () => ({
   loadProgress,
   buildStepsRenderParams,
   state,
+  homeButton,
   backButton,
   saveProgress,
   updateProgress,
@@ -1077,6 +1134,7 @@ const buildHomeContext = () => ({
   prevStepButton,
   nextStepButton,
   jumpCurrentButton,
+  homeButton,
   backButton,
   stepsDiv,
   viewModeToggle,
@@ -1239,10 +1297,9 @@ const {
   resetSearchInput,
   showMessage,
   saveUiPreferences,
-  loadQuestFromName: (questName) => loadQuest(questName, buildQuestContext()),
+  loadQuestFromName: (questName) => navigateToQuest(questName),
   returnHome: async () => {
-    await returnToHome(buildHomeContext());
-    updateScrollTopButtonVisibility();
+    await navigateBackInQuestHistory();
   },
 });
 
@@ -1288,6 +1345,12 @@ if (questTranslateButton) {
   });
 }
 
+if (homeButton) {
+  homeButton.onclick = async () => {
+    await navigateHome();
+  };
+}
+
 window.addEventListener('scroll', updateScrollTopButtonVisibility, { passive: true });
 window.addEventListener('scroll', updateQuestTranslateButtonVisibility, { passive: true });
 window.addEventListener('scroll', updateBackButtonPlacement, { passive: true });
@@ -1311,6 +1374,7 @@ bootstrapApp({
   toggleBar,
   playerBar,
   stepsDiv,
+  homeButton,
   backButton,
   bindSearchEvents,
   input,
