@@ -1851,6 +1851,16 @@ header.hidden {
   position: static;
 }
 
+.nav-left .sticky-quest-nav-buttons {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .nav-settings-button {
   position: absolute;
   right: 0;

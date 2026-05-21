@@ -398,8 +398,8 @@ const updateTopBarsStickyState = () => {
     }
   }
   if (viewModeToggle) {
-    const shouldStickOverview = !state.showSteps && !viewModeToggle.classList.contains('hidden');
-    viewModeToggle.classList.toggle('sticky-top', shouldStickOverview);
+    const shouldStickViewMode = !viewModeToggle.classList.contains('hidden');
+    viewModeToggle.classList.toggle('sticky-top', shouldStickViewMode);
   }
   updateBackButtonPlacement();
   updateQuestTranslateButtonVisibility();
@@ -413,8 +413,13 @@ const isNavCurrentlyStuck = () => {
 };
 
 const updateBackButtonPlacement = () => {
-  if ((!backButton && !homeButton) || !viewModeToggle) return;
-  const target = document.getElementById('questNavButtons') || viewModeToggle;
+  if (!backButton && !homeButton) return;
+  const defaultTarget = document.getElementById('questNavButtons') || viewModeToggle;
+  const stickyNavTarget = document.getElementById('stickyQuestNavButtons');
+  const shouldRenderInStickyNav =
+    !!stickyNavTarget && !!state.showSteps && !!state.showAllSteps && isNavCurrentlyStuck();
+  const target = shouldRenderInStickyNav ? stickyNavTarget : defaultTarget;
+  if (!target) return;
   if (homeButton && homeButton.parentElement !== target) {
     target.insertBefore(homeButton, target.firstChild);
   }
